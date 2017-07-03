@@ -24,24 +24,19 @@ Mini-Roadmap
 ------------
 
 * Foundations:
-
 - SQLAlchemy data models for systems and credentials
 - Credential Manager to securely store and retrieve credentials to get assigned to a system
 
 * Generic System:
-
 - Develop the UI independent generic system manager
 - Develop the generic system manager UI
 
 * ABAP:
-
 - Develop the UI independent ABAP management routines
 + A simple batch scheduling mechanism
 + Spool Downloader
 + Table Downloader
-
 - Adapt the generic UI for ABAP
-
 - Develop Plugin Types:
 + Retrieve and validate runtime parameters
 + Retrieve and validate the parameters in the profile
@@ -49,7 +44,6 @@ Mini-Roadmap
 + Execute and validate RSUSR* reports using their RFC API
 + Validate Batch Scheduling
 + ...
-
 - Develop Plugins based on the plugin types
 + Use Case Demonstration based on implementing SAP's Security Baseline Guide (https://support.sap.com/sos)
 
