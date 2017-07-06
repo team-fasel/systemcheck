@@ -27,3 +27,10 @@ __requires__        = ['PyQt5']
 __version_info__    = (0, 1, 0)
 __version__         = 'v{}.{}.{}'.format(*__version_info__)
 __revision__        = __version__
+
+
+from systemcheck.config import CONFIG, SESSION
+from systemcheck import model
+from pprint import pprint
+
+pprint(CONFIG)

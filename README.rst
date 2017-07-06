@@ -7,7 +7,7 @@ A Python based extensible configuration validation solution
 
 
 * Free software: MIT license
-* Documentation: https://systemcheck.readthedocs.io.
+
 
 The software is under heavy development at the moment. I started this project 4+ years ago to teach myself Python. It
 became quite sophisticated over time and was instrumental during my last engagement, where I shared it with my

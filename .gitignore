@@ -95,3 +95,8 @@ ENV/
 # Rope project settings
 .ropeproject
 
+.git/
+.idea/
+
+scratch/
+/systemcheck/systems.sqlite

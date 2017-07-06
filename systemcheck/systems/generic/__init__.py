@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-""" Generic UI Models
+""" Generic System Components
+
+Each system type will have a dedicated folder that contains the system specific functions.
 
 
 """
@@ -11,6 +13,3 @@ __author__      = ','.join(__authors__)
 __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
-
-
-from systemcheck.gui.models.tree import SystemTreeModel

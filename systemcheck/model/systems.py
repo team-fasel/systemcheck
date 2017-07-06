@@ -12,39 +12,43 @@ __email__       = 'systemcheck@team-fasel.com'
 from pprint import pprint, pformat
 import re
 
+import sqlalchemy_utils
+
 from .meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
-    Column, String, CHAR, generic_repr, validates, \
-    UniqueMixin, Session, DateTime, relationship, declared_attr,  \
+    Column, String, CHAR, generic_repr, validates, backref, \
+    UniqueMixin, Session, DateTime, relationship, declared_attr, attribute_mapped_collection, \
     one_to_many, many_to_one, Boolean, Integer, ForeignKey, ChoiceType, UUIDType
 
 
 @generic_repr
-class AbapClient(SurrogateUuidPK, Base):
+class AbapClient(Base):
     """ Contains ABAP specific information"""
 
     __tablename__ = 'abap_clients'
 
+    id=Column(Integer, primary_key=True)
+
     client=Column(String(3),
                   nullable=False,
-                  label='Client',
-                  description='The 3 digit number that describes the client',
-                  qtmodel_column=1)
+                  qt_label='Client',
+                  qt_description='The 3 digit number that describes the client',
+                  )
 
     description= Column(String(250),
                         nullable=True,
-                        label='Description',
-                        description="Client Description",
-                        qtmodel_column=2)
+                        qt_label='Description',
+                        qt_description="Client Description",
+                        )
     use_sso = Column(Boolean,
                      default=True,
-                     label='Use SSO',
-                     description='Use Single Sign On',
-                     qtmodel_column=3)
+                     qt_label='Use SSO',
+                     qt_description='Use Single Sign On',
+                     )
 
-    credential_id = Column(CHAR(32), ForeignKey('identities.id'), add_to_ui=False)
+    credential_id = Column(CHAR(32), ForeignKey('credentials.id'), qt_hide=True)
     credential=relationship("Credential")
 
-    abapsystem_id = Column(Integer, ForeignKey('abap_systems.id'), add_to_ui=False)
+    abapsystem_id = Column(Integer, ForeignKey('abap_systems.id'), qt_hide=True)
     abapsystem = relationship('AbapSystem', back_populates='clients')
 
 
@@ -60,120 +64,253 @@ class AbapSystem(SurrogateUuidPK, Base):
                      (3, '3: Data Confidentiality.'),
                      (9, '9: Max. Available')]
 
+    id = Column(Integer, primary_key=True, qt_hide=True)
 
     sid = Column(String(32),
                  unique=True,
                  nullable=False,
-                 label='SID',
-                 description='Unique System Identifier',
-                 qtmodel_column=1)
+                 qt_label='SID',
+                 qt_description='Unique System Identifier')
 
     tier = Column(String(32),
                   nullable=True,
                   default='Unspecified',
-                  label='Tier',
-                  description='Tier the system resides in (for example DEV, PRD, or others)',
-                  qtmodel_column=2)
+                  qt_label='Tier',
+                  qt_description='Tier the system resides in (for example DEV, PRD, or others)',
+                  )
 
     rail = Column(String(32),
                   nullable=True,
                   default='Unspecified',
-                  label='Rail',
-                  description='The rail the system resides in (N, N+1)',
-                  qtmodel_column=3)
+                  qt_label='Rail',
+                  qt_description='The rail the system resides in (N, N+1)',
+                  )
 
     description= Column(String(250),
                         nullable=True,
-                        label='Description',
-                        description='Description of the system',
-                        qtmodel_column=4)
+                        qt_label='Description',
+                        qt_description='Description of the system',
+                        )
 
     enabled = Column(Boolean,
                      default=True,
-                     label='Enabled',
-                     description='System enabled',
-                     qtmodel_column=5)
+                     qt_label='Enabled',
+                     qt_description='System enabled',
+                     )
 
-    sncPartnername = Column(String(250),
-                            nullable=True,
-                            label="SNC Partner Name",
-                            description="SNC Partner Name",
-                            qtmodel_column=6)
+    snc_partnername = Column(String(250),
+                             nullable=True,
+                             qt_label="SNC Partner Name",
+                             qt_description="SNC Partner Name",
+                             )
 
-    sncQop=Column(ChoiceType(SNC_QOP_CHOICES),
-                  nullable=True,
-                  default=9,
-                  label='SNC QoP',
-                  description='SNC Quality of Protection',
-                  qtmodel_column=7,
-                  choices=SNC_QOP_CHOICES)
+    snc_qop=Column(ChoiceType(SNC_QOP_CHOICES),
+                   nullable=True,
+                   default=9,
+                   qt_label='SNC QoP',
+                   qt_description='SNC Quality of Protection',
+                   choices=SNC_QOP_CHOICES,
+                   )
 
     use_snc=Column(Boolean,
                    default=True,
-                   label='Use SNC',
-                   description='Use a secured connection',
-                   qtmodel_column=8)
+                   qt_label='Use SNC',
+                   qt_description='Use a secured connection',
+                   )
 
-    defaultClient=Column(String(3),
+    default_client=Column(String(3),
                          unique=False,
                          nullable=False,
                          default='000',
-                         label='Default Client',
-                         description='The client that should be used for client independent checks',
-                         qtmodel_column=9)
+                         qt_label='Default Client',
+                         qt_description='The client that should be used for client independent checks',
+                         )
 
     ms_hostname=Column(String(250),
                        nullable=True,
-                       label='MS Hostname',
-                       description='Specify the Message Server for load balanced connections',
-                       qtmodel_column=10)
+                       qt_label='MS Hostname',
+                       qt_description='Specify the Message Server for load balanced connections',
+                       )
 
     ms_sysnr=Column(String(2),
                     default='00',
                     nullable=True,
-                    label='MS SysNr.',
-                    description='System Number of the message server',
-                    qtmodel_column=11)
+                    qt_label='MS SysNr.',
+                    qt_description='System Number of the message server',
+                    )
 
     ms_logongroup=Column(String(32),
                          nullable=True,
-                         label='Logon Group',
+                         qt_label='Logon Group',
                          default='PUBLIC',
-                         description='Logon Group to use for load balanced connections',
-                         qtmodel_column=12)
+                         qt_description='Logon Group to use for load balanced connections',
+                         )
 
     as_hostname=Column(String(250),
                        nullable=True,
-                       label='AS Hostname',
-                       description='Application Server Hostname, to be used in case load balancing should not be used.',
-                       qtmodel_column=13)
+                       qt_label='AS Hostname',
+                       qt_description='Application Server Hostname, to be used in case load balancing should not be used.',
+                       )
 
     as_sysnr=Column(String(2),
                     nullable=True,
                     default='00',
-                    label='AS SysNr.',
-                    description='System Number of the application server',
-                    qtmodel_column=14)
+                    qt_label='AS SysNr.',
+                    qt_description='System Number of the application server')
 
-    system_tree_uuid = Column(UUIDType, ForeignKey='system_tree.id')
-    tree = relationship('SystemTree', back_populates='abap_systems')
+    system_tree_id = Column(Integer, ForeignKey('system_tree.id'))
+    tree = relationship('SystemTreeNode', back_populates='abap_system')
     clients = relationship('AbapClient', back_populates='abapsystem', cascade="save-update, merge, delete")
 
 
 @generic_repr
-class Credential(SurrogatePK, Base):
+class Credential(Base):
     __tablename__ = 'credentials'
 
+    id = Column(Integer, primary_key=True)
     application = Column(String(250), nullable=False,  unique=False)
     description = Column(String(250), nullable=False,  unique=True)
     username = Column(String(40), unique=False, nullable=False)
     type = Column(String(40), unique=False, nullable=False, default='Password')
     uq_application_description_username = UniqueConstraint(application, description, username)
 
-class SystemTree(SurrogateUuidPK, Base):
+@generic_repr
+class SystemTreeNode(SurrogateUuidPK, Base):
     __tablename__ = 'system_tree'
 
-    parent_uuid = Column(UUIDType(), ForeignKey('credentials.id'))
-    type = Column(String(50))
-    abap_system = relationship('AbapSystem', uselist=False, back_populates='system_tree')
-    children=relationship('SystemTree')
+    id = Column(Integer, primary_key=True, qt_label='Primary Key', qt_hide=True)
+    parent_id = Column(Integer, ForeignKey('system_tree.id'), qt_label='Parent Key', qt_hide=True)
+    type = Column(String(50), qt_hide=False)
+    name = Column(String(50), qt_hide=False)
+    abap_system = relationship('AbapSystem', uselist=False, back_populates='tree')
+    children=relationship('SystemTreeNode',
+                          cascade="all, delete-orphan",
+                          backref=backref("parent", remote_side=id),
+                          )
+
+    def __init__(self, type, name, parent=None):
+        self.type = type
+        self.parent = parent
+        self.name = name
+
+        #To be able to map a Qt column nuber to a table column numer, build a mapping
+
+    def _child(self, childnr):
+        if self._child_count() >0:
+            if childnr >= 0 and childnr<self._child_count():
+                return self.children[childnr]
+
+        return False
+
+    def _child_count(self):
+        return len(self.children)
+
+    def _column_count(self):
+        return len(self.__table__.columns)
+
+    def _visible_columns(self):
+        return [colData
+                for colData in self.__table__.columns
+                if colData.info.get('qt_hide')==False]
+
+    def _visible_column_count(self):
+        """Returns the number of visible Columns
+
+
+        This is required due to the issue that you can't hide the first column of the QTreeView. If you hide the first column,
+        all you see are entries immediately under the root node. The first column however is usually a primary key or something
+        else that is not relevant for processing.
+
+        The primary key is also determined automatically when inserting a new record and does not need to be maintained
+        manually. Due to this, the handling of visible and invisible columns needs to get added to the tree handling.
+
+        Here, we only return the visible column count.
+        """
+        visible_columns=self._visible_columns()
+        return len(visible_columns)
+
+    def _colnr_is_valid(self, colnr):
+
+
+        if colnr>=0 and colnr < len(self.__table__.columns):
+            return True
+        return False
+
+    def _visible_colnr_is_valid(self, colnr):
+        """ Validate that the column number is ok fo a visible column"""
+
+        visible_columns=self._visible_columns()
+
+        if colnr>=0 and colnr < len(visible_columns):
+            return True
+        return False
+
+
+    def _row(self):
+        if self.parent is not None:
+            return self.parent.children.index(self)
+
+    def _value_by_colnr(self, colnr):
+        """ Get the Value of a Column by its Number
+
+        QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
+        automatically.
+
+        :param colnr: The Qt Column Number
+        :type int:
+
+
+        """
+
+        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
+
+        if self._colnr_is_valid(colnr):
+            value=getattr(self, list(self.__table__.columns)[colnr].name)
+            return value
+        else:
+            return None
+
+    def _value_by_visible_colnr(self, colnr):
+        """ Get the Value of a Column by its its visible Number
+
+        QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
+        automatically.
+
+        :param colnr: The Qt Column Number
+        :type int:
+
+
+        """
+
+        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
+
+        if self._visible_colnr_is_valid(colnr):
+            visible_columns=self._visible_columns()
+            value=getattr(self, visible_columns[colnr].name)
+            return value
+        else:
+            return None
+
+    def _info_by_colnr(self, colnr):
+        if self._colnr_is_valid(colnr):
+            value=list(self.__table__.columns)[colnr].info
+            return value
+        else:
+            return None
+
+    def _info_by_visible_colnr(self, colnr):
+        if self._visible_colnr_is_valid(colnr):
+            visible_columns=self._visible_columns()
+            value=visible_columns[colnr].info
+            return value
+        else:
+            return None
+
+
+    def _dump(self, _indent=0):
+        return "   " * _indent + repr(self) + \
+            "\n" + \
+            "".join([
+                c._dump(_indent + 1)
+                for c in self.children
+            ])
