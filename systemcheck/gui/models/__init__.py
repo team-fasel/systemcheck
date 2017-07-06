@@ -13,4 +13,4 @@ __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
 
-from systemcheck.gui.models.tree import SystemTreeModel
+from systemcheck.gui.models.tree_model import SystemTreeModel
