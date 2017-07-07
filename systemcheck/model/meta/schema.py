@@ -34,7 +34,7 @@ class Column(sqlalchemy.Column):
         kwargs['info'].setdefault('choices', kwargs.pop('choices', None))
         kwargs['info'].setdefault('qt_label', kwargs.pop('qt_label', ''))
         kwargs['info'].setdefault('qt_description', kwargs.pop('qt_description', ''))
-        kwargs['info'].setdefault('qt_hide', kwargs.pop('qt_hide', False))
+        kwargs['info'].setdefault('qt_show', kwargs.pop('qt_show', True))
 
         sqlalchemy.Column.__init__(self, *args, **kwargs)
 

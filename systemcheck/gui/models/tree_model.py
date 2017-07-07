@@ -10,12 +10,6 @@ class SystemTreeModel(QtCore.QAbstractItemModel):
 
         self._rootNode=rootnode
 
-#        self.session=session
-#        self.refresh()
-
-
-#    def refresh(self):
-#        self._rootNode = self.session.query(SystemTreeNode).filter(type=='ROOT')
 
     def rowCount(self, parent):
         if not parent.isValid():
@@ -29,15 +23,26 @@ class SystemTreeModel(QtCore.QAbstractItemModel):
 
         return self._rootNode._visible_column_count()
 
-    def data(self, index, role):
+    def data(self, index:QtCore.QModelIndex, role:int):
 
         if not index.isValid():
-            return None
+            return False
 
         node = index.internalPointer()
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             return node._value_by_visible_colnr(index.column())
+
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
+        """ setData Method to make the model modifieabls """
+
+        if index.isValid():
+
+            if role == QtCore.Qt.EditRole:
+                node = index.internalPointer()
+                node._set_value_by_visible_colnr(index.column(), value)
+                return True
+        return False
 
     def headerData(self, column, orientation, role):
         if role==QtCore.Qt.DisplayRole:
@@ -48,6 +53,20 @@ class SystemTreeModel(QtCore.QAbstractItemModel):
     def flags(self, index):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
+    def insertRows(self, position, rows, parent=QtCore.QModelIndex()):
+
+        parentNode = self.getNode(parent)
+
+        self.beginInsertRows(parent, position, position + rows - 1)
+
+        for row in range(rows):
+            childCount = parentNode._child_count()
+            childNode = SystemTreeNode(type='FOLDER', name="untitled " + str(childCount))
+            success = parentNode.insertChild(position, childNode)
+
+        self.endInsertRows()
+
+        return success
 
     def parent(self, index):
 

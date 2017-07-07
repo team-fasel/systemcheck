@@ -14,6 +14,7 @@ import re
 
 import sqlalchemy_utils
 
+from typing import Any, List, Union
 from .meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
     Column, String, CHAR, generic_repr, validates, backref, \
     UniqueMixin, Session, DateTime, relationship, declared_attr, attribute_mapped_collection, \
@@ -45,10 +46,10 @@ class AbapClient(Base):
                      qt_description='Use Single Sign On',
                      )
 
-    credential_id = Column(CHAR(32), ForeignKey('credentials.id'), qt_hide=True)
+    credential_id = Column(CHAR(32), ForeignKey('credentials.id'), qt_show=False)
     credential=relationship("Credential")
 
-    abapsystem_id = Column(Integer, ForeignKey('abap_systems.id'), qt_hide=True)
+    abapsystem_id = Column(Integer, ForeignKey('abap_systems.id'), qt_show=False)
     abapsystem = relationship('AbapSystem', back_populates='clients')
 
 
@@ -64,7 +65,7 @@ class AbapSystem(SurrogateUuidPK, Base):
                      (3, '3: Data Confidentiality.'),
                      (9, '9: Max. Available')]
 
-    id = Column(Integer, primary_key=True, qt_hide=True)
+    id = Column(Integer, primary_key=True, qt_show=False)
 
     sid = Column(String(32),
                  unique=True,
@@ -178,10 +179,10 @@ class Credential(Base):
 class SystemTreeNode(SurrogateUuidPK, Base):
     __tablename__ = 'system_tree'
 
-    id = Column(Integer, primary_key=True, qt_label='Primary Key', qt_hide=True)
-    parent_id = Column(Integer, ForeignKey('system_tree.id'), qt_label='Parent Key', qt_hide=True)
-    type = Column(String(50), qt_hide=False)
-    name = Column(String(50), qt_hide=False)
+    id = Column(Integer, primary_key=True, qt_label='Primary Key', qt_show=False)
+    parent_id = Column(Integer, ForeignKey('system_tree.id'), qt_label='Parent Key', qt_show=False)
+    type = Column(String(50), qt_show=True)
+    name = Column(String(50), qt_show=True)
     abap_system = relationship('AbapSystem', uselist=False, back_populates='tree')
     children=relationship('SystemTreeNode',
                           cascade="all, delete-orphan",
@@ -195,25 +196,29 @@ class SystemTreeNode(SurrogateUuidPK, Base):
 
         #To be able to map a Qt column nuber to a table column numer, build a mapping
 
-    def _child(self, childnr):
+    def _child(self, childnr:int)->Any:
+        """  Return the child object at a specific position"""
         if self._child_count() >0:
             if childnr >= 0 and childnr<self._child_count():
                 return self.children[childnr]
 
         return False
 
-    def _child_count(self):
+    def _child_count(self)->int:
+        """ Return the number of children """
         return len(self.children)
 
-    def _column_count(self):
+    def _column_count(self)->int:
+        """ Return the number of columns """
         return len(self.__table__.columns)
 
-    def _visible_columns(self):
+    def _visible_columns(self)->List[Any]:
+        """ Return a list of columns that have the info medatadata variable qt_show set to True"""
         return [colData
                 for colData in self.__table__.columns
-                if colData.info.get('qt_hide')==False]
+                if colData.info.get('qt_show')==True]
 
-    def _visible_column_count(self):
+    def _visible_column_count(self)->int:
         """Returns the number of visible Columns
 
 
@@ -229,14 +234,18 @@ class SystemTreeNode(SurrogateUuidPK, Base):
         visible_columns=self._visible_columns()
         return len(visible_columns)
 
-    def _colnr_is_valid(self, colnr):
+    def _insert_child(self, position:int, node)->True:
+        self.children.insert(position, node)
+        return True
+
+    def _colnr_is_valid(self, colnr:int)->bool:
 
 
         if colnr>=0 and colnr < len(self.__table__.columns):
             return True
         return False
 
-    def _visible_colnr_is_valid(self, colnr):
+    def _visible_colnr_is_valid(self, colnr:int)->bool:
         """ Validate that the column number is ok fo a visible column"""
 
         visible_columns=self._visible_columns()
@@ -245,12 +254,11 @@ class SystemTreeNode(SurrogateUuidPK, Base):
             return True
         return False
 
-
     def _row(self):
         if self.parent is not None:
             return self.parent.children.index(self)
 
-    def _value_by_colnr(self, colnr):
+    def _value_by_colnr(self, colnr:int)->object:
         """ Get the Value of a Column by its Number
 
         QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
@@ -270,7 +278,7 @@ class SystemTreeNode(SurrogateUuidPK, Base):
         else:
             return None
 
-    def _value_by_visible_colnr(self, colnr):
+    def _value_by_visible_colnr(self, colnr: int) -> object:
         """ Get the Value of a Column by its its visible Number
 
         QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
@@ -289,25 +297,69 @@ class SystemTreeNode(SurrogateUuidPK, Base):
             value=getattr(self, visible_columns[colnr].name)
             return value
         else:
-            return None
+            return False
 
-    def _info_by_colnr(self, colnr):
+    def _set_value_by_colnr(self, colnr:int, value:object):
+        """ Get the Value of a Column by its Number
+
+        QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
+        automatically.
+
+        :param colnr: The Qt Column Number
+        :type int:
+
+
+        """
+
+        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
+
+        if self._colnr_is_valid(colnr):
+            setattr(self, list(self.__table__.columns)[colnr].name, value)
+            return True
+        else:
+            return False
+
+    def _set_value_by_visible_colnr(self, colnr:int, value:object):
+        """ Set the Value of a Column by its its visible Number
+
+        QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
+        automatically.
+
+        :param colnr: The Qt Column Number
+        :type int:
+        :param value: The value to be set in the column
+
+
+        """
+
+        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
+
+        if self._visible_colnr_is_valid(colnr, value):
+            visible_columns=self._visible_columns()
+            setattr(self, visible_columns[colnr].name, value)
+            return True
+        else:
+            return False
+
+    def _info_by_colnr(self, colnr:int)->Union[dict, bool]:
+        """ Return the info metadata for any column"""
         if self._colnr_is_valid(colnr):
             value=list(self.__table__.columns)[colnr].info
             return value
         else:
-            return None
+            return False
 
-    def _info_by_visible_colnr(self, colnr):
+    def _info_by_visible_colnr(self, colnr:int)->Union[dict, bool]:
+        """ Return the info metadata for a visible column"""
         if self._visible_colnr_is_valid(colnr):
             visible_columns=self._visible_columns()
             value=visible_columns[colnr].info
             return value
         else:
-            return None
+            return False
 
-
-    def _dump(self, _indent=0):
+    def _dump(self, _indent=0)->str:
+        """ Recursively return the structure of the node and all its children as text """
         return "   " * _indent + repr(self) + \
             "\n" + \
             "".join([

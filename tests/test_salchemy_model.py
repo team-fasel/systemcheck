@@ -61,6 +61,8 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
         print('step_001: Finding Root Element')
         rootcount=self.session.query(SystemTreeNode).filter(SystemTreeNode.type=='ROOT').count()
         assert rootcount==1
+        print('success: only one root element')
+
 
     def step_002_populate_tree(self):
         print('step_002: Populating Tree')
@@ -123,6 +125,23 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
         print('step_005a: Validating Visible Column Count')
         rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
         assert rootnode._visible_column_count() == 2
+
+    def step_006_insert_child_at_position(self):
+        print('step_006: Insert child at a specific position')
+        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
+        position_folder=SystemTreeNode(type='FOLDER', parent=rootnode, name='Position Test')
+        pos1_node = SystemTreeNode(type='FOLDER', parent=position_folder, name='Pos 1')
+        pos2_node = SystemTreeNode(type='FOLDER', parent=position_folder, name='Pos 2')
+        pos3_node = SystemTreeNode(type='FOLDER', parent=position_folder, name='Pos 3')
+
+        pos4_node = SystemTreeNode(type='ROLDER', name='Pos 4')
+        position_folder._insert_child(1, pos4_node)
+
+        position_folder._dump()
+
+        testchild=position_folder._child(1)
+        print(testchild.name)
+
 
     def test_steps(self):
         for name, step in self._steps():
