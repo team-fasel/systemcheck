@@ -33,4 +33,3 @@ from systemcheck.config import CONFIG, SESSION
 from systemcheck import model
 from pprint import pprint
 
-pprint(CONFIG)

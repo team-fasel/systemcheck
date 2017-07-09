@@ -13,13 +13,13 @@ from pprint import pprint, pformat
 import re
 
 import sqlalchemy_utils
+from sqlalchemy import inspect
 
 from typing import Any, List, Union
 from .meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
     Column, String, CHAR, generic_repr, validates, backref, \
     UniqueMixin, Session, DateTime, relationship, declared_attr, attribute_mapped_collection, \
     one_to_many, many_to_one, Boolean, Integer, ForeignKey, ChoiceType, UUIDType
-
 
 @generic_repr
 class AbapClient(Base):
@@ -175,14 +175,16 @@ class Credential(Base):
     type = Column(String(40), unique=False, nullable=False, default='Password')
     uq_application_description_username = UniqueConstraint(application, description, username)
 
+
 @generic_repr
 class SystemTreeNode(SurrogateUuidPK, Base):
+    """ A generic node that is the foundation of the tree stored in a database table"""
     __tablename__ = 'system_tree'
 
     id = Column(Integer, primary_key=True, qt_label='Primary Key', qt_show=False)
     parent_id = Column(Integer, ForeignKey('system_tree.id'), qt_label='Parent Key', qt_show=False)
-    type = Column(String(50), qt_show=True)
-    name = Column(String(50), qt_show=True)
+    type = Column(String(50), qt_show=True, qt_label = 'Type')
+    name = Column(String(50), qt_show=True, qt_label='Name')
     abap_system = relationship('AbapSystem', uselist=False, back_populates='tree')
     children=relationship('SystemTreeNode',
                           cascade="all, delete-orphan",
@@ -234,9 +236,35 @@ class SystemTreeNode(SurrogateUuidPK, Base):
         visible_columns=self._visible_columns()
         return len(visible_columns)
 
-    def _insert_child(self, position:int, node)->True:
+    def _insert_child(self, position:int, node)->bool:
         self.children.insert(position, node)
+
+        session=inspect(self).session
+        session.commit()
         return True
+
+    def _remove_child(self, position:int)->bool:
+        """ Remove a child item at a particular position
+
+        :param position: The position within the list of children
+
+        """
+        if 0 <= position < self._child_count():
+            child=self._child(position)
+
+            session=inspect(child).session
+
+            # Since we are using SQLAlchemy, we can't simply delete objects. If an object is part of a change that was not
+            # committet yet, we need to use 'Session.expunge()' instead of 'Session.delete()'.
+            if child in session.new:
+                session.expunge(child)
+            else:
+                session.delete(child)
+            session.commit()
+
+        return True
+
+
 
     def _colnr_is_valid(self, colnr:int)->bool:
 
@@ -315,6 +343,7 @@ class SystemTreeNode(SurrogateUuidPK, Base):
 
         if self._colnr_is_valid(colnr):
             setattr(self, list(self.__table__.columns)[colnr].name, value)
+            self._commit()
             return True
         else:
             return False
@@ -334,9 +363,10 @@ class SystemTreeNode(SurrogateUuidPK, Base):
 
         #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
 
-        if self._visible_colnr_is_valid(colnr, value):
+        if self._visible_colnr_is_valid(colnr):
             visible_columns=self._visible_columns()
             setattr(self, visible_columns[colnr].name, value)
+            self._commit()
             return True
         else:
             return False
@@ -366,3 +396,11 @@ class SystemTreeNode(SurrogateUuidPK, Base):
                 c._dump(_indent + 1)
                 for c in self.children
             ])
+
+    def _commit(self):
+        session = inspect(self).session
+        session.commit()
+
+    def _flush(self):
+        session = inspect(self).session
+        session.flush()
