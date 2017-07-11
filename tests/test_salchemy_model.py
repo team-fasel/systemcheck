@@ -21,24 +21,26 @@ import shutil
 from pprint import pprint
 import os
 
-from config_for_test import TEST_CONFIG
 
 import systemcheck.model as model
 from systemcheck import SESSION
 from systemcheck.model.systems import AbapSystem, AbapClient, SystemTreeNode, Credential
 from systemcheck.model.meta.base import scoped_session, sessionmaker, engine_from_config
 import sqlalchemy_utils
+import logging
 
 
 class MonolithicTestSqlalchemyModel(unittest.TestCase):
 
+    #TODO: clean up and align with PyCharm testing integration
+
     PATH=r'D:\Python\Projects\systemcheck\tests\test_systems.sqlite'
 
     def setUp(self):
-        self.dbconfig = {'sqlalchemy.echo' : True,
+        self.dbconfig = {'sqlalchemy.echo' : False,
                          'sqlalchemy.url' : 'sqlite:///'+self.PATH,}
 
-
+        self.logger=logging.getLogger(__name__)
         if os.path.exists(self.PATH):
             os.remove(self.PATH)
 
@@ -69,12 +71,12 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
 
         rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
 
-        dev_folder = SystemTreeNode(type='FOLDER', name='DEV', parent=rootnode)
-        qas_folder = SystemTreeNode(type='FOLDER', name='QAS', parent=rootnode)
-        prd_folder = SystemTreeNode(type='FOLDER', name='PRD', parent=rootnode)
-        sbx_folder = SystemTreeNode(type='FOLDER', name='SBX', parent=rootnode)
+        dev_folder = SystemTreeNode(type='FOLDER', name='DEV', parent_node=rootnode)
+        qas_folder = SystemTreeNode(type='FOLDER', name='QAS', parent_node=rootnode)
+        prd_folder = SystemTreeNode(type='FOLDER', name='PRD', parent_node=rootnode)
+        sbx_folder = SystemTreeNode(type='FOLDER', name='SBX', parent_node=rootnode)
 
-        e1d_node = SystemTreeNode(type='ABAP', parent=dev_folder, name='E1D')
+        e1d_node = SystemTreeNode(type='ABAP', parent_node=dev_folder, name='E1D')
         e1d_abap = AbapSystem(sid='E1D', tier='Dev', rail='N',
                               description='ECC Development System',
                               enabled=True,
@@ -88,7 +90,7 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
 
         e1d_node.abap_system = e1d_abap
 
-        e1s_node = SystemTreeNode(type='ABAP', parent=sbx_folder, name='E1S')
+        e1s_node = SystemTreeNode(type='ABAP', parent_node=sbx_folder, name='E1S')
         e1s_abap = AbapSystem(sid='E1S', tier='Sandbox', rail='N',
                               description='ECC Sandbox System',
                               enabled=True,
@@ -124,15 +126,15 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
     def step_005_validate_visible_columns(self):
         print('step_005a: Validating Visible Column Count')
         rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        assert rootnode._visible_column_count() == 2
+        assert rootnode._visible_column_count() == 1
 
     def step_006_insert_child_at_position(self):
         print('step_006: Insert child at a specific position')
         rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        position_folder=SystemTreeNode(type='FOLDER', parent=rootnode, name='Position Test')
-        pos1_node = SystemTreeNode(type='FOLDER', parent=position_folder, name='Pos 1')
-        pos2_node = SystemTreeNode(type='FOLDER', parent=position_folder, name='Pos 2')
-        pos3_node = SystemTreeNode(type='FOLDER', parent=position_folder, name='Pos 3')
+        position_folder=SystemTreeNode(type='FOLDER', parent_node=rootnode, name='Position Test')
+        pos1_node = SystemTreeNode(type='FOLDER', parent_node=position_folder, name='Pos 1')
+        pos2_node = SystemTreeNode(type='FOLDER', parent_node=position_folder, name='Pos 2')
+        pos3_node = SystemTreeNode(type='FOLDER', parent_node=position_folder, name='Pos 3')
 
         pos4_node = SystemTreeNode(type='ROLDER', name='Pos 4')
         position_folder._insert_child(1, pos4_node)
@@ -141,6 +143,27 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
 
         testchild=position_folder._child(1)
         print(testchild.name)
+
+    def step_007_delete_children(self):
+        print('step_007: Delete child at a specific position')
+        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
+        delete_folder=SystemTreeNode(type='FOLDER', parent_node=rootnode, name='Position Test')
+        del1_node = SystemTreeNode(type='FOLDER', parent_node=delete_folder, name='Del 1')
+        del2_node = SystemTreeNode(type='FOLDER', parent_node=delete_folder, name='Del 2')
+        del3_node = SystemTreeNode(type='FOLDER', parent_node=delete_folder, name='Del 3')
+        del4_node = SystemTreeNode(type='FOLDER', parent_node=delete_folder, name='Del 4')
+
+        childcount=delete_folder._child_count()
+
+        self.logger.info('Delete Folder has {} children'.format(childcount))
+        assert delete_folder._child_count() == 4
+
+        self.logger.info('Deleting child from position 2 (Del 3)'.format(childcount))
+        delete_folder._remove_child(2)
+
+        assert delete_folder._child_count() == 3
+        deleted=delete_folder._child(2)
+        assert deleted.name == 'Del 4'
 
 
     def test_steps(self):
