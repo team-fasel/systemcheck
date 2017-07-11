@@ -13,4 +13,4 @@ __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
 
-from systemcheck.gui.widgets.tree_view import TreeView
+from systemcheck.gui.widgets.widgets import TreeView, FlatComboBox
