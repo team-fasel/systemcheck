@@ -13,9 +13,10 @@ __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from systemcheck.gui.widgets import TreeView
 from systemcheck.gui.models import SettingsModel
+from systemcheck.resources import icon_rc
 from collections import OrderedDict
 from systemcheck.gui.qtalcmapper import generateQtDelegate, getQtWidgetForAlchemyType
 import systemcheck.model.meta as meta
@@ -84,11 +85,11 @@ class SettingsWidget(QtWidgets.QWidget):
 class SystemsWidget(QtWidgets.QWidget):
     """ The Generic Systems Widget
 
-    The Systems Widget consists of actually 3  or more widgets:
+    The Systems Widget consists of actually 2  or more widgets
 
     * The TreeView that contains all the systems and displays them in a tree
-    * The SystemSettingsWidget that manages what gets displayed to configured a system
-    * The NodeTypeSettingsWidget that gets generated dynamically based on the system type
+    * The SystemSettingsWidget that gets geenerated everytime when a system is clicked on in the tree.
+
 
     """
 
@@ -101,9 +102,23 @@ class SystemsWidget(QtWidgets.QWidget):
         if model:
             self.setModel(model)
 
-    def on_treeSelectionChanged(self, selected: QtCore.QModelIndex, deselected: QtCore.QModelIndex):
+    def on_addFolder(self):
+        indexes = self.tree.selectedIndexes()
+        if len(indexes) >0:
+            index = indexes[0]
+        else:
+            index = QtCore.QModelIndex()
 
-#        node = selected.internalPointer()
+        self.model.insertRow(0, parent=index)
+
+    def on_deleteFolder(self):
+        index = self.tree.currentIndex()
+
+        parent=index.parent()
+        self.model.removeRows(index.row(), 1, parent)
+
+
+    def on_treeSelectionChanged(self, selected: QtCore.QModelIndex, deselected: QtCore.QModelIndex):
 
         splitterWidgetCount=self.splitter.count()
         if splitterWidgetCount >1:
@@ -118,6 +133,11 @@ class SystemsWidget(QtWidgets.QWidget):
 #        self.logger.debug(pformat(node))
 
     def generateSettingsWidget(self, selected:QtCore.QModelIndex):
+        """ Generate the widget that allows configuration of systems
+
+        The settings widget is generated dynamically based on the SQLAlchemy object behind the selected tree node.
+
+        """
         treenode = selected.internalPointer()
         system_node = treenode._system_node()
         if system_node:
@@ -132,11 +152,38 @@ class SystemsWidget(QtWidgets.QWidget):
         self.splitter=QtWidgets.QSplitter()
         self.splitter.setOrientation(QtCore.Qt.Vertical )
         self.tree=TreeView()
+        self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self.openContextMenu)
         self.splitter.addWidget(self.tree)
         layout.addWidget(self.splitter)
 
+        self.treeContextMenu = QtWidgets.QMenu()
+
+        self.addFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Folder', self)
+        self.addFolder_act.triggered.connect(self.on_addFolder)
+        self.deleteFolder_act = QtWidgets.QAction(QtGui.QIcon(":Trash"), 'Delete Folder', self)
+        self.deleteFolder_act.triggered.connect(self.on_deleteFolder)
+
+
+
         self.setLayout(layout)
         self.show()
+
+    def openContextMenu(self, position):
+
+        indexes = self.tree.selectedIndexes()
+        if len(indexes) > 0:
+            level = 0
+            index = indexes[0]
+            while index.parent().isValid():
+                index = index.parent()
+                level += 1
+
+        menu=QtWidgets.QMenu()
+        menu.addAction(self.addFolder_act)
+        menu.addAction(self.deleteFolder_act)
+
+        menu.exec_(self.tree.viewport().mapToGlobal(position))
 
     def setModel(self, model):
         self.model = model
