@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-""" Generic UI Models
+""" ABAP Specific GUI Widgets of the systemcheck Application
+
+Each system type will have a dedicated folder that contains the system specific functions.
 
 
 """
@@ -12,4 +14,3 @@ __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
-from systems.generic.gui.model import SystemTreeModel, SettingsModel

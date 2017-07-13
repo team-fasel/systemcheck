@@ -1,9 +1,10 @@
 import sqlalchemy
 from inspect import isclass
-from sqlalchemy import ForeignKey, Table, DateTime, Integer, CHAR
+from sqlalchemy import ForeignKey, Table, DateTime, Integer, CHAR, inspect
 from sqlalchemy import event, ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.sql import functions
 from sqlalchemy_utils.types import UUIDType
+from typing import Any, Union, List
 
 def bool_or_str(type_):
     return is_string(type_) or is_boolean(type_)
@@ -41,6 +42,160 @@ class Column(sqlalchemy.Column):
     @property
     def choices(self):
         return self.info['choices'] if 'choices' in self.info else []
+
+class QtModelMixin(object):
+
+    def _column_count(self)->int:
+        """ Return the number of columns """
+        return len(self.__table__.columns)
+
+    def _colnr_is_valid(self, colnr:int)->bool:
+
+
+        if colnr>=0 and colnr < len(self.__table__.columns):
+            return True
+        return False
+
+    def _commit(self):
+        session = inspect(self).session
+        session.commit()
+
+    def _flush(self):
+        session = inspect(self).session
+        session.flush()
+
+    def _info_by_colnr(self, colnr:int)->Union[dict, bool]:
+        """ Return the info metadata for any column"""
+        if self._colnr_is_valid(colnr):
+            value=list(self.__table__.columns)[colnr].info
+            return value
+        else:
+            return False
+
+    def _info_by_visible_colnr(self, colnr:int)->Union[dict, bool]:
+        """ Return the info metadata for a visible column"""
+        if self._visible_colnr_is_valid(colnr):
+            visible_columns=self._visible_columns()
+            value=visible_columns[colnr].info
+            return value
+        else:
+            return False
+
+    def _set_value_by_colnr(self, colnr:int, value:object):
+        """ Get the Value of a Column by its Number
+
+        QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
+        automatically.
+
+        :param colnr: The Qt Column Number
+        :type int:
+
+
+        """
+
+        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
+
+        if self._colnr_is_valid(colnr):
+            setattr(self, list(self.__table__.columns)[colnr].name, value)
+            self._flush()
+            return True
+        else:
+            return False
+
+    def _set_value_by_visible_colnr(self, colnr:int, value:object):
+        """ Set the Value of a Column by its its visible Number
+
+        QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
+        automatically.
+
+        :param colnr: The Qt Column Number
+        :type int:
+        :param value: The value to be set in the column
+
+
+        """
+
+        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
+
+        if self._visible_colnr_is_valid(colnr):
+            visible_columns=self._visible_columns()
+            setattr(self, visible_columns[colnr].name, value)
+            self._commit()
+            return True
+        else:
+            return False
+
+    def _value_by_colnr(self, colnr:int)->object:
+        """ Get the Value of a Column by its Number
+
+        QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
+        automatically.
+
+        :param colnr: The Qt Column Number
+        :type int:
+
+
+        """
+
+        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
+
+        if self._colnr_is_valid(colnr):
+            value=getattr(self, list(self.__table__.columns)[colnr].name)
+            return value
+        else:
+            return None
+
+    def _value_by_visible_colnr(self, colnr: int) -> object:
+        """ Get the Value of a Column by its its visible Number
+
+        QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
+        automatically.
+
+        :param colnr: The Qt Column Number
+        :type int:
+
+
+        """
+
+        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
+
+        if self._visible_colnr_is_valid(colnr):
+            visible_columns=self._visible_columns()
+            value=getattr(self, visible_columns[colnr].name)
+            return value
+        else:
+            return False
+
+    def _visible_columns(self)->List[Any]:
+        """ Return a list of columns that have the info medatadata variable qt_show set to True"""
+        return [colData
+                for colData in self.__table__.columns
+                if colData.info.get('qt_show')==True]
+
+    def _visible_column_count(self)->int:
+        """Returns the number of visible Columns
+
+
+        This is required due to the issue that you can't hide the first column of the QTreeView. If you hide the first column,
+        all you see are entries immediately under the root node. The first column however is usually a primary key or something
+        else that is not relevant for processing.
+
+        The primary key is also determined automatically when inserting a new record and does not need to be maintained
+        manually. Due to this, the handling of visible and invisible columns needs to get added to the tree handling.
+
+        Here, we only return the visible column count.
+        """
+        visible_columns=self._visible_columns()
+        return len(visible_columns)
+
+    def _visible_colnr_is_valid(self, colnr:int)->bool:
+        """ Validate that the column number is ok fo a visible column"""
+
+        visible_columns=self._visible_columns()
+
+        if colnr>=0 and colnr < len(visible_columns):
+            return True
+        return False
 
 
 

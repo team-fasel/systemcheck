@@ -72,10 +72,8 @@ class TreeView(QtWidgets.QTreeView):
     """ Customized Tree View
     """
 
-    addSystem = QtCore.pyqtSignal(dict)
-    delSystem = QtCore.pyqtSignal(dict)
-    addClient = QtCore.pyqtSignal(dict)
-    delClient = QtCore.pyqtSignal(dict)
+    addNode = QtCore.pyqtSignal(dict)
+    delNode = QtCore.pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()

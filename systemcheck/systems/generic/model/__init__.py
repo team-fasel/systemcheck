@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-""" Generic UI Models
+""" Generic System Models
+
 
 
 """
@@ -11,5 +12,3 @@ __author__      = ','.join(__authors__)
 __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
-
-from systems.generic.gui.model import SystemTreeModel, SettingsModel

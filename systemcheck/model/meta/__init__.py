@@ -1,6 +1,6 @@
 from .types import Integer, String, Boolean, CHAR
 from .orm import UniqueMixin, many_to_one, one_to_many
-from .schema import SurrogatePK, SurrogateUuidPK, References, utcnow, UniqueConstraint, Column
+from .schema import SurrogatePK, SurrogateUuidPK, References, utcnow, UniqueConstraint, Column, QtModelMixin
 from .base import Base, CheckBase, Session, commit_on_success
 from sqlalchemy.orm import relationship, validates, backref
 from sqlalchemy.orm.collections import attribute_mapped_collection

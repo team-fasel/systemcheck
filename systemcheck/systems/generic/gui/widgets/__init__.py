@@ -1,0 +1,1 @@
+from systemcheck.systems.generic.gui.widgets.systemswidget import SystemsWidget, SettingsWidget

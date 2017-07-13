@@ -21,7 +21,7 @@ __email__       = 'systemcheck@team-fasel.com'
 from configparser import ConfigParser
 from systemcheck.utils import get_absolute_systemcheck_path
 from systemcheck import model
-from systemcheck.model.systems import SystemTreeNode
+from systemcheck.systems.ABAP.model import AbapTreeNode
 from systemcheck.model.meta.base import scoped_session, sessionmaker, engine_from_config
 
 import os
@@ -39,11 +39,16 @@ dbconfig['sqlalchemy.url']=r'{}'.format(dbconfig['sqlalchemy.url'].replace('{dbp
 
 engine = engine_from_config(dbconfig)
 model.meta.base.Base.metadata.create_all(engine)
-session_factory = sessionmaker(bind=engine)
+
+# The session is initialized with expire_on_commit to prevent problems with expired nodes in the QTreeAbstractItemModel
+# after a commit.
+session_factory = sessionmaker(bind=engine, autoflush=True, expire_on_commit=False)
+
+
 SESSION = scoped_session(session_factory)
 
-if SESSION.query(SystemTreeNode).filter(SystemTreeNode.type=='ROOT').count() == 0:
-    SESSION.add(SystemTreeNode(type='ROOT', name='RootNode'))
+if SESSION.query(AbapTreeNode).filter(AbapTreeNode.type== 'ROOT').count() == 0:
+    SESSION.add(AbapTreeNode(type='ROOT', name='RootNode'))
     SESSION.commit()
 
 
