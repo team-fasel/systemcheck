@@ -19,8 +19,8 @@ __email__ = 'systemcheck@team-fasel.com'
 import os
 
 import systemcheck.model as model
-from systemcheck.gui.models import SystemTreeModel
-from systemcheck.model.systems import AbapSystem, AbapClient, SystemTreeNode, Credential
+from systemcheck.systems.ABAP.gui.model import AbapTreeModel
+from systemcheck.systems.ABAP.model.abap_model import AbapTreeNode, AbapSystem, AbapClient
 from systemcheck.model.meta.base import scoped_session, sessionmaker, engine_from_config
 import logging
 
@@ -29,7 +29,7 @@ from PyQt5 import QtCore
 from unittest import TestCase
 
 
-class TestSystemTreeModel(TestCase):
+class TestAbapTreeModel(TestCase):
     PATH = r'D:\Python\Projects\systemcheck\tests\test_pyqt_model.sqlite'
 
     def setUp(self):
@@ -45,8 +45,8 @@ class TestSystemTreeModel(TestCase):
         self.session_factory = sessionmaker(bind=self.engine)
         self.session = scoped_session(self.session_factory)
 
-        if self.session.query(SystemTreeNode).filter(SystemTreeNode.type == 'ROOT').count() == 0:
-            self.session.add(SystemTreeNode(type='ROOT', name='RootNode'))
+        if self.session.query(AbapTreeNode).filter(AbapTreeNode.type == 'ROOT').count() == 0:
+            self.session.add(AbapTreeNode(type='ROOT', name='RootNode'))
             self.session.commit()
 
     def tearDown(self):
@@ -56,28 +56,67 @@ class TestSystemTreeModel(TestCase):
             os.remove(self.PATH)
 
     def populateTree(self):
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
 
-        dev_folder = SystemTreeNode(type='FOLDER', name='DEV', parent_node=rootnode)
-        qas_folder = SystemTreeNode(type='FOLDER', name='QAS', parent_node=rootnode)
-        prd_folder = SystemTreeNode(type='FOLDER', name='PRD', parent_node=rootnode)
-        sbx_folder = SystemTreeNode(type='FOLDER', name='SBX', parent_node=rootnode)
+        dev_folder = AbapTreeNode(type='FOLDER', name='DEV', parent_node=rootnode)
+        qas_folder = AbapTreeNode(type='FOLDER', name='QAS', parent_node=rootnode)
+        prd_folder = AbapTreeNode(type='FOLDER', name='PRD', parent_node=rootnode)
+        sbx_folder = AbapTreeNode(type='FOLDER', name='SBX', parent_node=rootnode)
 
-        e1d_node = SystemTreeNode(type='FOLDER', parent_node=dev_folder, name='E1D')
-        e1s_node = SystemTreeNode(type='FOLDER', parent_node=sbx_folder, name='E1S')
+        e1d_node = AbapTreeNode(type='ABAP', parent_node=dev_folder, name='E1D')
+        e1d_abap = AbapSystem(sid='E1D', tier='Dev', rail='N',
+                              description='ECC Development System',
+                              enabled=True,
+                              snc_partnername="Fill SNC Name Here",
+                              snc_qop='9',
+                              use_snc=True,
+                              default_client='100',
+                              ms_hostname='sape1d.team-fasel.lab',
+                              ms_sysnr='00',
+                              ms_logongroup='PUBLIC')
+
+        e1d_node.abap_system = e1d_abap
+
+        e1d_client000_node = AbapTreeNode(type='ABAPCLIENT', name='000', parent_node=e1d_node)
+        e1d_client000 = AbapClient(client='000')
+        e1d_client000_node.abap_client = e1d_client000
+        e1d_client100_node = AbapTreeNode(type='ABAPCLIENT', name='100', parent_node=e1d_node)
+        e1d_client100 = AbapClient(client='100')
+        e1d_client100_node.abap_client = e1d_client100
+
+        e1s_node = AbapTreeNode(type='ABAP', parent_node=sbx_folder, name='E1S')
+        e1s_abap = AbapSystem(sid='E1S', tier='Sandbox', rail='N',
+                              description='ECC Sandbox System',
+                              enabled=True,
+                              snc_partnername="Fill SNC Name Here",
+                              snc_qop='9',
+                              use_snc=True,
+                              default_client='100',
+                              ms_hostname='sape1s.team-fasel.lab',
+                              ms_sysnr='00',
+                              ms_logongroup='PUBLIC')
+        e1s_node.abap_system = e1s_abap
+
+        e1s_client000_node = AbapTreeNode(type='ABAPCLIENT', name='000', parent_node=e1s_node)
+        e1s_client000 = AbapClient(client='000')
+        e1s_client000_node.abap_client = e1s_client000
+        e1s_client100_node = AbapTreeNode(type='ABAPCLIENT', name='100', parent_node=e1s_node)
+        e1s_client100 = AbapClient(client='100')
+        e1s_client100_node.abap_client = e1s_client100
+
         self.session.commit()
 
     def test_rowCount(self):
         self.populateTree()
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         rootindex = model.createIndex(0, 0, rootnode)
 
         self.assertEqual(model.rowCount(rootindex), 4)
 
     def test_columnCount(self):
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         column_count = model.columnCount()
         self.assertEqual(column_count, 1)
         rootindex = model.createIndex(0, 0, rootnode)
@@ -87,16 +126,16 @@ class TestSystemTreeModel(TestCase):
 
     def test_data(self):
         self.populateTree()
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         index = model.createIndex(0, 0, rootnode)
         self.assertTrue(index.isValid())
         name = model.data(index, QtCore.Qt.DisplayRole)
         self.assertEqual(name, 'RootNode')
 
     def test_setData(self):
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         index = model.createIndex(0, 0, rootnode)
         self.assertTrue(index.isValid())
         name = model.data(index, QtCore.Qt.DisplayRole)
@@ -106,37 +145,37 @@ class TestSystemTreeModel(TestCase):
         self.assertEqual(name, 'StillRootNode')
 
     def test_headerData(self):
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         index = model.createIndex(0, 0, QtCore.QModelIndex())
         headerdata = model.headerData(0, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
         self.assertEqual(headerdata, 'Name')
 
     def test_flags(self):
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         index = model.createIndex(0, 0, rootnode)
         flags = model.flags(index)
         self.assertEqual(flags, QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable \
                          | QtCore.Qt.ItemIsUserCheckable |QtCore.Qt.ItemIsEditable)
 
     def test_insertRow(self):
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         index = model.createIndex(0, 0, rootnode)
         model.insertRow(0, index)
         self.assertTrue(model.hasChildren(index))
 
     def test_insertRows(self):
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         index = model.createIndex(0, 0, rootnode)
         model.insertRows(0, 10, index)
         self.assertEqual(model.rowCount(index), 10)
 
     def test_removeRow(self):
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         index = model.createIndex(0, 0, rootnode)
         model.insertRow(0, index)
         self.assertEqual(model.rowCount(index), 1)
@@ -144,8 +183,8 @@ class TestSystemTreeModel(TestCase):
         self.assertEqual(model.rowCount(index), 0)
 
     def test_removeRows(self):
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         index = model.createIndex(0, 0, rootnode)
         model.insertRows(0, 10, index)
         self.assertEqual(model.rowCount(index), 10)
@@ -154,8 +193,8 @@ class TestSystemTreeModel(TestCase):
 
     def test_parent(self):
         self.populateTree()
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
 
         node1index = model.index(0, 0, QtCore.QModelIndex())
         node2index = model.index(0, 0, node1index)
@@ -169,7 +208,7 @@ class TestSystemTreeModel(TestCase):
         self.assertEqual(node1_node.type, 'FOLDER')
         self.assertEqual(node1_node.name, 'DEV')
         node2_node = node2index.internalPointer()
-        self.assertEqual(node2_node.type, 'FOLDER')
+        self.assertEqual(node2_node.type, 'ABAP')
         self.assertEqual(node2_node.name, 'E1D')
         node2_parent_index = model.parent(node2index)
         node2_parent_node = node2_parent_index.internalPointer()
@@ -178,8 +217,8 @@ class TestSystemTreeModel(TestCase):
 
     def test_index(self):
         self.populateTree()
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
 
         index = model.index(0, 0, QtCore.QModelIndex())
         node = index.internalPointer()
@@ -188,8 +227,8 @@ class TestSystemTreeModel(TestCase):
 
     def test_getNode(self):
         self.populateTree()
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
 
         index = model.index(0, 0, QtCore.QModelIndex())
         node = model.getNode(index)
@@ -205,8 +244,8 @@ class TestSystemTreeModel(TestCase):
 
     def test_recursiveCheck(self):
         self.populateTree()
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        model = SystemTreeModel(rootnode)
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        model = AbapTreeModel(rootnode)
         self.logger.info('setting parent index')
         parent_index = model.index(0, 0, QtCore.QModelIndex())
         self.logger.info('setting parent checked')

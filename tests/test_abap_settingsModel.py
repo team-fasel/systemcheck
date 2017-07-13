@@ -2,8 +2,9 @@
 import os
 
 import systemcheck.model as model
-from systemcheck.gui.models import SettingsModel, SystemTreeModel
-from systemcheck.model.systems import AbapSystem, AbapClient, SystemTreeNode, Credential
+from systems.generic.gui.model import SystemTreeModel, SettingsModel
+from systemcheck.model.systems import AbapClient, Credential
+from systems.ABAP.model.abap_model import AbapTreeNode, AbapSystem
 from systemcheck.model.meta.base import scoped_session, sessionmaker, engine_from_config
 import logging
 
@@ -30,8 +31,8 @@ class TestSettingsModel(TestCase):
         self.session_factory = sessionmaker(bind=self.engine)
         self.session = scoped_session(self.session_factory)
 
-        if self.session.query(SystemTreeNode).filter(SystemTreeNode.type == 'ROOT').count() == 0:
-            self.session.add(SystemTreeNode(type='ROOT', name='RootNode'))
+        if self.session.query(AbapTreeNode).filter(AbapTreeNode.type == 'ROOT').count() == 0:
+            self.session.add(AbapTreeNode(type='ROOT', name='RootNode'))
             self.session.commit()
 
         self.populate_tree()
@@ -44,14 +45,14 @@ class TestSettingsModel(TestCase):
 
     def populate_tree(self):
 
-        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
+        rootnode = self.session.query(AbapTreeNode).filter_by(type='ROOT').first()
 
-        dev_folder = SystemTreeNode(type='FOLDER', name='DEV', parent_node=rootnode)
-        qas_folder = SystemTreeNode(type='FOLDER', name='QAS', parent_node=rootnode)
-        prd_folder = SystemTreeNode(type='FOLDER', name='PRD', parent_node=rootnode)
-        sbx_folder = SystemTreeNode(type='FOLDER', name='SBX', parent_node=rootnode)
+        dev_folder = AbapTreeNode(type='FOLDER', name='DEV', parent_node=rootnode)
+        qas_folder = AbapTreeNode(type='FOLDER', name='QAS', parent_node=rootnode)
+        prd_folder = AbapTreeNode(type='FOLDER', name='PRD', parent_node=rootnode)
+        sbx_folder = AbapTreeNode(type='FOLDER', name='SBX', parent_node=rootnode)
 
-        e1d_node = SystemTreeNode(type='ABAP', parent_node=dev_folder, name='E1D')
+        e1d_node = AbapTreeNode(type='ABAP', parent_node=dev_folder, name='E1D')
         e1d_abap = AbapSystem(sid='E1D', tier='Dev', rail='N',
                               description='ECC Development System',
                               enabled=True,
@@ -65,7 +66,7 @@ class TestSettingsModel(TestCase):
 
         e1d_node.abap_system = e1d_abap
 
-        e1s_node = SystemTreeNode(type='ABAP', parent_node=sbx_folder, name='E1S')
+        e1s_node = AbapTreeNode(type='ABAP', parent_node=sbx_folder, name='E1S')
         e1s_abap = AbapSystem(sid='E1S', tier='Sandbox', rail='N',
                               description='ECC Sandbox System',
                               enabled=True,
