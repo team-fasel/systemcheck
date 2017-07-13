@@ -24,7 +24,7 @@ import os
 
 import systemcheck.model as model
 from systemcheck import SESSION
-from systemcheck.model.systems import AbapSystem, AbapClient, SystemTreeNode, Credential
+from systemcheck.model.systems import AbapSystem, SystemTreeNode, Credential
 from systemcheck.model.meta.base import scoped_session, sessionmaker, engine_from_config
 import sqlalchemy_utils
 import logging
@@ -58,17 +58,7 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
 
-    def step_001_find_root_element(self):
-        """ Validate that exactly one root object exists """
-        print('step_001: Finding Root Element')
-        rootcount=self.session.query(SystemTreeNode).filter(SystemTreeNode.type=='ROOT').count()
-        assert rootcount==1
-        print('success: only one root element')
-
-
-    def step_002_populate_tree(self):
-        print('step_002: Populating Tree')
-
+    def populate_tree(self):
         rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
 
         dev_folder = SystemTreeNode(type='FOLDER', name='DEV', parent_node=rootnode)
@@ -102,17 +92,26 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
                               ms_sysnr='00',
                               ms_logongroup='PUBLIC')
         e1s_node.abap_system = e1s_abap
-
         self.session.commit()
 
-    def step_003_validate_model_count_root_children(self):
-        print('step_003: validating model')
-        rootnode=self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
-        childCount = rootnode._child_count()
-        assert childCount == 4
+    def test_find_root_element(self):
+        """ Validate that exactly one root object exists """
+        print('step_001: Finding Root Element')
+        rootcount=self.session.query(SystemTreeNode).filter(SystemTreeNode.type=='ROOT').count()
+        assert rootcount==1
+        print('success: only one root element')
 
-    def step_004_validate_child_names(self):
+
+    def test_populate_tree(self):
+        print('step_002: Populating Tree')
+        self.populate_tree()
+        rootnode=self.session.query(SystemTreeNode).filter(SystemTreeNode.name=='RoteNode').first()
+        self.assertEqual(rootnode._child_count, 4)
+
+
+    def test_validate_child_names(self):
         print('step_004: validating child labels')
+        self.populate_tree()
         rootnode=self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
         child=rootnode._child(0)
         assert child.name == 'DEV'
@@ -123,12 +122,13 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
         child=rootnode._child(3)
         assert child.name == 'SBX'
 
-    def step_005_validate_visible_columns(self):
+    def test_visible_columns(self):
         print('step_005a: Validating Visible Column Count')
+        self.populate_tree()
         rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
         assert rootnode._visible_column_count() == 1
 
-    def step_006_insert_child_at_position(self):
+    def test_insert_child_at_position(self):
         print('step_006: Insert child at a specific position')
         rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
         position_folder=SystemTreeNode(type='FOLDER', parent_node=rootnode, name='Position Test')
@@ -144,7 +144,7 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
         testchild=position_folder._child(1)
         print(testchild.name)
 
-    def step_007_delete_children(self):
+    def test_delete_children(self):
         print('step_007: Delete child at a specific position')
         rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
         delete_folder=SystemTreeNode(type='FOLDER', parent_node=rootnode, name='Position Test')
@@ -165,14 +165,14 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
         deleted=delete_folder._child(2)
         assert deleted.name == 'Del 4'
 
-
-    def test_steps(self):
-        for name, step in self._steps():
-            try:
-                print('starting step')
-                step()
-            except Exception as e:
-                self.fail("{} failed ({}: {})".format(step, type(e), e))
+    def test_delete_parent(self):
+        self.populate_tree()
+        rootnode = self.session.query(SystemTreeNode).filter_by(type='ROOT').first()
+        self.assertEqual(rootnode._child_count(), 4)
+        self.assertEqual(self.session.query(AbapSystem).count(), 2)
+        rootnode._remove_child(0)
+        self.assertEqual(rootnode._child_count(), 3)
+        self.assertEqual(self.session.query(AbapSystem).count(), 1)
 
     # pprint(result)
 
