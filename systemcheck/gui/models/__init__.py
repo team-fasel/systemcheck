@@ -12,4 +12,5 @@ __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
-from systems.generic.gui.model import SystemTreeModel, SettingsModel
+from systemcheck.gui.models.credential_model import CredentialModel
+
