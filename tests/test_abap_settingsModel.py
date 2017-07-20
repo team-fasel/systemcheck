@@ -1,11 +1,12 @@
 
 import os
 
-import systemcheck.model as model
-from systems.generic.gui.model import SystemTreeModel, SettingsModel
-from systemcheck.model.systems import AbapClient, Credential
-from systems.ABAP.model.abap_model import AbapTreeNode, AbapSystem
-from systemcheck.model.meta.base import scoped_session, sessionmaker, engine_from_config
+import systemcheck
+from systemcheck.systems.generic.gui.models import GenericTreeModel
+from systemcheck.gui.models import SettingsModel
+from systemcheck.systems.ABAP.models import AbapTreeNode, AbapSystem
+from systemcheck.systems.ABAP.gui.models import AbapTreeModel
+from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import logging
 
 from PyQt5 import QtCore
@@ -27,7 +28,7 @@ class TestSettingsModel(TestCase):
             os.remove(self.PATH)
 
         self.engine = engine_from_config(self.dbconfig)
-        model.meta.base.Base.metadata.create_all(self.engine)
+        systemcheck.models.meta.base.Base.metadata.create_all(self.engine)
         self.session_factory = sessionmaker(bind=self.engine)
         self.session = scoped_session(self.session_factory)
 
@@ -82,7 +83,7 @@ class TestSettingsModel(TestCase):
         self.logger.info('Generated Tree: ' + rootnode._dump())
         self.session.commit()
 
-        self.treemodel = SystemTreeModel(rootnode)
+        self.treemodel = AbapTreeModel(rootnode)
 
 
     def test_columnCount(self):

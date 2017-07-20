@@ -18,10 +18,10 @@ __email__ = 'systemcheck@team-fasel.com'
 
 import os
 
-import systemcheck.model as model
-from systemcheck.systems.ABAP.gui.model import AbapTreeModel
-from systemcheck.systems.ABAP.model.abap_model import AbapTreeNode, AbapSystem, AbapClient
-from systemcheck.model.meta.base import scoped_session, sessionmaker, engine_from_config
+import systemcheck.models as models
+from systemcheck.systems.ABAP.gui.models import AbapTreeModel
+from systemcheck.systems.ABAP.models.abap_model import AbapTreeNode, AbapSystem, AbapClient
+from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import logging
 
 from PyQt5 import QtCore
@@ -41,7 +41,7 @@ class TestAbapTreeModel(TestCase):
             os.remove(self.PATH)
 
         self.engine = engine_from_config(self.dbconfig)
-        model.meta.base.Base.metadata.create_all(self.engine)
+        models.meta.base.Base.metadata.create_all(self.engine)
         self.session_factory = sessionmaker(bind=self.engine)
         self.session = scoped_session(self.session_factory)
 

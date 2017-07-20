@@ -22,16 +22,16 @@ from pprint import pprint
 import os
 
 
-import systemcheck.model as model
+import systemcheck.models as models
 from systemcheck import SESSION
-from systemcheck.model.systems import Credential
-from systems.ABAP.model import AbapTreeNode, AbapSystem, AbapClient
-from systemcheck.model.meta.base import scoped_session, sessionmaker, engine_from_config
+from systemcheck.models.credentials import Credential
+from systems.ABAP.models import AbapTreeNode, AbapSystem, AbapClient
+from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import sqlalchemy_utils
 import logging
 
 
-class MonolithicTestSqlalchemyModel(unittest.TestCase):
+class SqlalchemyAbapModel(unittest.TestCase):
 
     #TODO: clean up and align with PyCharm testing integration
 
@@ -46,7 +46,7 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
             os.remove(self.PATH)
 
         self.engine = engine_from_config(self.dbconfig)
-        model.meta.base.Base.metadata.create_all(self.engine)
+        models.meta.base.Base.metadata.create_all(self.engine)
         self.session_factory = sessionmaker(bind=self.engine)
         self.session = scoped_session(self.session_factory)
 
@@ -74,22 +74,22 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
                               enabled=True,
                               snc_partnername="Fill SNC Name Here",
                               snc_qop='9',
-                              use_snc=True,
+                              use_snc=False,
                               default_client='100',
                               ms_hostname='sape1d.team-fasel.lab',
                               ms_sysnr='00',
                               ms_logongroup='PUBLIC')
-
         e1d_node.abap_system = e1d_abap
 
         e1d_client000_node = AbapTreeNode(type='ABAPCLIENT', name='000', parent_node=e1d_node)
-        e1d_client000 = AbapClient(client='000')
+        e1d_client000 = AbapClient(client='000', username = 'TestUser', password = 'PassWord1', use_sso=False)
         e1d_client000_node.abap_client = e1d_client000
         e1d_client100_node = AbapTreeNode(type='ABAPCLIENT', name='100', parent_node=e1d_node)
-        e1d_client100 = AbapClient(client='100')
+        e1d_client100 = AbapClient(client='100', username = 'TestUser', password = 'PassWord1', use_sso=False)
         e1d_client100_node.abap_client = e1d_client100
 
-        e1s_node = AbapTreeNode(type='ABAP', parent_node=sbx_folder, name='E1S')
+        e1s_node = AbapTreeNode(type='ABAP', parent_node=sbx_folder, name='E1S',
+                                username='TestUser', password='PassWord1')
         e1s_abap = AbapSystem(sid='E1S', tier='Sandbox', rail='N',
                               description='ECC Sandbox System',
                               enabled=True,
@@ -103,10 +103,10 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
         e1s_node.abap_system = e1s_abap
 
         e1s_client000_node = AbapTreeNode(type='ABAPCLIENT', name='000', parent_node=e1s_node)
-        e1s_client000 = AbapClient(client='000')
+        e1s_client000 = AbapClient(client='000', username = 'TestUser', password = 'PassWord1', use_sso=True)
         e1s_client000_node.abap_client = e1s_client000
         e1s_client100_node = AbapTreeNode(type='ABAPCLIENT', name='100', parent_node=e1s_node)
-        e1s_client100 = AbapClient(client='100')
+        e1s_client100 = AbapClient(client='100', username = 'TestUser', password = 'PassWord1', use_sso=True)
         e1s_client100_node.abap_client = e1s_client100
 
         pprint(rootnode._dump())
@@ -118,6 +118,41 @@ class MonolithicTestSqlalchemyModel(unittest.TestCase):
         rootcount=self.session.query(AbapTreeNode).filter(AbapTreeNode.parent_id == None).count()
         self.assertEqual(rootcount, 1)
 
+    def test_password(self):
+        e1s_client000 = AbapClient(client='000', username = 'TestUser', password='PassWord1', use_sso=True)
+        pwd = e1s_client000.password
+        self.assertEqual(pwd, 'PassWord1')
+
+    def test_logon_info(self):
+        rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
+        dev_folder = AbapTreeNode(type='FOLDER', name='DEV', parent_node=rootnode)
+        e1d_node = AbapTreeNode(type='ABAP', parent_node=dev_folder, name='E1D')
+        e1d_abap = AbapSystem(sid='E1D', tier='Dev', rail='N',
+                              description='ECC Development System',
+                              enabled=True,
+                              snc_partnername="Fill SNC Name Here",
+                              snc_qop='9',
+                              use_snc=False,
+                              default_client='100',
+                              ms_hostname='sape1d.team-fasel.lab',
+                              ms_sysnr='00',
+                              ms_logongroup='PUBLIC')
+        e1d_node.abap_system = e1d_abap
+
+        e1d_client000_node = AbapTreeNode(type='ABAPCLIENT', name='000', parent_node=e1d_node)
+        e1d_client000 = AbapClient(client='000', username = 'TestUser', password = 'PassWord1', use_sso=False)
+        e1d_client000_node.abap_client = e1d_client000
+
+        logon_info = e1d_client000.login_info()
+        self.assertEqual(logon_info, {'group': 'PUBLIC', 'mshost': 'sape1d.team-fasel.lab',  'msserv': '3600',
+                                      'passwd': 'PassWord1',  'sysid': 'E1D', 'user': 'TestUser'})
+
+        e1d_abap.use_snc = True
+        e1d_client000.use_sso=True
+        pprint(e1d_client000.login_info())
+        self.assertEqual(e1d_client000, {'group': 'PUBLIC', 'mshost': 'sape1d.team-fasel.lab',  'msserv': '3600',
+                                         'snc_myname': 'p:CN=LARS@< please customize >',  'snc_partnername': 'Fill SNC Name Here',
+                                         'snc_qop': '9', 'sysid': 'E1D'})
 
 
     def test_populate_tree(self):
