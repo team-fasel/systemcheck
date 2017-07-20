@@ -1,10 +1,13 @@
 import sqlalchemy
 from inspect import isclass
-from sqlalchemy import ForeignKey, Table, DateTime, Integer, CHAR, inspect
+from sqlalchemy import ForeignKey, Table, DateTime, Integer, CHAR, inspect, String
 from sqlalchemy import event, ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.sql import functions
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_utils.types import UUIDType
 from typing import Any, Union, List
+import keyring
+import uuid
 
 def bool_or_str(type_):
     return is_string(type_) or is_boolean(type_)
@@ -50,7 +53,6 @@ class QtModelMixin(object):
         return len(self.__table__.columns)
 
     def _colnr_is_valid(self, colnr:int)->bool:
-
 
         if colnr>=0 and colnr < len(self.__table__.columns):
             return True
@@ -125,6 +127,12 @@ class QtModelMixin(object):
         else:
             return False
 
+    def _visible_headers(self):
+
+        return [colData.info.get('qt_label')
+                for colData in self.__table__.columns
+                if colData.info.get('qt_show')]
+
     def _value_by_colnr(self, colnr:int)->object:
         """ Get the Value of a Column by its Number
 
@@ -157,6 +165,7 @@ class QtModelMixin(object):
 
         """
 
+
         #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
 
         if self._visible_colnr_is_valid(colnr):
@@ -170,7 +179,7 @@ class QtModelMixin(object):
         """ Return a list of columns that have the info medatadata variable qt_show set to True"""
         return [colData
                 for colData in self.__table__.columns
-                if colData.info.get('qt_show')==True]
+                if colData.info.get('qt_show')]
 
     def _visible_column_count(self)->int:
         """Returns the number of visible Columns
@@ -196,6 +205,25 @@ class QtModelMixin(object):
         if colnr>=0 and colnr < len(visible_columns):
             return True
         return False
+
+class PasswordKeyringMixin():
+
+
+    keyring_uuid = Column(String(32), qt_show=False)
+
+    @hybrid_property
+    def password(self):
+        namespace='systemcheck'
+        keyring_user=self.keyring_uuid
+        pwd = keyring.get_password(namespace, username=keyring_user)
+        return pwd
+
+    @password.setter
+    def password(self, password):
+        namespace='systemcheck'
+        pwd = password
+        keyring_username=self.keyring_uuid
+        keyring.set_password(namespace, username=keyring_username, password=pwd)
 
 
 

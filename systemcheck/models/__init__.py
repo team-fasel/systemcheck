@@ -2,6 +2,6 @@
 __maintainer__  = 'Lars Fasel'
 __email__       = 'systemcheck@team-fasel.com'
 
-from . import meta
-from . import systems
+from systemcheck.models import meta
+from systemcheck.models import credentials
 

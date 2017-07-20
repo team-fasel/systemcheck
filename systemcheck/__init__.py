@@ -29,7 +29,6 @@ __version__         = 'v{}.{}.{}'.format(*__version_info__)
 __revision__        = __version__
 
 
-from systemcheck.config import CONFIG, SESSION
-from systemcheck import model
+from systemcheck import models
 from pprint import pprint
 

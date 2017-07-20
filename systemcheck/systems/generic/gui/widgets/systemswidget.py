@@ -6,7 +6,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 from systemcheck.gui.qtalcmapper import generateQtDelegate, getQtWidgetForAlchemyType
 from systemcheck.gui.widgets import TreeView
-from systemcheck.systems.generic.gui.model import SettingsModel
+from systemcheck.gui.models import SettingsModel
 
 __authors__     = ['Lars Fasel']
 __author__      = ','.join(__authors__)

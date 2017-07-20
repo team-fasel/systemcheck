@@ -12,5 +12,7 @@ __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
 from systemcheck.systems.generic.plugins.generic_plugins import BasePlugin, PluginResult
+from systemcheck.systems.generic.plugins.generic_plugin_manager import CheckPluginManager
+
 
 

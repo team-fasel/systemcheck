@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-from systemcheck.model import meta
+from systemcheck.models import meta
 from systemcheck.gui import utils
 import sqlalchemy
 import sqlalchemy_utils

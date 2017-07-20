@@ -2,7 +2,7 @@
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy_utils import generic_repr, ChoiceType
 
-from model.meta import Base, QtModelMixin, Column
+from models.meta import Base, QtModelMixin, Column
 
 __authors__     = ['Lars Fasel']
 __author__      = ','.join(__authors__)
@@ -23,7 +23,7 @@ import sqlalchemy_utils
 import enum
 from sqlalchemy import inspect, Integer, ForeignKey, String, Boolean
 from typing import Any, List, Union
-from systemcheck.model.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
+from systemcheck.models.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
     Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, \
     UniqueMixin, Session, DateTime, relationship, declared_attr, attribute_mapped_collection, \
     one_to_many, many_to_one, Boolean, Integer, ForeignKey, ChoiceType, UUIDType
@@ -32,10 +32,10 @@ from systemcheck.model.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueCon
 @generic_repr
 class GenericTreeNode(Base, QtModelMixin):
     """ A generic node that is the foundation of the tree stored in a database table"""
-    __tablename__ = 'abap_tree'
+    __tablename__ = 'generic_tree'
 
     id = Column(Integer, primary_key=True, qt_label='Primary Key', qt_show=False)
-    parent_id = Column(Integer, ForeignKey('abap_tree.id'), qt_label='Parent Key', qt_show=False)
+    parent_id = Column(Integer, ForeignKey('generic_tree.id'), qt_label='Parent Key', qt_show=False)
     type = Column(String(50), qt_show=False, qt_label='Type')
     name = Column(String(50), qt_show=True, qt_label='Name')
     children=relationship('GenericTreeNode',
