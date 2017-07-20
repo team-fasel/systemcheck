@@ -18,10 +18,11 @@ import sqlalchemy_utils
 import enum
 from sqlalchemy import inspect
 from typing import Any, List, Union
-from systemcheck.model.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
+from systemcheck.models.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
     Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, \
     UniqueMixin, Session, DateTime, relationship, declared_attr, attribute_mapped_collection, \
     one_to_many, many_to_one, Boolean, Integer, ForeignKey, ChoiceType, UUIDType
 
 
-from systemcheck.systems.ABAP.model.abap_model import AbapSystem, AbapTreeNode, AbapClient
+from systemcheck.systems.ABAP.models.abap_model import AbapSystem, AbapTreeNode, AbapClient
+

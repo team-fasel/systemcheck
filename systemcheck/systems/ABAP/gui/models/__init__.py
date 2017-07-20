@@ -14,4 +14,4 @@ __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
-from systemcheck.systems.ABAP.gui.model.abap_tree import AbapTreeModel
+from systemcheck.systems.ABAP.gui.models.abap_tree import AbapTreeModel

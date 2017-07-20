@@ -12,10 +12,11 @@ __maintainer__  = 'Lars Fasel'
 __email__       = 'systemcheck@team-fasel.com'
 
 
-from systemcheck.systems.generic.gui.model import SystemTreeModel
+from systemcheck.systems.generic.gui.models import GenericTreeModel
+from systemcheck.systems.ABAP.models import AbapTreeNode
 
-class AbapTreeModel(SystemTreeModel):
+class AbapTreeModel(GenericTreeModel):
 
     def __init__(self, rootnode, parent=None):
         super().__init__(rootnode, parent=None)
-
+        self._treeNode = AbapTreeNode
