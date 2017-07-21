@@ -95,7 +95,7 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
     def flags(self, index:QtCore.QModelIndex)->int:
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsUserCheckable
 
-    def insertRow(self, position: int, parent:QtCore.QModelIndex, nodeType:str='FOLDER', nodeObject:Any=None)->bool:
+    def insertRow(self, position: int, parent:QtCore.QModelIndex, nodeObject:Any=None)->bool:
         """ Add a single child to the model
 
         :param position: The position where the new child should get inserted
@@ -105,8 +105,17 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
 
         """
 
-        success=self.insertRows(position, 1, parent)
-        return success
+        parent_node = self.getNode(parent)
+
+        self.beginInsertRows(parent, position, position + 1)
+
+        if nodeObject:
+            parent_node._insert_child(position, nodeObject)
+        else:
+            childNode = self._treeNode(type='FOLDER', name="untitled")
+            parent_node._insert_child(position, childNode)
+        self.endInsertRows()
+        return True
 
 
     def insertRows(self, position: int, count: int, parent:QtCore.QModelIndex=QtCore.QModelIndex())->bool:

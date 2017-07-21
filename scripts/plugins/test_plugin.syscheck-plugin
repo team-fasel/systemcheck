@@ -1,0 +1,13 @@
+[Core]
+name = Test Plugin
+module = test_plugin
+
+[Documentation]
+author = Lars Fasel
+version = 0.1
+website = http://lotsofplugins.com
+description = My first plugin
+
+[Parameters]
+enabled = true
+report_01 = Test

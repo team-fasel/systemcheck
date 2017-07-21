@@ -18,7 +18,7 @@ from systemcheck.systems.ABAP.models import AbapTreeNode
 class AbapTreeModel(GenericTreeModel):
 
     def __init__(self, rootnode, parent=None):
-        super().__init__(rootnode, parent=None)
+        GenericTreeModel.__init__(self, rootnode, parent=None)
         self._treeNode = AbapTreeNode
 
 

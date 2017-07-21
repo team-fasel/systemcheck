@@ -32,43 +32,45 @@ class SettingsWidget(QtWidgets.QWidget):
         layout=QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         treeNode=currentIndex.internalPointer()
-        self.alchemyObject = getattr(treeNode, treeNode.RELNAME)
-        self.setLayout(layout)
-        self.delegate=generateQtDelegate(self.alchemyObject)
-        self.dataMapper=QtWidgets.QDataWidgetMapper()
-        self.model=SettingsModel(self.alchemyObject)
-        self.dataMapper.setModel(self.model)
-        columns = self.alchemyObject._visible_columns()
-
-        self.tablew = QtWidgets.QTableWidget(len(columns), 2)
-        self.tablew.setAlternatingRowColors(True)
-        self.tablew.horizontalHeader().hide()
-        self.tablew.verticalHeader().hide()
-        self.tablew.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.tablew)
-        self.widgets = OrderedDict()
         self.setVisible(False)
+        if treeNode:
+            if treeNode.type != 'FOLDER':
+                self.alchemyObject = getattr(treeNode, treeNode.RELNAME)
+                self.setLayout(layout)
+                self.delegate=generateQtDelegate(self.alchemyObject)
+                self.dataMapper=QtWidgets.QDataWidgetMapper()
+                self.model=SettingsModel(self.alchemyObject)
+                self.dataMapper.setModel(self.model)
+                columns = self.alchemyObject._visible_columns()
 
-        for colNr, column in enumerate(columns):
-            if colNr in self.delegate.delegates.keys():
-                lblWidget=QtWidgets.QTableWidgetItem(column.info.get('qt_label'))
-                self.tablew.setItem(colNr, 0, lblWidget)
+                self.tablew = QtWidgets.QTableWidget(len(columns), 2)
+                self.tablew.setAlternatingRowColors(True)
+                self.tablew.horizontalHeader().hide()
+                self.tablew.verticalHeader().hide()
+                self.tablew.horizontalHeader().setStretchLastSection(True)
+                layout.addWidget(self.tablew)
+                self.widgets = OrderedDict()
 
-#                if isinstance(sqlalchemy_utils.functions.get_type(column), meta.ChoiceType):
-#                    wid=self.delegate.delegates[colNr].createEditor(self, self, column.info['choices'], None)
-#                else:
-#                    wid = self.delegate.delegates[colNr].createEditor(self, self, None, None)
+                for colNr, column in enumerate(columns):
+                    if colNr in self.delegate.delegates.keys():
+                        lblWidget=QtWidgets.QTableWidgetItem(column.info.get('qt_label'))
+                        self.tablew.setItem(colNr, 0, lblWidget)
+
+        #                if isinstance(sqlalchemy_utils.functions.get_type(column), meta.ChoiceType):
+        #                    wid=self.delegate.delegates[colNr].createEditor(self, self, column.info['choices'], None)
+        #                else:
+        #                    wid = self.delegate.delegates[colNr].createEditor(self, self, None, None)
 
 
-                wid = getQtWidgetForAlchemyType(column)
-                self.dataMapper.addMapping(wid, colNr)
-                self.widgets[colNr]=wid
-                self.tablew.setCellWidget(colNr, 1, wid)
+                        wid = getQtWidgetForAlchemyType(column)
+                        self.dataMapper.addMapping(wid, colNr)
+                        self.widgets[colNr]=wid
+                        self.tablew.setCellWidget(colNr, 1, wid)
 
-        self.dataMapper.toFirst()
+                self.dataMapper.toFirst()
 
-        self.tablew.resizeColumnsToContents()
-        self.tablew.resizeRowsToContents()
+                self.tablew.resizeColumnsToContents()
+                self.tablew.resizeRowsToContents()
 
 
 class SystemsWidget(QtWidgets.QWidget):
@@ -126,11 +128,9 @@ class SystemsWidget(QtWidgets.QWidget):
         The settings widget is generated dynamically based on the SQLAlchemy object behind the selected tree node.
 
         """
-        treenode = selected.internalPointer()
-        system_node = treenode._system_node()
-        if system_node:
-            settingsw=SettingsWidget(self.model, selected)
-            return settingsw
+
+        settingsw=SettingsWidget(self.model, selected)
+        return settingsw
 
     def setupUi(self):
         """ Configure the User Interface """

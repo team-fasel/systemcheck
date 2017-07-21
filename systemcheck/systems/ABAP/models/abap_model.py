@@ -16,6 +16,7 @@ __email__       = 'systemcheck@team-fasel.com'
 
 
 from pprint import pprint, pformat
+import traceback
 import re
 
 import sqlalchemy_utils
@@ -39,7 +40,6 @@ class AbapTreeNode(Base, QtModelMixin):
     """ A generic node that is the foundation of the tree stored in a database table"""
     __tablename__ = 'abap_tree'
     __table_args__ = {'extend_existing': True}
-
 
     id = Column(Integer, primary_key=True, qt_label='Primary Key', qt_show=False)
     parent_id = Column(Integer, ForeignKey('abap_tree.id'), qt_label='Parent Key', qt_show=False)
@@ -76,9 +76,11 @@ class AbapTreeNode(Base, QtModelMixin):
 
     def _insert_child(self, position:int, node)->bool:
         self.children.insert(position, node)
-
-        session=inspect(self).session
-        session.commit()
+        try:
+            self._commit()
+        except Exception as err:
+            print('traceback.print_exc():')
+            traceback.print_exc()
         return True
 
     def _row(self):
