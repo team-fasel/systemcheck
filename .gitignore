@@ -101,3 +101,5 @@ ENV/
 scratch/
 /systemcheck/systems.sqlite
 /tests/dev_rfc.trc
+/systemcheck/resources/sap/
+/systemcheck/resources/update_icon_rc.bat

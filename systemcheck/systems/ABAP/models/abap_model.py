@@ -108,12 +108,8 @@ class AbapTreeNode(Base, QtModelMixin):
 
     def _system_node(self):
         #TODO: That needs to be done dynamically at some point
-        if self.type == 'ABAP':
-            return self.abap_system
-        elif self.type == 'ABAPCLIENT':
-            return self.abap_client
-        elif self.type =='FOLDER':
-            return None
+        if self.type != 'FOLDER':
+            return getattr(self, self.type)
         else:
             return None
 
@@ -125,6 +121,8 @@ class AbapSystem(Base, QtModelMixin):
 
     __tablename__ = 'abap_systems'
     __table_args__ = {'extend_existing': True}
+
+    RELNAME = 'abap_system'
 
 
     SNC_QOP_CHOICES=[
@@ -229,7 +227,7 @@ class AbapSystem(Base, QtModelMixin):
                     qt_description='System Number of the application server')
 
     system_tree_id = Column(Integer, ForeignKey('abap_tree.id'))
-    tree = relationship('AbapTreeNode', back_populates='abap_system', cascade='all, delete-orphan', single_parent=True)
+    tree = relationship('AbapTreeNode', back_populates=RELNAME, cascade='all, delete-orphan', single_parent=True)
 
 
 @generic_repr
@@ -238,6 +236,7 @@ class AbapClient(Base, QtModelMixin, PasswordKeyringMixin):
     __tablename__ = 'abap_clients'
     __table_args__ = {'extend_existing': True}
 
+    RELNAME = 'abap_client'
 
     id = Column(Integer, primary_key=True, qt_show=False)
 
@@ -258,7 +257,7 @@ class AbapClient(Base, QtModelMixin, PasswordKeyringMixin):
                      )
     username = Column(String(40), default='<initial>', nullable=True, qt_label='Username', qt_description='Username to logon to the ABAP Client')
     system_tree_id = Column(Integer, ForeignKey('abap_tree.id'), qt_show=False)
-    tree = relationship('AbapTreeNode', back_populates='abap_client', cascade='all, delete-orphan', single_parent=True)
+    tree = relationship('AbapTreeNode', back_populates=RELNAME, cascade='all, delete-orphan', single_parent=True)
 
     def __init__(self, **kwargs):
         uuid_string = str(uuid.uuid4())

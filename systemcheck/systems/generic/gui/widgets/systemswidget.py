@@ -32,7 +32,7 @@ class SettingsWidget(QtWidgets.QWidget):
         layout=QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         treeNode=currentIndex.internalPointer()
-        self.alchemyObject = treeNode._system_node()
+        self.alchemyObject = getattr(treeNode, treeNode.RELNAME)
         self.setLayout(layout)
         self.delegate=generateQtDelegate(self.alchemyObject)
         self.dataMapper=QtWidgets.QDataWidgetMapper()
@@ -91,20 +91,20 @@ class SystemsWidget(QtWidgets.QWidget):
         if model:
             self.setModel(model)
 
-    def on_addFolder(self):
-        indexes = self.tree.selectedIndexes()
-        if len(indexes) >0:
-            index = indexes[0]
-        else:
-            index = QtCore.QModelIndex()
-
+    def on_addSubFolder(self):
+        index = self.tree.currentIndex()
         self.model.insertRow(0, parent=index)
 
-    def on_deleteFolder(self):
+    def on_addFolder(self):
+        index = self.tree.currentIndex()
+        parent = index.parent()
+        self.model.insertRow(0, parent=parent)
+
+    def on_deleteItem(self):
         index = self.tree.currentIndex()
 
         parent=index.parent()
-        self.model.removeRows(index.row(), 1, parent)
+        self.model.removeRow(index.row(), parent)
 
     def on_treeSelectionChanged(self, selected: QtCore.QModelIndex, deselected: QtCore.QModelIndex):
 
@@ -147,34 +147,39 @@ class SystemsWidget(QtWidgets.QWidget):
 
         self.treeContextMenu = QtWidgets.QMenu()
 
+        self.addSubFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Sub Folder', self)
+        self.addSubFolder_act.triggered.connect(self.on_addSubFolder)
         self.addFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Folder', self)
         self.addFolder_act.triggered.connect(self.on_addFolder)
-        self.deleteFolder_act = QtWidgets.QAction(QtGui.QIcon(":Trash"), 'Delete Folder', self)
-        self.deleteFolder_act.triggered.connect(self.on_deleteFolder)
+        self.deleteItem_act = QtWidgets.QAction(QtGui.QIcon(":Trash"), 'Delete Item', self)
+        self.deleteItem_act.triggered.connect(self.on_deleteItem)
         self.setLayout(layout)
         self.show()
 
-    def treeSystemContextMenu(self):
-        #TODO: Raise a NotImplemented Exception
-        return []
 
     def openContextMenu(self, position):
 
-        indexes = self.tree.selectedIndexes()
-        if len(indexes) > 0:
-            level = 0
-            index = indexes[0]
-            while index.parent().isValid():
-                index = index.parent()
-                level += 1
-
         menu=QtWidgets.QMenu()
         menu.addAction(self.addFolder_act)
-        menu.addAction(self.deleteFolder_act)
+        menu.addAction(self.addSubFolder_act)
+        menu.addAction(self.deleteItem_act)
 
+        menu = self.systemSpecificContextMenu(position, menu)
         menu.exec_(self.tree.viewport().mapToGlobal(position))
 
     def setModel(self, model):
         self.model = model
         self.tree.setModel(model)
         self.tree.selectionModel().currentChanged.connect(self.on_treeSelectionChanged)
+
+    def systemSpecificContextMenu(self, position:QtCore.QPoint, menu:QtWidgets.QMenu):
+        """ Generate the system specific context menu
+
+        This function has to be reimplemented in the system specific tree models.
+
+        :param position:  The coordinates of the selected tree node
+        :param meny: The generic context menu
+
+        """
+
+        raise NotImplemented

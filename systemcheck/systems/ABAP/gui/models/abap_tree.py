@@ -20,3 +20,5 @@ class AbapTreeModel(GenericTreeModel):
     def __init__(self, rootnode, parent=None):
         super().__init__(rootnode, parent=None)
         self._treeNode = AbapTreeNode
+
+

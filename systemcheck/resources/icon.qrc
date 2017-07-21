@@ -6,7 +6,6 @@
     <file alias="AddRow">./img/icons8/Add Row_32px.png</file>
     <file alias="AddUserMale">./img/icons8/Add User Male_32px.png</file>
     <file alias="Add">./img/icons8/Add_32px.png</file>
-    <file alias="AddList">./img/icons8/AddList_32px.png</file>
     <file alias="AddProperty">./img/icons8/Add Property_32px.png</file>
     <file alias="AlignLeft">./img/icons8/Align Left_32px.png</file>
     <file alias="AlignCenter">./img/icons8/Align Center_32px.png</file>
@@ -17,7 +16,7 @@
     <file alias="Bold">./img/icons8/Bold_32px.png</file>
     <file alias="CheckedCheckbox">./img/icons8/Checked Checkbox_32px.png</file>
     <file alias="CheckedCheckbox2">./img/icons8/Checked Checkbox 2_32px.png</file>
-    <file alias="Checkdmark">./img/icons8/Checkmark_32px.png</file>
+    <file alias="Checkmark">./img/icons8/Checkmark_32px.png</file>
     <file alias="Clock">./img/icons8/Clock_32px.png</file>
     <file alias="Cut">./img/icons8/Cut_32px.png</file>
     <file alias="Compare">./img/icons8/Compare_32px.png</file>
@@ -43,6 +42,7 @@
     <file alias="Last">./img/icons8/Last_32px.png</file>
     <file alias="Linux">./img/icons8/Linux_32px.png</file>
     <file alias="Menu">./img/icons8/Menu_32px.png</file>
+    <file alias="New">./img/icons8/New_32px.png</file>
     <file alias="Next">./img/icons8/Next_32px.png</file>
     <file alias="NumberedList">./img/icons8/Numbered List_32px.png</file>
     <file alias="Outdent">./img/icons8/Outdent_32px.png</file>
@@ -50,6 +50,8 @@
     <file alias="Pause">./img/icons8/Pause_32px.png</file>
     <file alias="Paste">./img/icons8/Paste_32px.png</file>
     <file alias="Play">./img/icons8/Play_32px.png</file>
+    <file alias="Plus">./img/icons8/Plus_32px.png</file>
+    <file alias="PlusMath">./img/icons8/Plus Math_32px.png</file>
     <file alias="PreviewPane">./img/icons8/Preview Pane_32px.png</file>
     <file alias="Previous">./img/icons8/Previous_32px.png</file>
     <file alias="Print">./img/icons8/Print_32px.png</file>

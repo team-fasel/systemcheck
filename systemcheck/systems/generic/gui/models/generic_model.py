@@ -155,6 +155,7 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
 
         for i in range(count):
             del node.children[row+i]
+            node._commit()
 
         self.endRemoveRows()
 

@@ -15,7 +15,8 @@ __license__     = 'MIT'
 
 from PyQt5 import QtCore, QtWidgets
 from systemcheck.models.credentials import Credential
-from systemcheck.config import CONFIG, SESSION
+from systemcheck.config import CONFIG
+from systemcheck.session import SESSION
 from sqlalchemy import inspect, asc, desc
 import logging
 

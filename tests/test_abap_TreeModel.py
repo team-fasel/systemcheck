@@ -63,7 +63,6 @@ class TestAbapTreeModel(TestCase):
         prd_folder = AbapTreeNode(type='FOLDER', name='PRD', parent_node=rootnode)
         sbx_folder = AbapTreeNode(type='FOLDER', name='SBX', parent_node=rootnode)
 
-        e1d_node = AbapTreeNode(type='ABAP', parent_node=dev_folder, name='E1D')
         e1d_abap = AbapSystem(sid='E1D', tier='Dev', rail='N',
                               description='ECC Development System',
                               enabled=True,
@@ -74,17 +73,18 @@ class TestAbapTreeModel(TestCase):
                               ms_hostname='sape1d.team-fasel.lab',
                               ms_sysnr='00',
                               ms_logongroup='PUBLIC')
+        e1d_node = AbapTreeNode(type=e1d_abap.RELNAME, parent_node=dev_folder, name='E1D')
+
 
         e1d_node.abap_system = e1d_abap
 
-        e1d_client000_node = AbapTreeNode(type='ABAPCLIENT', name='000', parent_node=e1d_node)
         e1d_client000 = AbapClient(client='000')
+        e1d_client000_node = AbapTreeNode(type=e1d_client000.RELNAME, name='000', parent_node=e1d_node)
         e1d_client000_node.abap_client = e1d_client000
-        e1d_client100_node = AbapTreeNode(type='ABAPCLIENT', name='100', parent_node=e1d_node)
         e1d_client100 = AbapClient(client='100')
+        e1d_client100_node = AbapTreeNode(type=e1d_client100.RELNAME, name='100', parent_node=e1d_node)
         e1d_client100_node.abap_client = e1d_client100
 
-        e1s_node = AbapTreeNode(type='ABAP', parent_node=sbx_folder, name='E1S')
         e1s_abap = AbapSystem(sid='E1S', tier='Sandbox', rail='N',
                               description='ECC Sandbox System',
                               enabled=True,
@@ -95,13 +95,14 @@ class TestAbapTreeModel(TestCase):
                               ms_hostname='sape1s.team-fasel.lab',
                               ms_sysnr='00',
                               ms_logongroup='PUBLIC')
+        e1s_node = AbapTreeNode(type=e1s_abap.RELNAME, parent_node=sbx_folder, name='E1S')
         e1s_node.abap_system = e1s_abap
 
-        e1s_client000_node = AbapTreeNode(type='ABAPCLIENT', name='000', parent_node=e1s_node)
         e1s_client000 = AbapClient(client='000')
+        e1s_client000_node = AbapTreeNode(type=e1s_client000.RELNAME, name='000', parent_node=e1s_node)
         e1s_client000_node.abap_client = e1s_client000
-        e1s_client100_node = AbapTreeNode(type='ABAPCLIENT', name='100', parent_node=e1s_node)
         e1s_client100 = AbapClient(client='100')
+        e1s_client100_node = AbapTreeNode(type=e1s_client100.RELNAME, name='100', parent_node=e1s_node)
         e1s_client100_node.abap_client = e1s_client100
 
         self.session.commit()
@@ -208,7 +209,7 @@ class TestAbapTreeModel(TestCase):
         self.assertEqual(node1_node.type, 'FOLDER')
         self.assertEqual(node1_node.name, 'DEV')
         node2_node = node2index.internalPointer()
-        self.assertEqual(node2_node.type, 'ABAP')
+        self.assertEqual(node2_node.type, 'abap_system')
         self.assertEqual(node2_node.name, 'E1D')
         node2_parent_index = model.parent(node2index)
         node2_parent_node = node2_parent_index.internalPointer()

@@ -53,7 +53,6 @@ class TestSettingsModel(TestCase):
         prd_folder = AbapTreeNode(type='FOLDER', name='PRD', parent_node=rootnode)
         sbx_folder = AbapTreeNode(type='FOLDER', name='SBX', parent_node=rootnode)
 
-        e1d_node = AbapTreeNode(type='ABAP', parent_node=dev_folder, name='E1D')
         e1d_abap = AbapSystem(sid='E1D', tier='Dev', rail='N',
                               description='ECC Development System',
                               enabled=True,
@@ -64,10 +63,11 @@ class TestSettingsModel(TestCase):
                               ms_hostname='sape1d.team-fasel.lab',
                               ms_sysnr='00',
                               ms_logongroup='PUBLIC')
+        e1d_node = AbapTreeNode(type=e1d_abap.RELNAME, parent_node=dev_folder, name='E1D')
+
 
         e1d_node.abap_system = e1d_abap
 
-        e1s_node = AbapTreeNode(type='ABAP', parent_node=sbx_folder, name='E1S')
         e1s_abap = AbapSystem(sid='E1S', tier='Sandbox', rail='N',
                               description='ECC Sandbox System',
                               enabled=True,
@@ -78,6 +78,8 @@ class TestSettingsModel(TestCase):
                               ms_hostname='sape1s.team-fasel.lab',
                               ms_sysnr='00',
                               ms_logongroup='PUBLIC')
+        e1s_node = AbapTreeNode(type=e1s_abap.RELNAME, parent_node=sbx_folder, name='E1S')
+
         e1s_node.abap_system = e1s_abap
 
         self.logger.info('Generated Tree: ' + rootnode._dump())

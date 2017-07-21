@@ -23,7 +23,7 @@ import os
 
 
 import systemcheck.models as models
-from systemcheck import SESSION
+from systemcheck.session import SESSION
 from systemcheck.models.credentials import Credential
 from systems.ABAP.models import AbapTreeNode, AbapSystem, AbapClient
 from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
@@ -81,15 +81,13 @@ class SqlalchemyAbapModel(unittest.TestCase):
                               ms_logongroup='PUBLIC')
         e1d_node.abap_system = e1d_abap
 
-        e1d_client000_node = AbapTreeNode(type='ABAPCLIENT', name='000', parent_node=e1d_node)
         e1d_client000 = AbapClient(client='000', username = 'TestUser', password = 'PassWord1', use_sso=False)
+        e1d_client000_node = AbapTreeNode(type=e1d_client000.RELNAME, name='000', parent_node=e1d_node)
         e1d_client000_node.abap_client = e1d_client000
-        e1d_client100_node = AbapTreeNode(type='ABAPCLIENT', name='100', parent_node=e1d_node)
         e1d_client100 = AbapClient(client='100', username = 'TestUser', password = 'PassWord1', use_sso=False)
+        e1d_client100_node = AbapTreeNode(type=e1d_client100.RELNAME, name='100', parent_node=e1d_node)
         e1d_client100_node.abap_client = e1d_client100
 
-        e1s_node = AbapTreeNode(type='ABAP', parent_node=sbx_folder, name='E1S',
-                                username='TestUser', password='PassWord1')
         e1s_abap = AbapSystem(sid='E1S', tier='Sandbox', rail='N',
                               description='ECC Sandbox System',
                               enabled=True,
@@ -100,13 +98,14 @@ class SqlalchemyAbapModel(unittest.TestCase):
                               ms_hostname='sape1s.team-fasel.lab',
                               ms_sysnr='00',
                               ms_logongroup='PUBLIC')
+        e1s_node = AbapTreeNode(type=e1s_abap.RELNAME, parent_node=sbx_folder, name='E1S')
         e1s_node.abap_system = e1s_abap
 
-        e1s_client000_node = AbapTreeNode(type='ABAPCLIENT', name='000', parent_node=e1s_node)
         e1s_client000 = AbapClient(client='000', username = 'TestUser', password = 'PassWord1', use_sso=True)
+        e1s_client000_node = AbapTreeNode(type=e1s_client000.RELNAME, name='000', parent_node=e1s_node)
         e1s_client000_node.abap_client = e1s_client000
-        e1s_client100_node = AbapTreeNode(type='ABAPCLIENT', name='100', parent_node=e1s_node)
         e1s_client100 = AbapClient(client='100', username = 'TestUser', password = 'PassWord1', use_sso=True)
+        e1s_client100_node = AbapTreeNode(type=e1s_client100.RELNAME, name='100', parent_node=e1s_node)
         e1s_client100_node.abap_client = e1s_client100
 
         pprint(rootnode._dump())
@@ -139,8 +138,8 @@ class SqlalchemyAbapModel(unittest.TestCase):
                               ms_logongroup='PUBLIC')
         e1d_node.abap_system = e1d_abap
 
-        e1d_client000_node = AbapTreeNode(type='ABAPCLIENT', name='000', parent_node=e1d_node)
         e1d_client000 = AbapClient(client='000', username = 'TestUser', password = 'PassWord1', use_sso=False)
+        e1d_client000_node = AbapTreeNode(type=e1d_client000.RELNAME, name='000', parent_node=e1d_node)
         e1d_client000_node.abap_client = e1d_client000
 
         logon_info = e1d_client000.login_info()
@@ -150,7 +149,7 @@ class SqlalchemyAbapModel(unittest.TestCase):
         e1d_abap.use_snc = True
         e1d_client000.use_sso=True
         pprint(e1d_client000.login_info())
-        self.assertEqual(e1d_client000, {'group': 'PUBLIC', 'mshost': 'sape1d.team-fasel.lab',  'msserv': '3600',
+        self.assertEqual(e1d_client000.login_info(), {'group': 'PUBLIC', 'mshost': 'sape1d.team-fasel.lab',  'msserv': '3600',
                                          'snc_myname': 'p:CN=LARS@< please customize >',  'snc_partnername': 'Fill SNC Name Here',
                                          'snc_qop': '9', 'sysid': 'E1D'})
 
