@@ -30,7 +30,7 @@ from unittest import TestCase
 
 
 class TestAbapTreeModel(TestCase):
-    PATH = r'D:\Python\Projects\systemcheck\tests\test_pyqt_model.sqlite'
+    PATH = r'test_pyqt_model.sqlite'
 
     def setUp(self):
         self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
@@ -164,8 +164,31 @@ class TestAbapTreeModel(TestCase):
         rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
         model = AbapTreeModel(rootnode)
         index = model.createIndex(0, 0, rootnode)
-        model.insertRow(0, index)
-        self.assertTrue(model.hasChildren(index))
+        child_count_root = model.rowCount(index)
+        self.assertEqual(child_count_root, 0)
+        system_node = AbapSystem(sid='NEW')
+        system_tree_node = AbapTreeNode(type = system_node.RELNAME, name='New ABAP System')
+        setattr(system_tree_node, system_node.RELNAME, system_node)
+        model.insertRow(0, index, nodeObject=system_tree_node)
+        child_count_root = model.rowCount(index)
+        self.assertEqual(child_count_root, 1)  #Successfully added one new system
+        self.assertTrue(model.hasChildren(index))  #Another test
+
+        #Testing Inserting a new client
+        system_index = model.index(0, 0, index)
+        child_count_system = model.rowCount(system_index)
+        self.assertEqual(child_count_system, 0)  #No new client exists
+        self.assertFalse(model.hasChildren(system_index))  #Another test
+
+        client_node = AbapClient(client='000')
+        client_tree_node = AbapTreeNode(type = client_node.RELNAME, name = 'New ABAP Client')
+        setattr(client_tree_node, client_node.RELNAME, client_node)
+        model.insertRow(position=0, parent=system_index, nodeObject=client_tree_node)
+        child_count_system = model.rowCount(system_index)
+        self.assertEqual(child_count_system, 1)  #Successfully added one new system
+        self.assertTrue(model.hasChildren(system_index))  #Another test
+
+
 
     def test_insertRows(self):
         rootnode = self.session.query(AbapTreeNode).filter_by(parent_id=None).first()
