@@ -1,4 +1,4 @@
-from systemcheck.systems.ABAP.plugins import CheckAbapPlugin
+from systems.ABAP.plugins.plugin_types import CheckAbapPlugin
 from systemcheck.utils import Result, Fail
 
 class AbapPlugin(CheckAbapPlugin):
