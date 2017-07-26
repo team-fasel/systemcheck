@@ -5,7 +5,7 @@ Module = modules/abap_check_table_entry_count
 [Documentation]
 Author = Lars Fasel
 Version = 0.1
-Description = The clients 001 and 066 are not longer required and can be deleted.
+Description = Unless clients 001 is actually used, it can get removed together with client 066.
 Tree = Basis;Post Installation
 
 

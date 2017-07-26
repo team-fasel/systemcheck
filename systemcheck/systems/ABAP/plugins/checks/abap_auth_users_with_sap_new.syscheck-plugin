@@ -1,0 +1,13 @@
+[Core]
+Name = Users with SAP_NEW
+Module = modules/abap_auth_rsusr002
+
+[Documentation]
+Author = Lars Fasel
+Version = 0.1
+Description = Checks whether a user has SAP_NEW
+Tree = Authorizations;Basis;Critical Profiles
+clientspecific = True
+
+[Parameters]
+iv_prof2 = "SAP_NEW"

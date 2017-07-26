@@ -1,7 +1,7 @@
-from systems.ABAP.plugins.plugin_types import CheckAbapPlugin
+import systemcheck.systems.ABAP.plugins as abapplugins
 from systemcheck.utils import Result, Fail
 
-class AbapPlugin(CheckAbapPlugin):
+class AbapPlugin(abapplugins.CheckAbapPlugin):
 
     def __init__(self):
         super().__init__()
