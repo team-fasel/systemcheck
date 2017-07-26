@@ -25,7 +25,6 @@ import systemcheck
 from systemcheck.utils import Result, Fail
 from systemcheck.systems.ABAP.utils.mock_connection import MockConnection
 
-
 class Connection:
     """ Wrapper for the PyRFC Connection Class"""
 
@@ -273,3 +272,14 @@ class Connection:
 
         return result
 
+def get_connection(logon_info:dict)->Union[Result, Fail]:
+    """ Establish a connection to an ABAP System
+
+
+    """
+
+    connection = Connection()
+    result = connection.logon(logon_info)
+    if not result.fail:
+        result=Result(message='Logon Successful', data=connection)
+    return result

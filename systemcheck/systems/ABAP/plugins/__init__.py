@@ -14,14 +14,14 @@ __license__     = 'MIT'
 
 import systemcheck.systems.generic.plugins
 from systemcheck.utils import Result, Fail
-from systemcheck.systems.ABAP.utils import Connection
+import systemcheck.systems.ABAP.utils as abaputils
 from pprint import pformat
 import logging
 from collections import OrderedDict
 import ast
 
 
-class CheckAbapFoundationPlugin(systemcheck.systems.generic.plugins.BasePlugin):
+class CheckAbapFoundationPlugin(systemcheck.systems.generic.plugins.GenericCheckPlugin):
     """ ABAP Foundation Plugin
     Base class for all ABAP Plugins. """
 
@@ -29,14 +29,16 @@ class CheckAbapFoundationPlugin(systemcheck.systems.generic.plugins.BasePlugin):
 
     def __init__(self):
         super().__init__()
-        self.pluginConfig['base_config']['systemtype']=self.TYPE
 
-    def system_connection(self, logonInfo, **kwargs):
+
+    def system_connection(self):
         """ Get RFC System Connection
         """
-        result = Connection(**logonInfo)
+        logon_info = self._system_object.logon_info()
+        result = abaputils.get_connection(logon_info)
+
         if not result.fail:
-            self.logger.info('successfully connected to {}'.format(pformat(logonInfo)))
+            self.conn = result.data
 
         return result
 
@@ -59,59 +61,52 @@ class CheckAbapPlugin(CheckAbapFoundationPlugin):
 
     def __init__(self):
         super().__init__()
-        self.logger.info('starting plugin {:s}'.format(self.pluginConfig['Core']['name']))
 
 
 class CheckAbapCountTableEntries(CheckAbapFoundationPlugin):
 
     def execute(self, connection, **kwargs):
 
-        self.pluginResult['resultRating']='pass'
-        self.pluginResult['result']=[]
-        self.pluginResult['tableDefinition'] = OrderedDict(RATING='Rating', WHERE_CLAUSE='Where Clause',
-                                                           OPERATOR='Operator', TABLE='Table',
-                                                           EXPECTED='Expected', CONFIGURED='Configured')
-
-        totalResult=[]
+        self.pluginResult.resultDefinition = OrderedDict(RATING='Rating', WHERE_CLAUSE='Where Clause',
+                                                         OPERATOR='Operator', TABLE='Table',
+                                                         EXPECTED='Expected', CONFIGURED='Configured')
 
         self.connection=connection
 
-        for item, value in self.pluginConfig['RuntimeParameters']:
+        for item, value in self.pluginConfig['RuntimeParameters'].items():
             config=self.pluginConfig['RuntimeParameters'].get(item, raw=True)
             data=ast.literal_eval(config)
 
             record=dict(RATING='pass',
                         WHERE_CLAUSE=data['WHERE_CLAUSE'],
                         TABLE=data['TABLE'],
-                        EXPECTED=data['COUNT_VALUE'])
-
-            record['OPERATOR']=data.get('COUNT_OPERATOR')
+                        EXPECTED=int(data['EXPECTED']),
+                        OPERATOR = data.get('OPERATOR'))
 
             if not record['OPERATOR']:
                 record['OPERATOR'] = 'EQ'
 
-            result=self.connection.zDownloadSapTable(record['TABLE'], whereclause=record['WHERE_CLAUSE'], tabfields=data['COLUMNS'])
+            result=self.connection.download_table(record['TABLE'],
+                                                  where_clause=record['WHERE_CLAUSE'],
+                                                  tab_fields=data['COLUMNS'])
             if not result.fail:
-                record['CONFIGURED']=str(len(result.result['data']))
+                downloaded_data=result.data['data']
+                record['CONFIGURED']=str(len(downloaded_data))
             else:
                 record['CONFIGURED']=result.fail
-                totalResult.append(record)
-                self.pluginResult.resultRating='error'
-                self.pluginResult.pluginExecutionError=True
-                self.pluginResult.pluginExecutionErrorDescription=result.fail
-                self.pluginResult.setTableResult(totalResult)
+                self.pluginResult.add_result(record)
+                self.pluginResult.rating='error'
                 return Result(self.pluginResult)
 
-            success=self.OPERATIONS[data['COUNT_OPERATOR']](int(record['EXPECTED']), int(record['CONFIGURED']))
+            success=self.OPERATIONS[data['OPERATOR']](int(record['EXPECTED']), int(record['CONFIGURED']))
 
             if not success:
                 record['RATING']='fail'
-                self.pluginResult.resultRating='fail'
+                self.pluginResult.rating='fail'
 
-            totalResult.append(record)
+            self.pluginResult.add_result(record)
 
-        self.pluginResult.setTableResult(totalResult)
-        return Result(self.pluginResult)
+        return Result(data=self.pluginResult)
 
 
 

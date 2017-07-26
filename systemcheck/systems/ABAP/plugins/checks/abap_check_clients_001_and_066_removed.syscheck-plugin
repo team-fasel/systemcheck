@@ -1,0 +1,14 @@
+[Core]
+Name = Clients 001 and 066 Removed
+Module = modules/abap_check_table_entry_count
+
+[Documentation]
+Author = Lars Fasel
+Version = 0.1
+Description = The clients 001 and 066 are not longer required and can be deleted.
+Tree = Basis;Post Installation
+
+
+[Parameters]
+count_0 = {'TABLE':'T000', 'WHERE_CLAUSE':"MANDT EQ '001'", 'OPERATOR':'EQ', 'EXPECTED':0, 'COLUMNS':['MANDT']}
+count_1 = {'TABLE':'T000', 'WHERE_CLAUSE':"MANDT EQ '066'", 'OPERATOR':'EQ', 'EXPECTED':0, 'COLUMNS':['MANDT']}

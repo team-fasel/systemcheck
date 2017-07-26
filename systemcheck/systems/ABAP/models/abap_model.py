@@ -74,6 +74,14 @@ class AbapTreeNode(Base, QtModelMixin):
         """ Return the number of children """
         return len(self.children)
 
+    def _icon(self):
+        node = self._system_node()
+        if node is not None:
+            return node._icon()
+        else:
+            return ":Folder"
+
+
     def _insert_child(self, position:int, node)->bool:
         self.children.insert(position, node)
         try:
@@ -137,8 +145,9 @@ class AbapSystem(Base, QtModelMixin):
     id = Column(Integer, primary_key=True, qt_show=False)
 
     sid = Column(String(32),
-                 unique=True,
+                 unique=False,
                  nullable=False,
+                 default='NEW',
                  qt_label='SID',
                  qt_description='Unique System Identifier')
 
@@ -231,6 +240,9 @@ class AbapSystem(Base, QtModelMixin):
     system_tree_id = Column(Integer, ForeignKey('abap_tree.id'))
     tree = relationship('AbapTreeNode', back_populates=RELNAME, cascade='all, delete-orphan', single_parent=True)
 
+    def _icon(self):
+        return ":SAP"
+
 
 @generic_repr
 class AbapClient(Base, QtModelMixin, PasswordKeyringMixin):
@@ -263,7 +275,6 @@ class AbapClient(Base, QtModelMixin, PasswordKeyringMixin):
 
     def __init__(self, **kwargs):
         uuid_string = str(uuid.uuid4())
-        self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
         self.keyring_uuid = uuid_string
         self.client = kwargs.get('client')
         self.description = kwargs.get('description')
@@ -273,33 +284,37 @@ class AbapClient(Base, QtModelMixin, PasswordKeyringMixin):
 
     def abap_system(self):
         parent_node = self.tree.parent_node
-        if parent_node.type == 'ABAP':
+        if parent_node.type == 'abap_system':
             return parent_node.abap_system
         else:
             return None
 
-    def login_info(self):
+    def _icon(self):
+        return ":Client"
+
+    def logon_info(self):
 
         logon_info = {}
-
+        self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
         abap_system = self.abap_system()
         if abap_system:
             sysid = abap_system.sid
             logon_info['sysid'] = sysid  #technically only required for load balancing, but we specify it
                                          # anyway since it's handy down the road.
+            logon_info['client'] = self.client
             if abap_system.ms_hostname and abap_system.ms_sysnr and abap_system.ms_logongroup:
                 mshost=abap_system.ms_hostname
                 msserv='36' + abap_system.ms_sysnr
                 group = abap_system.ms_logongroup
-
                 self.logger.debug('Logon using Load Balancing. mshost: %s, msserv: %s, sysid: %s, group: %s', mshost, msserv, sysid, group)
                 logon_info['mshost'] = mshost
                 logon_info['msserv'] = msserv
                 logon_info['group'] = group
-            elif abap_system.as_host and abap_system.as_sysnr:
-                ashost = abap_system.as_hostname
-                sysnr = abap_system.as_sysnr
-                self.logger.debug('Logon using direct as connection. ashost: $s, sysnr: %s', ashost, sysnr)
+            elif abap_system.as_hostname and abap_system.as_sysnr:
+                logon_info['ashost'] = abap_system.as_hostname
+                logon_info['sysnr'] = abap_system.as_sysnr
+                self.logger.debug('Logon using direct as connection. ashost: %s, sysnr: %s', logon_info['ashost'],
+                                  logon_info['sysnr'])
             else:
                 return False
 
