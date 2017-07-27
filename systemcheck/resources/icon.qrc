@@ -17,6 +17,7 @@
     <file alias="CheckedCheckbox">./img/icons8/Checked Checkbox_32px.png</file>
     <file alias="CheckedCheckbox2">./img/icons8/Checked Checkbox 2_32px.png</file>
     <file alias="Checkmark">./img/icons8/Checkmark_32px.png</file>
+    <file alias="Client">./img/Client_32px.jpg</file>
     <file alias="Clock">./img/icons8/Clock_32px.png</file>
     <file alias="Cut">./img/icons8/Cut_32px.png</file>
     <file alias="Compare">./img/icons8/Compare_32px.png</file>
@@ -33,6 +34,7 @@
     <file alias="FindAndReplace">./img/icons8/Find and Replace_32px.png</file>
     <file alias="First">./img/icons8/First_32px.png</file>
     <file alias="FitToWidth">./img/icons8/Fit to Width_32px.png</file>
+    <file alias="Folder">./img/icons8/Folder_64px.png</file>
     <file alias="Forward">./img/icons8/Forward_32px.png</file>
     <file alias="Import">./img/icons8/Import_32px.png</file>
     <file alias="Information">./img/icons8/Information_32px.png</file>
