@@ -143,6 +143,9 @@ class Connection:
 
         return result
 
+    def close(self):
+        self.conn.close()
+
     def download_table(self,
                        tabname: str,
                        where_clause: str = None,
@@ -233,6 +236,10 @@ class Connection:
         else:
             return Result(data={'data': table_data, 'headers': fm_tbl_headers})
 
+    def fm_interface(self, fm):
+        result = self.call_fm('RFC_GET_FUNCTION_INTERFACE', FUNCNAME=fm, LANGUAGE='EN')
+        return result
+
     def user_change_own_password(self, password: str, set_prod_password: bool = True) -> Union[Result, Fail]:
         """ Change the password of the current user
 
@@ -271,6 +278,7 @@ class Connection:
             self.logger.error('Profile Assignment Failed: ' + result.fail)
 
         return result
+
 
 def get_connection(logon_info:dict)->Union[Result, Fail]:
     """ Establish a connection to an ABAP System

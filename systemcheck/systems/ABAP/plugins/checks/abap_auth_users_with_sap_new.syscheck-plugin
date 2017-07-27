@@ -7,7 +7,7 @@ Author = Lars Fasel
 Version = 0.1
 Description = Checks whether a user has SAP_NEW
 Tree = Authorizations;Basis;Critical Profiles
-clientspecific = True
 
 [Parameters]
+clientspecific = True
 iv_prof2 = "SAP_NEW"

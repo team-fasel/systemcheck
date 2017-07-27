@@ -15,6 +15,8 @@ class CheckAbapFoundationPlugin(systemcheck.systems.generic.plugins.GenericCheck
 
     TYPE='ABAP'
 
+    BAPI_MSG_TYPES = {'S':'Success', 'E':'Error', 'W':'Warning', 'I':'Info', 'A':'Abort'}
+
     def __init__(self):
         super().__init__()
 
@@ -157,6 +159,7 @@ class CheckAbapSUIMPlugin(CheckAbapFoundationPlugin):
         if result.fail:
             self.pluginResult.rating = 'error'
 
+        self.pluginResult.rating='info'
         fm_interface = result.data
 
         fmkeys={item['PARAMETER'] for item in fm_interface['PARAMS']}
@@ -166,7 +169,12 @@ class CheckAbapSUIMPlugin(CheckAbapFoundationPlugin):
         fmcallparams={}
 
         for parameter in relevantParams:
-            fmcallparams[parameter]=ast.literal_eval(self.pluginConfig['Parameters'][parameter.lower()])
+
+            param_value = self.pluginConfig['Parameters'].get(parameter, raw=True)
+            if param_value=='':
+                param_value = ' '
+
+            fmcallparams[parameter]=param_value
 
         self.logger.debug('parameters for SUIM API Call: %s', pformat(fmcallparams))
 
@@ -177,9 +185,23 @@ class CheckAbapSUIMPlugin(CheckAbapFoundationPlugin):
 
         fm_data=result.data
 
+        message = 'The plugin showed some additional results: \n'
+
+        #Analyzing the return structure
+        return_data = fm_data.get('RETURN')
+        if len(return_data) >0:
+            msg_types = [item['TYPE'] for item in return_data]
+            for rec in return_data:
+                message += '{}: {}\n'.format(self.BAPI_MSG_TYPES[rec.get('TYPE')], rec['MESSAGE'])
+
+            self.pluginResult.message = message
+            if 'E' in msg_types or 'A' in msg_types:
+                self.pluginResult.rating = 'error'
+            elif 'W' in msg_types:
+                self.pluginResult.rating = 'warning'
+
         self.pluginResult.result=fm_data.get(self.RETURNSTRUCTURE)
 
-        self.pluginResult.rating='info'
 
         if len(self.pluginResult.result)>0:
             self.pluginResult.rating = 'fail'
@@ -187,6 +209,12 @@ class CheckAbapSUIMPlugin(CheckAbapFoundationPlugin):
             self.pluginResult.rating = 'pass'
 
         return Result(data=self.pluginResult)
+
+    def analyzeResults(self):
+        """ Analyze the Results and apply White Lists"""
+        pass
+
+
 
 class CheckAbapRsusr002Plugin(CheckAbapSUIMPlugin):
     """RSUSR002: Users by Complex Selection Criteria
@@ -279,3 +307,191 @@ class CheckAbapRsusr002Plugin(CheckAbapSUIMPlugin):
 
         for column in report_columns:
             self.pluginResult.addResultColumn(column, header_descriptions.get(column))
+
+class CheckAbapRsusr020Plugin(CheckAbapSUIMPlugin):
+    """SUSR_SUIM_API_RSUSR020: Profiles by complex selection criteria
+
+    The selection options below depend on the version of the system. The return structure ET_PROFS has the following
+    headers: PROFN, AKTPS, PTEXT, MODDA, MODTI, MODBE, TYP, LANGU
+
+    Import:
+        Selection Criteria:
+            IT_PROF      Selection options for profiles
+            IT_PTEXT     Transfer structure for selection options for profile text
+            IV_ACTIVE    Active profiles (TRUE (='X') und FALSE (=' '))
+            IV_NO_ACT    Maintenance Version
+        Additional selection criteria for profiles:
+            IV_C_PROF    Composite Profile (TRUE (='X') und FALSE (=' '))
+            IV_S_PROF    Single Profile (TRUE (='X') und FALSE (=' '))
+            IV_G_PROF    Generated Profile (TRUE (='X') und FALSE (=' '))
+            IV_MODBE     Mofidied by
+            IV_VONDAT    Last change since
+            IV_BISDAT    Last change up to
+        Selection by contained profiles:
+            IT_I_PROFS   Selection option for profiles
+        Selection by authorizations:
+            IT_OBJCT     Selection option for authorization objects
+            IT_AUTH
+        Selection by authorization values:
+            IT_VALUES    Selection option for authorization values
+        Selection by role:
+            IT_ACTGRPS
+    Export:
+        ET_PROFS  Profiles
+        RETURN    Return structure
+    """
+
+    FM = 'SUSR_SUIM_API_RSUSR020'
+    RETURNSTRUCTURE='ET_PROFS'
+
+    def __init__(self):
+        super().__init__()
+
+        report_columns = CONFIG['systemtype_ABAP']['suim.reportcolumns.rsusr020'].split(',')
+        header_descriptions = dict(PROFN='Profile Name', AKTPS='Act./Maint. Version',
+                                                         PTEXT='Profile Text', MODDA='Modification Date',
+                                                         MODTI='Modification Time', MODBE='Last Change By',
+                                                         TYP='Profile Type (Comp/Single)', LANGU='Language')
+
+
+        for column in report_columns:
+            self.pluginResult.addResultColumn(column, header_descriptions.get(column))
+
+class CheckAbapRsusr200Plugin(CheckAbapSUIMPlugin):
+    """SUSR_SUIM_API_RSUSR200: Users by
+
+
+    Import:
+        Selection Criteria:
+            IT_PROF      Selection options for profiles
+            IT_PTEXT     Transfer structure for selection options for profile text
+            IV_ACTIVE    Active profiles (TRUE (='X') und FALSE (=' '))
+            IV_NO_ACT    Maintenance Version
+        Additional selection criteria for profiles:
+            IV_C_PROF    Composite Profile (TRUE (='X') und FALSE (=' '))
+            IV_S_PROF    Single Profile (TRUE (='X') und FALSE (=' '))
+            IV_G_PROF    Generated Profile (TRUE (='X') und FALSE (=' '))
+            IV_MODBE     Mofidied by
+            IV_VONDAT    Last change since
+            IV_BISDAT    Last change up to
+        Selection by contained profiles:
+            IT_I_PROFS   Selection option for profiles
+        Selection by authorizations:
+            IT_OBJCT     Selection option for authorization objects
+            IT_AUTH
+        Selection by authorization values:
+            IT_VALUES    Selection option for authorization values
+        Selection by role:
+            IT_ACTGRPS
+    Export:
+        ET_USERS  Profiles
+        RETURN    Return structure
+    """
+
+    FM = 'SUSR_SUIM_API_RSUSR200'
+    RETURNSTRUCTURE='ET_USERS'
+
+    def __init__(self):
+        super().__init__()
+
+        report_columns = CONFIG['systemtype_ABAP']['suim.reportcolumns.rsusr020'].split(',')
+
+        header_descriptions = dict(BNAME = 'Username',
+                                   CLASS = 'User Group',
+                                   USTYP = 'User Type',
+                                   ANAME = 'Created By',
+                                   ERDAT = 'Creation Date',
+                                   GLTGV = 'Valid from',
+                                   GLTGB = 'Valid until',
+                                   TRDAT1 = 'Date of Last Logon',
+                                   LTIME = 'Last Logon Time',
+                                   ICON_STATE = 'Password Status',
+                                   BCDA1 = 'Date of Last Password Change',
+                                   ICON_LOCKED = 'User Lock Status',
+                                   LOCK_REASON = 'Reason for User Lock',
+                                   LOCNT = 'Number of failed logon attempts',
+                                   CODVN = 'Code Version of Password Hash',
+                                   USR02FLAG = 'User Lock Status',
+                                   TRDAT = 'Last Logon Date',
+                                   PWDLOCKDATE = 'Setting of Password Lock',
+                                   RELEASE = 'SAP Release',
+                                   SECURITY_POLICY = 'Security Policy Name')
+
+
+        for column in report_columns:
+            self.pluginResult.addResultColumn(column, header_descriptions.get(column))
+
+class CheckAbapRsusr070Plugin(CheckAbapSUIMPlugin):
+    """SUSR_SUIM_API_RSUSR070: Roles by complex selection criteria
+
+    The selection options below depend on the version of the system. The return structure ET_PROFS has the following
+    headers: PROFN, AKTPS, PTEXT, MODDA, MODTI, MODBE, TYP, LANGU
+
+         IT_ACTGRPS
+         IT_TEXT1
+         IV_LANGU
+         IV_BES_LNG
+         IV_S_ROLES
+         IV_C_ROLES
+         IV_OBSOLETE
+         IV_ALL_USER
+         IV__USER
+         IT_USER
+         IV_ALVLISTE
+         IV_NO_USER
+         IT_TCODE1
+         IV_TCODE2
+         IV_TCODE3
+         IV_TCODE4
+         IV_TCODE5
+         IT_S_OBJNM1
+         IV_S_OBJNM2
+         IV_S_OBJNM3
+         IV_S_OBJNM4
+         IV_S_OBJNM5
+         IT_PROF
+         IT_OBJCT
+         IT_VALUES
+         IV_AUTH_FLD
+         LV_AUTH_VAL
+         LV_RESPO
+         LV_CHANGER
+         LV_CHG_SDAT
+         LV_CHG_BDAT
+
+    """
+
+    #TODO: Need to adapt the normal SUIM interface for RSUSR070
+
+    FM = 'SUSR_SUIM_API_RSUSR070'
+    RETURNSTRUCTURE='ET_PROFS'
+
+    def __init__(self):
+        super().__init__()
+
+        report_roles_columns = CONFIG['systemtype_ABAP']['suim.reportcolumns.rsusr070_roles'].split(',')
+        report_users_columns = CONFIG['systemtype_ABAP']['suim.reportcolumns.rsusr070_users'].split(',')
+        header_roles_descriptions = dict(AGR_NAME='Role Name',
+                                        AGR_TYPE='Role Type',
+                                        ATEXT = 'Role Description',
+                                        LANGU = 'Logon Language')
+
+        header_users_descriptions = dict(UNAME = 'User Name',
+                                         NAME_TEXT = 'Full Name of User',
+                                         AGR_NAME = 'Role Nane',
+                                         AGR_TYPE = 'Role Type',
+                                         ASSIGN_TYPE = 'ASSIGN_TYPE',
+                                         ASSIGN_REF = 'ASSIGN_REF',
+                                         FROM_DAT = 'Valid From',
+                                         TO_DAT = 'Valid Until',
+                                         AGR_TEXT = 'Role Description')
+
+
+
+        for column in report_roles_columns:
+            self.pluginResult.addResultColumn(column, header_roles_descriptions.get(column))
+
+        for column in report_users_columns:
+            self.pluginResult.addResultColumn(column, header_users_descriptions.get(column))
+
+
