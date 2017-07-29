@@ -19,15 +19,11 @@ class CheckPluginManager(PluginManager):
     executePluginsInParallel : executes a number of plugins in parallel processes. Yields the return
     """
 
-    def __init__(self, pluginFolder):
+    def __init__(self, pluginFolder=None):
         super().__init__()
         self.setPluginInfoExtension('syscheck-plugin')
         self.logger=logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
 
-        checkPluginDir=get_absolute_systemcheck_path(pluginFolder)
-        self.setPluginPlaces([checkPluginDir])
-        self.locatePlugins()
-        self.loadPlugins(callback_after=self.callback_after_load)
 
     def executePlugin(self, pluginName, logonInfo, sysInfo):
         """ Execute Plugin"""

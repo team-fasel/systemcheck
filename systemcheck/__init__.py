@@ -30,5 +30,4 @@ __revision__        = __version__
 
 
 from systemcheck import models
-from pprint import pprint
 

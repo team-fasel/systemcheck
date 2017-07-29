@@ -13,5 +13,5 @@ __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
 from systemcheck.systems.ABAP.plugins.plugin_types import CheckAbapCountTableEntries, CheckAbapFoundationPlugin, \
-    CheckAbapPlugin, CheckAbapRsusr002Plugin, CheckAbapRsusr020Plugin, CheckAbapRsusr200Plugin
+    CheckAbapPlugin, CheckAbapSUIMPlugin
 

@@ -7,6 +7,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from systemcheck.gui.qtalcmapper import generateQtDelegate, getQtWidgetForAlchemyType
 from systemcheck.gui.widgets import TreeView
 from systemcheck.gui.models import SettingsModel
+from pprint import pprint
 
 __authors__     = ['Lars Fasel']
 __author__      = ','.join(__authors__)
@@ -35,7 +36,7 @@ class SettingsWidget(QtWidgets.QWidget):
         self.setVisible(False)
         if treeNode:
             if treeNode.type != 'FOLDER':
-                self.alchemyObject = getattr(treeNode, treeNode.RELNAME)
+                self.alchemyObject = getattr(treeNode, treeNode.type)
                 self.setLayout(layout)
                 self.delegate=generateQtDelegate(self.alchemyObject)
                 self.dataMapper=QtWidgets.QDataWidgetMapper()
@@ -93,14 +94,16 @@ class SystemsWidget(QtWidgets.QWidget):
         if model:
             self.setModel(model)
 
-    def on_addSubFolder(self):
-        index = self.tree.currentIndex()
-        self.model.insertRow(0, parent=index)
-
     def on_addFolder(self):
-        index = self.tree.currentIndex()
-        parent = index.parent()
-        self.model.insertRow(0, parent=parent)
+        if len(self.tree.selectedIndexes()) == 0:
+            index = QtCore.QModelIndex()
+        else:
+            index = self.tree.currentIndex()
+
+        self.model.insertRow(0, index)
+        if not self.tree.isExpanded(index):
+            self.tree.expand(index)
+
 
     def on_deleteItem(self):
         index = self.tree.currentIndex()
@@ -148,7 +151,6 @@ class SystemsWidget(QtWidgets.QWidget):
         self.treeContextMenu = QtWidgets.QMenu()
 
         self.addSubFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Sub Folder', self)
-        self.addSubFolder_act.triggered.connect(self.on_addSubFolder)
         self.addFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Folder', self)
         self.addFolder_act.triggered.connect(self.on_addFolder)
         self.deleteItem_act = QtWidgets.QAction(QtGui.QIcon(":Trash"), 'Delete Item', self)
@@ -160,10 +162,6 @@ class SystemsWidget(QtWidgets.QWidget):
     def openContextMenu(self, position):
 
         menu=QtWidgets.QMenu()
-        menu.addAction(self.addFolder_act)
-        menu.addAction(self.addSubFolder_act)
-        menu.addAction(self.deleteItem_act)
-
         menu = self.systemSpecificContextMenu(position, menu)
         menu.exec_(self.tree.viewport().mapToGlobal(position))
 

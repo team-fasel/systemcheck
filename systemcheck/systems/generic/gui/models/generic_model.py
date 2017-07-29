@@ -1,8 +1,9 @@
 import logging
 
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 from typing import Any
 from systemcheck.systems.generic.model.generic_model import GenericTreeNode
+from systemcheck.resources import icon_rc
 
 class GenericTreeModel(QtCore.QAbstractItemModel):
 
@@ -10,7 +11,7 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         super().__init__(parent)
         self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
         self._rootNode=rootnode
-        self._treeNode=GenericTreeNode
+        self._treeNode=None
         self.checkedIndexes = set()
 
     def rowCount(self, parent: QtCore.QModelIndex) -> int:
@@ -38,6 +39,11 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
                     return QtCore.Qt.Unchecked
 
         node = index.internalPointer()
+
+        if role == QtCore.Qt.DecorationRole:
+            if index.column() == 0:
+                icon = QtGui.QIcon(node._icon())
+                return icon
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             return node._value_by_visible_colnr(index.column())

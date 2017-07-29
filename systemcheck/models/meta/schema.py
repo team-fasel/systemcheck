@@ -2,6 +2,7 @@ import sqlalchemy
 from inspect import isclass
 from sqlalchemy import ForeignKey, Table, DateTime, Integer, CHAR, inspect, String
 from sqlalchemy import event, ForeignKeyConstraint, UniqueConstraint
+from sqlalchemy.types import TypeDecorator
 from sqlalchemy.sql import functions
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_utils.types import UUIDType
@@ -73,6 +74,12 @@ class QtModelMixin(object):
             return value
         else:
             return False
+
+    def _icon(self):
+        """ Returns the Icon of the node type """
+
+        return False
+
 
     def _info_by_visible_colnr(self, colnr:int)->Union[dict, bool]:
         """ Return the info metadata for a visible column"""
@@ -219,9 +226,8 @@ class PasswordKeyringMixin():
         return pwd
 
     @password.setter
-    def password(self, password):
+    def password(self, pwd):
         namespace='systemcheck'
-        pwd = password
         keyring_username=self.keyring_uuid
         keyring.set_password(namespace, username=keyring_username, password=pwd)
 
@@ -299,5 +305,17 @@ class utcnow(functions.FunctionElement):
     key = 'utcnow'
     type = DateTime(timezone=True)
 
+class Password(TypeDecorator):
 
+    impl = CHAR
 
+    def process_bind_param(self, value, uuid):
+        if value is None:
+            return value
+        keyring.set_password('systemcheck', username=uuid, password=value)
+
+    def process_result_value(self, uuid):
+        if uuid is None:
+            return uuid
+        else:
+            return keyring.get_password('systemcheck', username=uuid)

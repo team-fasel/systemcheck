@@ -30,14 +30,12 @@ def main_is_frozen():
 
     return (hasattr(sys, '_MEIPASS'))
 
-
 def get_absolute_path(relative_path):
     """ Returns the absolute path for the relative path taking into account the freeze status """
 
     if main_is_frozen():
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.dirname(sys.argv[0]), relative_path)
-
 
 def get_absolute_systemcheck_path(relative_path=None):
     """ Returns the absolute path for the relative path taking into account the freeze status """
@@ -95,6 +93,7 @@ class Result(object):
     def __repr__(self):
         string = '< {}: message: {}, data: {}, fail: {}'.format(self.__class__.__name__, self.message, self.data, self.fail)
         return string
+
 
 class Fail(Result):
     """

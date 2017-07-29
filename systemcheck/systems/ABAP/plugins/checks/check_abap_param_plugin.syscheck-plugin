@@ -1,0 +1,10 @@
+[Core]
+Name = Check ABAP Configuration Parameter
+Module = check_abap_param_plugin
+
+[Documentation]
+Author = Lars Fasel
+Version = 0.1
+Description = Check the configuration of runtime parameters
+
+
