@@ -142,14 +142,14 @@ class SqlalchemyAbapModel(unittest.TestCase):
         e1d_client000_node = AbapTreeNode(type=e1d_client000.RELNAME, name='000', parent_node=e1d_node)
         e1d_client000_node.abap_client = e1d_client000
 
-        logon_info = e1d_client000.login_info()
+        logon_info = e1d_client000.logon_info()
         self.assertEqual(logon_info, {'group': 'PUBLIC', 'mshost': 'sape1d.team-fasel.lab',  'msserv': '3600',
                                       'passwd': 'PassWord1',  'sysid': 'E1D', 'user': 'TestUser'})
 
         e1d_abap.use_snc = True
         e1d_client000.use_sso=True
-        pprint(e1d_client000.login_info())
-        self.assertEqual(e1d_client000.login_info(), {'group': 'PUBLIC', 'mshost': 'sape1d.team-fasel.lab',  'msserv': '3600',
+        pprint(e1d_client000.logon_info())
+        self.assertEqual(e1d_client000.logon_info(), {'group': 'PUBLIC', 'mshost': 'sape1d.team-fasel.lab', 'msserv': '3600',
                                          'snc_myname': 'p:CN=LARS@< please customize >',  'snc_partnername': 'Fill SNC Name Here',
                                          'snc_qop': '9', 'sysid': 'E1D'})
 
@@ -195,7 +195,6 @@ class SqlalchemyAbapModel(unittest.TestCase):
 
         count=position_folder._child_count()
         self.assertEqual(count, 4)
-
 
     def test_delete_children(self):
         print('step_007: Delete child at a specific position')
