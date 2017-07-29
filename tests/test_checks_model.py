@@ -10,7 +10,7 @@ import sqlalchemy_utils
 import logging
 import os
 
-class TestConnection(TestCase):
+class TestChecks(TestCase):
 
     #TODO: clean up and align with PyCharm testing integration
 
@@ -38,9 +38,8 @@ class TestConnection(TestCase):
 
     def test_CheckAbapCountTableEntries(self):
 
-        check=CheckAbapCountTableEntries(check_name = 'Clients 001 and 066 removed',
-                                         check_description = 'If client 001 is not actively used, it can be deleted. Client 066 is no longer required in any case',
-                                         tree_path = 'Basis;Post Installation',
+        check=CheckAbapCountTableEntries(name = 'Clients 001 and 066 removed',
+                                         description = 'If client 001 is not actively used, it can be deleted. Client 066 is no longer required in any case',
                                          )
 
 
