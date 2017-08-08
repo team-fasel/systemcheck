@@ -1,12 +1,12 @@
 import operator
 from yapsy import IPlugin
-from systemcheck.config import CONFIG
+import systemcheck.session
 import datetime
 import logging
 from collections import OrderedDict
 from systemcheck.utils import Result, Fail
 
-class PluginResult:
+class ActionResult:
     """ Result of a check plugin
 
 
@@ -156,6 +156,7 @@ class PluginResult:
     def message(self, message):
         self._message = message
 
+
 class BasePlugin(IPlugin.IPlugin):
     """ The Base Plugin
 
@@ -184,37 +185,29 @@ class BasePlugin(IPlugin.IPlugin):
 
     TYPE = None
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__()
-        self.pluginResult = PluginResult()
+        self.actionResult = ActionResult()
         self.logger = logging.getLogger("{}.{}".format(__name__, self.__class__.__name__))
 
 
-class GenericCheckPlugin(BasePlugin):
-    """ The Foundation for all check plugins
+class GenericActionPlugin(BasePlugin):
+    """ The Foundation for all Action plugins
 
     """
 
+    def __init__(self, *args, parameters=None, **kwargs):
+        super().__init__()
 
-    def set_plugin_config(self, Core:dict,
-                          Documentation:dict,
-                          Parameters:dict,
-                          RuntimeParameters:dict,
-#                          Path:dict
-                          ):
-        """ Set Plugin Config
-
-        The yapsy plugin manager executed this method to configure the plugin based on the configuration files
+        self.parameters = parameters
+        self.alchemyObjects=[]
 
 
-        :param Core: The 'Core' section of PluginInfo.details
-        :param Documentation: The 'Documentation section of PluginInfo.details
-        :param Parameters: The standard parameters as defined in the plugin's info file
-        :param RuntimeParameters: The updated parameters including custom config if it exists
-        :param Path: The path as available in PluginInfo.path"""
+    def set_plugin_config(self):
+        pass
 
-        self.pluginConfig = dict(Core = Core, Documentation = Documentation, Parameters=Parameters, RuntimeParameters=RuntimeParameters, Path = None)
-        self.logger = logging.getLogger('systemcheck.plugins.CheckPlugin.{}.{}'.format(self.TYPE, self.pluginConfig['Core']['Name']))
+    def ressolve_parameters(self):
+        pass
 
     def system_connection(self, **logoninfo):
         """ Get a connection to the system """
@@ -223,7 +216,7 @@ class GenericCheckPlugin(BasePlugin):
     def execute(self, connection):
         """ The entry point for the actual plugin code"""
 
-    def execute_plugin(self, system_object, config_object, *args, **kwargs):
+    def execute_action(self, system_object, parameters, *args, **kwargs):
         """ Function that gets executed to initiate the plugin execution.
 
         :param system_object: The sqlalchemy objet of the system that the plugin should be executed for
@@ -233,6 +226,7 @@ class GenericCheckPlugin(BasePlugin):
 
         self.logger.debug('Starting Execution {}')
         self._system_object = system_object
+        self.init_db()
 
         result = self.system_connection()
         if not result.fail:
@@ -242,4 +236,9 @@ class GenericCheckPlugin(BasePlugin):
 
         plugin_result = self.execute(connection)
         return plugin_result
+
+    def init_db(self):
+
+        for object in self.alchemyObjects:
+            object.__table__.create(systemcheck.session.engine)
 

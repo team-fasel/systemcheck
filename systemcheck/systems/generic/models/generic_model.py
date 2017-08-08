@@ -1,9 +1,4 @@
 # define authorship information
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy_utils import generic_repr, ChoiceType
-
-from models.meta import Base, QtModelMixin, Column
-
 __authors__     = ['Lars Fasel']
 __author__      = ','.join(__authors__)
 __credits__     = []

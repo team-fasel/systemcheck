@@ -5,7 +5,7 @@ import systemcheck
 from systemcheck.systems.generic.gui.models import GenericTreeModel
 from systemcheck.gui.models import SettingsModel
 from systemcheck.systems.ABAP.models import AbapTreeNode, AbapSystem
-from systemcheck.systems.ABAP.gui.models import AbapTreeModel
+from systemcheck.systems.ABAP.gui.models import AbapSystemTreeModel
 from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import logging
 
@@ -85,7 +85,7 @@ class TestSettingsModel(TestCase):
         self.logger.info('Generated Tree: ' + rootnode._dump())
         self.session.commit()
 
-        self.treemodel = AbapTreeModel(rootnode)
+        self.treemodel = AbapSystemTreeModel(rootnode)
 
 
     def test_columnCount(self):

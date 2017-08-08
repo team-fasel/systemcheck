@@ -15,5 +15,4 @@ __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
 
-from systemcheck.systems.generic.gui.models.generic_model import GenericTreeModel
 

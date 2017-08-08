@@ -12,6 +12,7 @@ __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
-from systemcheck.systems.ABAP.plugins.plugin_types import CheckAbapCountTableEntries, CheckAbapFoundationPlugin, \
-    CheckAbapPlugin, CheckAbapSUIMPlugin
+import systemcheck.systems.ABAP.plugins.actions
+from systemcheck.systems.ABAP.plugins.action_types import CheckAbapFoundationAction, \
+    CheckAbapAction
 

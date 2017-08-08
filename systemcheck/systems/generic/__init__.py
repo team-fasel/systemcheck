@@ -13,3 +13,9 @@ __author__      = ','.join(__authors__)
 __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
+
+import systemcheck.systems.generic.gui
+import systemcheck.systems.generic.models
+import systemcheck.systems.generic.actions
+import systemcheck.systems.generic.utils
+

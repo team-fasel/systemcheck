@@ -12,7 +12,7 @@ __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
-
+import systemcheck.systems.generic.gui.widgets
 from systemcheck.gui.widgets.widgets import TreeView
 from PyQt5 import QtCore, QtWidgets
 

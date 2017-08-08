@@ -1,14 +1,16 @@
 import sqlalchemy
 from inspect import isclass
 from sqlalchemy import ForeignKey, Table, DateTime, Integer, CHAR, inspect, String
+from sqlalchemy.orm import relationship
 from sqlalchemy import event, ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.sql import functions
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy_utils.types import UUIDType
+from sqlalchemy_utils.types import UUIDType, ChoiceType
 from typing import Any, Union, List
 import keyring
 import uuid
+from pprint import pprint
 
 def bool_or_str(type_):
     return is_string(type_) or is_boolean(type_)
@@ -89,6 +91,7 @@ class QtModelMixin(object):
             return value
         else:
             return False
+
 
     def _set_value_by_colnr(self, colnr:int, value:object):
         """ Get the Value of a Column by its Number
@@ -177,8 +180,11 @@ class QtModelMixin(object):
 
         if self._visible_colnr_is_valid(colnr):
             visible_columns=self._visible_columns()
-            value=getattr(self, visible_columns[colnr].name)
-            return value
+            try:
+                value=getattr(self, visible_columns[colnr].name)
+                return value
+            except Exception as err:
+                pprint(err)
         else:
             return False
 
@@ -213,6 +219,47 @@ class QtModelMixin(object):
             return True
         return False
 
+class StandardAbapAuthSelectionOptionMixin:
+
+
+    CHOICE_SIGN = [('I', 'Include'),
+                   ('E', 'Exclude')]
+
+    CHOICE_OPTION = [('EQ', 'Equal'),
+                     ('NE', 'Not Equal'),
+                     ('GT', 'Greater Than'),
+                     ('GE', 'Greater or Equal'),
+                     ('LT', 'Lower Than'),
+                     ('LE', 'Lower or Equal')]
+
+    SIGN = Column(ChoiceType(CHOICE_SIGN),
+                  nullable = False,
+                  default = 'I',
+                  qt_label = 'Incl./Excl.',
+                  qt_description = 'Should the specified items be included or excluded? Default is to include them',
+                  choices = CHOICE_SIGN,
+    )
+
+    OPTION = Column(ChoiceType(CHOICE_SIGN),
+                  nullable = False,
+                  default = 'EQ',
+                  qt_label = 'Sel. Option',
+                  qt_description = 'Selection option',
+                  choices = CHOICE_OPTION,
+    )
+
+    LOW = Column(String(12),
+                 nullable=False,
+                 qt_label='Lower Range Value',
+                 qt_description='Lower Range Value. Must be specified.',
+                )
+
+    HIGH = Column(String(12),
+                 nullable=True,
+                 qt_label='Higher Range Value',
+                 qt_description='Higher Range Value. Optional.',
+                )
+
 class PasswordKeyringMixin():
 
 
@@ -230,7 +277,6 @@ class PasswordKeyringMixin():
         namespace='systemcheck'
         keyring_username=self.keyring_uuid
         keyring.set_password(namespace, username=keyring_username, password=pwd)
-
 
 
 def is_string(type_):
@@ -319,3 +365,12 @@ class Password(TypeDecorator):
             return uuid
         else:
             return keyring.get_password('systemcheck', username=uuid)
+
+class RichString(String):
+    """ Represents a Rich String
+
+    This column type will get mapped to a rich text editor in PyQt
+    """
+
+    def __init__(self):
+        super().__init__()

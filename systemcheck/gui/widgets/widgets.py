@@ -15,6 +15,37 @@ __license__     = 'MIT'
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
+class CheckWidget(QtWidgets.QWidget):
+
+    def __init__(self, model = None):
+        super().__init__()
+        if model:
+            self.model = model
+
+        self.setupUi()
+        self.setModel(model)
+        self.show()
+
+    def setupUi(self):
+        self.tree = TreeView()
+        self.tree.header().setStretchLastSection(True)
+        self.tree.show()
+
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+        self.layout.addWidget(self.tree)
+        self.setLayout(self.layout)
+
+    def setModel(self, model):
+
+        self.model = model
+        self.tree.setModel(model)
+
+
+
+
 class FlatComboBox(QtWidgets.QComboBox):
     """ A Flat QComboBox
 
@@ -82,5 +113,6 @@ class TreeView(QtWidgets.QTreeView):
         self.setHeaderHidden(True)
         self.sortByColumn(0, QtCore.Qt.AscendingOrder)
         self.setSortingEnabled(True)
-
+        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
 

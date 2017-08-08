@@ -14,6 +14,7 @@
     <file alias="Back">./img/icons8/Back_32px.png</file>
     <file alias="BulletedList">./img/icons8/Bulleted List_32px.png</file>
     <file alias="Bold">./img/icons8/Bold_32px.png</file>
+    <file alias="Checked">./img/icons8/Checked_48px.png</file>
     <file alias="CheckedCheckbox">./img/icons8/Checked Checkbox_32px.png</file>
     <file alias="CheckedCheckbox2">./img/icons8/Checked Checkbox 2_32px.png</file>
     <file alias="Checkmark">./img/icons8/Checkmark_32px.png</file>
@@ -43,10 +44,12 @@
     <file alias="Key">./img/icons8/Key_32px.png</file>
     <file alias="Last">./img/icons8/Last_32px.png</file>
     <file alias="Linux">./img/icons8/Linux_32px.png</file>
+    <file alias="MarkerPen">./img/icons8/Marker Pen_32px.png</file>
     <file alias="Menu">./img/icons8/Menu_32px.png</file>
     <file alias="New">./img/icons8/New_32px.png</file>
     <file alias="Next">./img/icons8/Next_32px.png</file>
     <file alias="NumberedList">./img/icons8/Numbered List_32px.png</file>
+    <file alias="Open">./img/icons8/Open_32px.png</file>
     <file alias="Outdent">./img/icons8/Outdent_32px.png</file>
     <file alias="Password">./img/icons8/Password_32px.png</file>
     <file alias="Pause">./img/icons8/Pause_32px.png</file>
@@ -70,7 +73,9 @@
     <file alias="SkipToStart">./img/icons8/Skip to Start_32px.png</file>
     <file alias="SQL">./img/icons8/SQL_32px.png</file>
     <file alias="Stop">./img/icons8/Stop_32px.png</file>
-    <file alias="Stop">./img/icons8/Stop_32px.png</file>
+    <file alias="Strikethrough">./img/icons8/Strikethrough_32px.png</file>
+    <file alias="Subscript">./img/icons8/Subscript_32px.png</file>
+    <file alias="Superscript">./img/icons8/Superscript_32px.png</file>
     <file alias="SUSE">./img/icons8/SUSE_32px.png</file>
     <file alias="Trash">./img/icons8/Trash_32px.png</file>
     <file alias="TextColor">./img/icons8/Text Color_32px.png</file>

@@ -1,9 +1,4 @@
 # define authorship information
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy_utils import generic_repr, ChoiceType
-
-from models.meta import Base, QtModelMixin, Column
-
 __authors__     = ['Lars Fasel']
 __author__      = ','.join(__authors__)
 __credits__     = []
@@ -25,8 +20,8 @@ import enum
 from sqlalchemy import inspect, Integer, ForeignKey, String, Boolean
 from typing import Any, List, Union
 from systemcheck.models.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
-    Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, PasswordKeyringMixin, \
-    UniqueMixin, Session, DateTime, relationship, declared_attr, attribute_mapped_collection, \
+    StandardAbapAuthSelectionOptionMixin, Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, \
+    PasswordKeyringMixin, UniqueMixin, Session, DateTime, relationship, declared_attr, attribute_mapped_collection, \
     one_to_many, many_to_one, Boolean, Integer, ForeignKey, ChoiceType, hybrid_property, UUIDType
 from systemcheck.models.credentials import Credential
 from systemcheck.systems.ABAP.utils import get_snc_name

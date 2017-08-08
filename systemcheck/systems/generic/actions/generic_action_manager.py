@@ -30,7 +30,7 @@ class CheckPluginManager(PluginManager):
         self.logger.debug('trying to execute plugin {} on system {}'.format(pluginName, pformat(sysInfo)))
 
         plugin=self.getPluginByName(pluginName)
-        result = plugin.plugin_object.execute_plugin(logonInfo=logonInfo, sysInfo=sysInfo,
+        result = plugin.plugin_object.execute_action(logonInfo=logonInfo, sysInfo=sysInfo,
                                                      pluginConfigParam=plugin.details)
         if result:
             return result

@@ -150,7 +150,7 @@ class SystemsWidget(QtWidgets.QWidget):
 
         self.treeContextMenu = QtWidgets.QMenu()
 
-        self.addSubFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Sub Folder', self)
+#        self.addSubFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Sub Folder', self)
         self.addFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Folder', self)
         self.addFolder_act.triggered.connect(self.on_addFolder)
         self.deleteItem_act = QtWidgets.QAction(QtGui.QIcon(":Trash"), 'Delete Item', self)

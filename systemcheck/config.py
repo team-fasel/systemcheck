@@ -19,16 +19,16 @@ __maintainer__  = 'Lars Fasel'
 __email__       = 'systemcheck@team-fasel.com'
 
 from configparser import ConfigParser
-from systemcheck.utils import get_absolute_systemcheck_path
+import systemcheck.utils as utils
 
 import os
 
 
 CONFIG = ConfigParser()
-path_to_settings=os.path.join(get_absolute_systemcheck_path(), 'settings.ini')
+path_to_settings=os.path.join(utils.get_absolute_systemcheck_path(), 'settings.ini')
 
 CONFIG.read(path_to_settings)
-CONFIG['application']['absolute_path']=get_absolute_systemcheck_path()
+CONFIG['application']['absolute_path']=utils.get_absolute_systemcheck_path()
 
 
 

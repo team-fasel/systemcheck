@@ -1,7 +1,22 @@
-import systemcheck.systems.ABAP.plugins as abapplugins
-from systemcheck.config import CONFIG
+__authors__     = ['Lars Fasel']
+__author__      = ','.join(__authors__)
+__credits__     = []
+__copyright__   = 'Copyright (c) 2017'
+__license__     = 'MIT'
 
-class CheckAbapRsusr002Plugin(abapplugins.CheckAbapSUIMPlugin):
+# maintanence information
+__maintainer__  = 'Lars Fasel'
+__email__       = 'systemcheck@team-fasel.com'
+
+
+from checks.models.checks import Check
+from systemcheck.config import CONFIG
+from systemcheck.models.meta import Base, Boolean, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, \
+    generic_repr, relationship
+from systemcheck.systems.ABAP.plugins import action_types
+
+
+class CheckAbapRsusr002Action(action_types.CheckAbapSUIMAction):
     """RSUSR002: Users by Complex Selection Criteria
 
     This plugin type retrieves user accounts similar to using SUIM with complex selection criteria. It's calling
@@ -93,31 +108,6 @@ class CheckAbapRsusr002Plugin(abapplugins.CheckAbapSUIMPlugin):
         for column in report_columns:
             self.pluginResult.addResultColumn(column, header_descriptions.get(column))
 
-# define authorship information
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy_utils import generic_repr, ChoiceType
-
-from models.meta import Base, QtModelMixin, Column
-
-__authors__     = ['Lars Fasel']
-__author__      = ','.join(__authors__)
-__credits__     = []
-__copyright__   = 'Copyright (c) 2017'
-__license__     = 'MIT'
-
-# maintanence information
-__maintainer__  = 'Lars Fasel'
-__email__       = 'systemcheck@team-fasel.com'
-
-
-from sqlalchemy import inspect, Integer, ForeignKey, String, Boolean
-from typing import Any, List, Union
-from systemcheck.models.meta import Base, UniqueConstraint, \
-    Column, String, generic_repr, validates, backref, QtModelMixin, \
-    relationship, Boolean, Integer, ForeignKey, ChoiceType
-
-from systemcheck.models.checks import Check
-
 
 class StandardAuthSelectionOptionMixin:
 
@@ -166,6 +156,10 @@ class CheckAbapRsusr002(Check):
 
     CHOICE_OPERATION = [('MERGE', 'Merge'),
                         ('INDIVIDUAL', 'Treat Individually')]
+
+    __tablename__ = 'CheckAbapRsusr002Plugin'
+
+    __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, ForeignKey('checks_metadata.id'), primary_key=True)
     params = relationship('CheckAbapRsusr002Params')
@@ -227,7 +221,9 @@ class CheckAbapRsusr002Params(QtModelMixin, Base):
 
     """
 
-    __tablename__ = 'CheckAbapRsusr002Plugin'
+    __tablename__ = 'CheckAbapRsusr002Plugin__params'
+
+    __table_args__ = {'extend_existing':True}
 
     CHOICE_SUIM_LOCK_SEL = [('Y', 'Locked'),
                            ('N', 'Not Locked'),
@@ -347,7 +343,7 @@ class CheckAbapRsusr002Params(QtModelMixin, Base):
 class CheckAbapRsusr002Plugin__IT_USER(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Users"""
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_USER'
-
+    __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey('CheckAbapRsusr002Plugin.id'))
@@ -368,7 +364,7 @@ class CheckAbapRsusr002Plugin__IT_USER(QtModelMixin, Base, StandardAuthSelection
 class CheckAbapRsusr002Plugin__IT_GROUP(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Groups """
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_GROUP'
-
+    __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey('CheckAbapRsusr002Plugin.id'))
@@ -390,7 +386,7 @@ class CheckAbapRsusr002Plugin__IT_UGROUP(QtModelMixin, Base, StandardAuthSelecti
     """ Selection Options for User Groups  """
 
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_GROUP'
-
+    __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey('CheckAbapRsusr002Plugin.id'))
@@ -411,7 +407,7 @@ class CheckAbapRsusr002Plugin__IT_UGROUP(QtModelMixin, Base, StandardAuthSelecti
 class CheckAbapRsusr002Plugin__IT_UALIAS(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for User Aliases """
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_UALIAS'
-
+    __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey('CheckAbapRsusr002Plugin.id'))
@@ -432,6 +428,7 @@ class CheckAbapRsusr002Plugin__IT_UALIAS(QtModelMixin, Base, StandardAuthSelecti
 class CheckAbapRsusr002Plugin__IT_UTYPE(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for User Types """
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_UTYPE'
+    __table_args__ = {'extend_existing':True}
 
     CHOICE_USERTYPE = [('A', 'Dialog'),
                        ('B', 'System'),
@@ -462,6 +459,7 @@ class CheckAbapRsusr002Plugin__IT_UTYPE(QtModelMixin, Base, StandardAuthSelectio
 class CheckAbapRsusr002Plugin__IT_SECPOL(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Security Policy """
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_SECPOL'
+    __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
@@ -484,6 +482,7 @@ class CheckAbapRsusr002Plugin__IT_SNC(QtModelMixin, Base, StandardAuthSelectionO
     """ Selection Options for SNC """
 
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_SNC'
+    __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
@@ -505,6 +504,7 @@ class CheckAbapRsusr002Plugin__IT_SNC(QtModelMixin, Base, StandardAuthSelectionO
 class CheckAbapRsusr002Plugin__IT_ACTGRPS(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Roles """
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_ACTGRPS'
+    __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
@@ -526,6 +526,7 @@ class CheckAbapRsusr002Plugin__IT_ACTGRPS(QtModelMixin, Base, StandardAuthSelect
 class CheckAbapRsusr002Plugin__IT_PROF1(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Profiles """
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_PROF1'
+    __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
@@ -547,6 +548,7 @@ class CheckAbapRsusr002Plugin__IT_PROF1(QtModelMixin, Base, StandardAuthSelectio
 class CheckAbapRsusr002Plugin__IT_OBJCT(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
 
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_OBJCT'
+    __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
@@ -569,6 +571,7 @@ class CheckAbapRsusr002Plugin__IT_AUTH(QtModelMixin, Base, StandardAuthSelection
     """ Selection Options for Authorizations """
 
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_AUTH'
+    __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
@@ -591,6 +594,7 @@ class CheckAbapRsusr002Plugin__IT_VALUES(QtModelMixin, Base):
     """ Sel. According to Authorization Values """
 
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_AUTH'
+    __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
@@ -648,6 +652,7 @@ class CheckAbapRsusr002Plugin__IT_VALUES(QtModelMixin, Base):
 class CheckAbapRsusr002Plugin__IT_UREF(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Reference Users """
     __tablename__ = 'CheckAbapRsusr002Plugin__IT_UREF'
+    __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)

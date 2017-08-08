@@ -148,6 +148,26 @@ class PlainTextColumnDelegate(QtWidgets.QStyledItemDelegate):
         model.setData(index, editor.text())
 
 
+class RichTextColumnDelegate(QtWidgets.QStyledItemDelegate):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+
+    def createEditor(self, parent, option, index):
+        editor = utils.richTextEditor(parent)
+        return editor
+
+
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, QtCore.Qt.DisplayRole)
+        editor.setText(value)
+
+
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.document())
+
+
 class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
 
     def __init__(self, parent=None):

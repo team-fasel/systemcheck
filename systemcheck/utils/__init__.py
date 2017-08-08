@@ -16,5 +16,5 @@ __license__     = 'MIT'
 
 
 from systemcheck.utils.generic import get_absolute_path, get_absolute_systemcheck_path, Result, Fail, get_lower_interval
-
+from systemcheck.utils.sqlalchemy import get_or_create
 

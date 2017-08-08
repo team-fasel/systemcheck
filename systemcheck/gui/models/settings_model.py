@@ -1,8 +1,23 @@
+# -*- coding: utf-8 -*-
+
+""" Generic UI Models
+
+
+"""
+
+# define authorship information
+__authors__ = ['Lars Fasel']
+__author__ = ','.join(__authors__)
+__credits__ = []
+__copyright__ = 'Copyright (c) 2017'
+__license__ = 'MIT'
+
+
+
 import logging
 from typing import Any
 
-from PyQt5 import QtCore
-
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 class SettingsModel(QtCore.QAbstractItemModel):
 

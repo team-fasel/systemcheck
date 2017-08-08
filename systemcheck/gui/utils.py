@@ -1,6 +1,7 @@
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 import traceback
+from systemcheck.gui.widgets import TextEditor
 
 def lineEdit(*args, editable:bool=True, transparentBackground:bool=True, borders=False, **kwargs):
     """ Generate a pre-customized QLineEdit Widget
@@ -27,6 +28,34 @@ def lineEdit(*args, editable:bool=True, transparentBackground:bool=True, borders
         widget.setStyleSheet(stylesheet)
     return widget
 
+def richTextEditor(*args, editable:bool=True, transparentBackground:bool=True, borders=False, **kwargs):
+    """ Generate a pre-customized RichTextEditor Widget
+
+    :param parent: Parent Index
+    :param editable: Defines whether the line edit should be editable or not
+    :param transparentBackground: Sets the style sheet to a transparent background if set to True
+    :param borders: Defines wheter the widget should have any borders. Useful to disable if you display the widget in a
+                    QTableWidgetItem.
+    """
+
+
+
+    stylesheetlist=[]
+    if transparentBackground:
+        stylesheetlist.append('background-color: rgba(0, 0, 0, 0);')
+
+    if not borders:
+        stylesheetlist.append('border: none;')
+
+    widget=TextEditor(**kwargs)
+
+    if stylesheetlist:
+        stylesheet = "QTextEdit { " + ' '.join(stylesheetlist) + '}'
+        print(stylesheet)
+        widget.setStyleSheet(stylesheet)
+    return widget
+
+
 def checkBox(*args, info:dict=None, **kwargs):
     flat=kwargs.get('flat')
     widget = QtWidgets.QCheckBox()
@@ -40,7 +69,7 @@ def comboBox(*args, choices=None, **kwargs):
     return widget
 
 def message(text, icon:int = QtWidgets.QMessageBox.Information, title=None, informativeText=None, details=None,
-            buttons=None, defaultButton=None, exc_info=False, parent=None):
+            buttons=None, defaultButton=None, exc_info=False, parent=None, windowIcon:QtGui.QIcon=None):
     """Show a Message
 
     :param icon: Icon that should be displayed
@@ -68,6 +97,9 @@ def message(text, icon:int = QtWidgets.QMessageBox.Information, title=None, info
         details = traceback.format_exc(limit=20)
 
     mbox = QtWidgets.QMessageBox(icon, title, text, buttons, parent)
+
+    if windowIcon:
+        mbox.setWindowIcon(windowIcon)
 
     if informativeText:
         mbox.setInformativeText(informativeText)

@@ -1,14 +1,13 @@
-from systemcheck.models.checks import Check
-from systemcheck.systems.ABAP.plugins.checks.check_abap_count_table_entries import CheckAbapCountTableEntries, CheckAbapCountTableEntries__params
+from systemcheck.systems.ABAP.plugins.actions.check_abap_count_table_entries import CheckAbapCountTableEntries, CheckAbapCountTableEntries__params
+import os
 from unittest import TestCase
+import logging
 
 import systemcheck.models as models
-from systemcheck.session import SESSION
-from systemcheck.models.credentials import Credential
-from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
-import sqlalchemy_utils
-import logging
-import os
+from systemcheck.models.meta.base import engine_from_config, scoped_session, sessionmaker
+from systemcheck.systems.ABAP.plugins.actions.check_abap_count_table_entries import CheckAbapCountTableEntries, \
+    CheckAbapCountTableEntries__params
+
 
 class TestChecks(TestCase):
 

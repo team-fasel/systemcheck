@@ -1,29 +1,30 @@
-from collections import OrderedDict
 import ast
+from collections import OrderedDict
 
-import systemcheck.systems.ABAP.plugins as abap
-from systemcheck.utils import Result, Fail
-from systemcheck.models.checks import Check
-
-from systemcheck.models.meta import Base, UniqueConstraint, \
-    Column, String, generic_repr, validates, backref, QtModelMixin, \
-    relationship, Boolean, Integer, ForeignKey, ChoiceType
+from systemcheck.checks.models.checks import Check
+from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, relationship
+from systemcheck.systems.ABAP.plugins.action_types import CheckAbapFoundationAction
+from systemcheck.utils import Result
 
 
 class CheckAbapCountTableEntries(Check):
 
     __tablename__ = 'CheckAbapCountTableEntries'
 
+    __table_args__ = {'extend_existing':True}
+
     CHOICE_OPERATION = [('MERGE', 'Merge'),
                         ('INDIVIDUAL', 'Treat Individually')]
 
-    id = Column(Integer, ForeignKey('checks_metadata.id'), primary_key=True)
+
+    id = Column(Integer, ForeignKey('checks_metadata.id'), primary_key=True, qt_show=False)
     params = relationship('CheckAbapCountTableEntries__params')
     operation = Column(ChoiceType(CHOICE_OPERATION),
                        default = 'INDIVIUAL',
                        qt_description='Merge so that only common results are presented',
                        qt_label = 'Operator',
-                       choices=CHOICE_OPERATION)
+                       choices=CHOICE_OPERATION,
+                       qt_show=False)
 
     __mapper_args__ = {
         'polymorphic_identity':'CheckAbapCountTableEntries',
@@ -31,6 +32,9 @@ class CheckAbapCountTableEntries(Check):
 
 class CheckAbapCountTableEntries__params(QtModelMixin, Base):
     __tablename__ = 'CheckAbapCountTableEntries__params'
+
+    __table_args__ = {'extend_existing':True}
+
 
     CHOICE_OPERATOR = [('EQ', 'Equal'),
                        ('NE', 'Not Equal'),
@@ -46,28 +50,28 @@ class CheckAbapCountTableEntries__params(QtModelMixin, Base):
                         nullable=False,
                         qt_description='Table Name',
                         qt_label='Table Name',
-                        qt_show=True
+                        qt_show=False
                         )
 
     table_fields = Column(String,
                         nullable=True,
                         qt_description='Table Fields',
                         qt_label='Table Fields',
-                        qt_show=True
+                        qt_show=False
                         )
 
     where_clause = Column(String,
                         nullable=True,
                         qt_description='Where Clause',
                         qt_label='Where Clause',
-                        qt_show=True
+                        qt_show=False
                         )
 
     expected_count = Column(Integer,
                             nullable=False,
                             qt_description = 'Expected Count',
                             qt_label = 'Expected Count',
-                            qt_show = True,
+                            qt_show = False,
                             )
 
     operator = Column(ChoiceType(CHOICE_OPERATOR),
@@ -75,16 +79,20 @@ class CheckAbapCountTableEntries__params(QtModelMixin, Base):
                       default='EQ',
                       qt_description='Expected Count',
                       qt_label='Expected Count',
-                      qt_show=True,
+                      qt_show=False,
                       )
 
     check = relationship("CheckAbapCountTableEntries", back_populates="params")
 
-class CheckAbapCountTableEntriesPlugin(abap.CheckAbapFoundationPlugin):
+class CheckAbapCountTableEntriesAction(CheckAbapFoundationAction):
     """ A SELECT COUNT(*) for ABAP Tables
 
 
     """
+
+    def __init__(self):
+        super().__init__()
+        self.alchemyObjects=[CheckAbapCountTableEntries, CheckAbapCountTableEntries__params]
 
     def execute(self, connection, parameters):
 

@@ -2,7 +2,7 @@ from systemcheck.systems.generic.gui.widgets import SystemsWidget, SettingsWidge
 from PyQt5 import QtWidgets, QtGui, QtCore
 from systemcheck.resources import icon_rc
 from systemcheck.systems.ABAP.models import AbapClient, AbapSystem, AbapTreeNode
-from systemcheck.systems.generic.model import GenericTreeNode
+from systemcheck.systems.generic.models import GenericTreeNode
 import systemcheck.gui.utils as guiutils
 import traceback
 
@@ -11,7 +11,7 @@ import traceback
 class AbapSystemsWidget(SystemsWidget):
 
     def __init__(self, model: QtCore.QAbstractItemModel = None):
-        super().__init__(model)
+        super().__init__()
 
         self.addSystem_act = QtWidgets.QAction(QtGui.QIcon(":Plus"), 'Add ABAP System', self)
         self.addSystem_act.triggered.connect(self.addSystem)
@@ -21,6 +21,8 @@ class AbapSystemsWidget(SystemsWidget):
 
         self.updatePassword_act = QtWidgets.QAction(QtGui.QIcon(":Password"), 'Update Password', self)
         self.updatePassword_act.triggered.connect(self.updatePassword)
+        if model:
+            self.setModel(model)
 
 
     def addClient(self):
@@ -88,7 +90,6 @@ class AbapSystemsWidget(SystemsWidget):
 
         if node is None:
             menu.addAction(self.addFolder_act)
-            menu.addAction(self.addSubFolder_act)
             menu.addAction(self.addSystem_act)
             menu.addAction(self.deleteItem_act)
         else:

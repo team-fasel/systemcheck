@@ -1,9 +1,10 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-from systemcheck.models import meta
-from systemcheck.gui import utils
+import systemcheck
+#import systemcheck.models.meta
+#from systemcheck.gui import utils
 import sqlalchemy
 import sqlalchemy_utils
-from systemcheck.gui.delegates import PlainTextColumnDelegate, GenericDelegate, ComboBoxDelegate, CenteredCheckBoxDelegate
+from systemcheck.gui.delegates import PlainTextColumnDelegate, GenericDelegate, ComboBoxDelegate, CenteredCheckBoxDelegate, RichTextColumnDelegate
 
 
 def generateQtDelegate(alchemyObject):
@@ -17,11 +18,13 @@ def generateQtDelegate(alchemyObject):
 
     for qtcolumn, column in enumerate(visible_columns):
         alchemyColumnType=sqlalchemy_utils.functions.get_type(column)
-        if isinstance(alchemyColumnType, meta.String):
+        if isinstance(alchemyColumnType, systemcheck.models.meta.RichString):
+            delegate.insertColumnDelegate(qtcolumn, RichTextColumnDelegate)
+        elif isinstance(alchemyColumnType, systemcheck.models.meta.String):
             delegate.insertColumnDelegate(qtcolumn, PlainTextColumnDelegate)
-        elif isinstance(alchemyColumnType, meta.ChoiceType):
+        elif isinstance(alchemyColumnType, systemcheck.models.meta.ChoiceType):
             delegate.insertColumnDelegate(qtcolumn, ComboBoxDelegate)
-        elif isinstance(alchemyColumnType, meta.Boolean):
+        elif isinstance(alchemyColumnType, systemcheck.models.meta.Boolean):
             delegate.insertColumnDelegate(qtcolumn, CenteredCheckBoxDelegate)
 
     return delegate
@@ -29,11 +32,15 @@ def generateQtDelegate(alchemyObject):
 def getQtWidgetForAlchemyType(column, *args, **kwargs):
 
     alchemyColumnType = sqlalchemy_utils.functions.get_type(column)
+    if isinstance(alchemyColumnType, systemcheck.models.meta.RichString):
 
-    if isinstance(alchemyColumnType, meta.String):
-        return utils.lineEdit(*args, **kwargs)
-    elif isinstance(alchemyColumnType, meta.Boolean):
-        return utils.checkBox( *args, **kwargs)
-    elif isinstance(alchemyColumnType, meta.ChoiceType):
+        editor = QtWidgets.QTextEdit()
+
+        return QtWidgets.QTextEdit(*args, **kwargs)
+    elif isinstance(alchemyColumnType, systemcheck.models.meta.String):
+        return systemcheck.gui.utils.lineEdit(*args, **kwargs)
+    elif isinstance(alchemyColumnType, systemcheck.models.meta.Boolean):
+        return systemcheck.gui.utils.checkBox( *args, **kwargs)
+    elif isinstance(alchemyColumnType, systemcheck.models.meta.ChoiceType):
         choices=column.info.get('choices')
-        return utils.comboBox(*args, choices=choices, **kwargs)
+        return systemcheck.gui.utils.comboBox(*args, choices=choices, **kwargs)
