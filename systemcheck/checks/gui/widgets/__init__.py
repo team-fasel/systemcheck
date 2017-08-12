@@ -1,2 +1,5 @@
+from systemcheck.checks.gui.widgets.check_description_widget import CheckSettingsWidget
+from systemcheck.checks.gui.widgets.check_parameterEditor_widget import CheckParameterEditorWidget
 from systemcheck.checks.gui.widgets.checks_widget import ChecksWidget
 from systemcheck.checks.gui.widgets.results_widget import CheckResultsWidget
+
