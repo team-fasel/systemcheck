@@ -46,6 +46,7 @@
     <file alias="Linux">./img/icons8/Linux_32px.png</file>
     <file alias="MarkerPen">./img/icons8/Marker Pen_32px.png</file>
     <file alias="Menu">./img/icons8/Menu_32px.png</file>
+    <file alias="Minus">./img/icons8/Minus_32px.png</file>
     <file alias="New">./img/icons8/New_32px.png</file>
     <file alias="Next">./img/icons8/Next_32px.png</file>
     <file alias="NumberedList">./img/icons8/Numbered List_32px.png</file>
