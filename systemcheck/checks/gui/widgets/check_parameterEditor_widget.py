@@ -161,6 +161,7 @@ class CheckParameterTableModel(QtCore.QAbstractTableModel):
         self.beginRemoveRows(QtCore.QModelIndex(), position, position + rows - 1)
 
         del self.__checknode.params[position:position + rows]
+        self.__checknode._commit()
 
         self.endRemoveRows()
         return True

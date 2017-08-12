@@ -14,7 +14,7 @@ __email__       = 'systemcheck@team-fasel.com'
 
 from systemcheck.models.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
     Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, \
-    Integer, ForeignKey, ChoiceType, UUIDType, relationship, RichString
+    Integer, ForeignKey, ChoiceType, UUIDType, relationship, RichString, qtRelationship
 
 #from systemcheck.session import SESSION
 
@@ -23,6 +23,7 @@ from typing import Any
 from sqlalchemy import inspect
 from typing import Union, List
 from pprint import pprint
+import systemcheck
 
 example_text="""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
 <html><head><meta name="qrichtext" content="1" /><style type="text/css">
@@ -219,7 +220,7 @@ class Check(Base):
         return False
 
     def _commit(self):
-        session = inspect(self).session
+        session = systemcheck.session.SESSION
         session.commit()
 
     def _flush(self):
@@ -362,4 +363,9 @@ class Check(Base):
         Here, we only return the visible column count.
         """
 #        visible_columns = self._visible_columns()
+
         return len(self.__qtmap__)
+
+    def _parameter_count(self):
+        pprint(self.params)
+        return len(self.params)
