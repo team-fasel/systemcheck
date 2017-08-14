@@ -16,24 +16,22 @@ __license__ = 'MIT'
 __maintainer__ = 'Lars Fasel'
 __email__ = 'systemcheck@team-fasel.com'
 
-import os
-
-import sqlalchemy.orm
-import systemcheck.models as models
-from systemcheck.systems.generic.models import GenericSystemTreeNode
-from systemcheck.gui.models import GenericTreeModel
-
-from systemcheck.systems.ABAP.models.abap_model import SystemABAP, SystemABAPClient, SystemABAPFolder
-from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import logging
-from . import tools
+import os
+from unittest import TestCase
 
 from PyQt5 import QtCore
 
-from unittest import TestCase
+import systemcheck.models as models
+from systemcheck.checks.models.checks import Check
+from systemcheck.gui.models import GenericTreeModel
+from systemcheck.models.meta.base import engine_from_config, scoped_session, sessionmaker
+from systemcheck.systems.ABAP.plugins.actions.check_abap_count_table_entries import CheckAbapCountTableEntries, \
+    CheckAbapCountTableEntries__params
 
+from . import tools
 
-class TestAbapTreeModel(TestCase):
+class TestChecksTreeModel(TestCase):
     PATH = r'test_pyqt_model.sqlite'
 
     def setUp(self):
@@ -49,12 +47,9 @@ class TestAbapTreeModel(TestCase):
         self.session_factory = sessionmaker(bind=self.engine)
         self.session = scoped_session(self.session_factory)
 
-        try:
-            rootnode = self.session.query(GenericSystemTreeNode).filter(GenericSystemTreeNode.parent_id == None).one()
-        except sqlalchemy.orm.exc.NoResultFound as err:
-            self.session.add(GenericSystemTreeNode(name='RootNode'))
+        if self.session.query(Check).filter(Check.parent_id == None).count() == 0:
+            self.session.add(Check(type='FOLDER', name='RootNode'))
             self.session.commit()
-
 
     def tearDown(self):
 
@@ -63,19 +58,19 @@ class TestAbapTreeModel(TestCase):
             os.remove(self.PATH)
 
     def populateTree(self):
-        tools.populateSystemsABAPTree(self.session)
+        tools.populateChecksTree(self.session)
 
     def test_rowCount(self):
         self.populateTree()
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
         rootindex = model.createIndex(0, 0, rootnode)
 
-        self.assertEqual(model.rowCount(rootindex), 4)
+        self.assertEqual(model.rowCount(rootindex), 2)
 
     def test_columnCount(self):
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).one()
+        model = GenericTreeModel(rootnode, treenode=Check)
         column_count = model.columnCount()
         self.assertEqual(column_count, 2)
         rootindex = model.createIndex(0, 0, rootnode)
@@ -85,16 +80,16 @@ class TestAbapTreeModel(TestCase):
 
     def test_data(self):
         self.populateTree()
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
         index = model.createIndex(0, 0, rootnode)
         self.assertTrue(index.isValid())
         name = model.data(index, QtCore.Qt.DisplayRole)
         self.assertEqual(name, 'RootNode')
 
     def test_setData(self):
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
         index = model.createIndex(0, 0, rootnode)
         self.assertTrue(index.isValid())
         name = model.data(index, QtCore.Qt.DisplayRole)
@@ -104,63 +99,93 @@ class TestAbapTreeModel(TestCase):
         self.assertEqual(name, 'StillRootNode')
 
     def test_headerData(self):
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
         index = model.createIndex(0, 0, QtCore.QModelIndex())
         headerdata = model.headerData(0, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
-        self.assertEqual(headerdata, 'Name')
+        self.assertEqual(headerdata, 'Folder or Check Name')
 
     def test_flags(self):
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
         index = model.createIndex(0, 0, rootnode)
         flags = model.flags(index)
         self.assertEqual(flags, QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable \
                          | QtCore.Qt.ItemIsUserCheckable |QtCore.Qt.ItemIsEditable)
 
     def test_insertRow(self):
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
         index = model.createIndex(0, 0, rootnode)
         child_count_root = model.rowCount(index)
         self.assertEqual(child_count_root, 0)
-        system_node = SystemABAP(name='New SID', sid='NEW')
-        model.insertRow(0, index, nodeObject=system_node)
+
+        check=CheckAbapCountTableEntries(name = 'Clients 001 and 066 removed',
+                                         description = 'If client 001 is not actively used, it can be deleted. Client 066 is no longer required in any case',
+                                         )
+
+
+        param001 = CheckAbapCountTableEntries__params(
+                                         table_name = 'T000',
+                                         table_fields = 'MANDT',
+                                         expected_count = 0,
+                                         operator = 'NE',
+                                         where_clause = "MANDT EQ '001'"
+                                         )
+        param066 = CheckAbapCountTableEntries__params(
+                                         table_name = 'T000',
+                                         table_fields = 'MANDT',
+                                         expected_count = 0,
+                                         operator = 'NE',
+                                         where_clause = "MANDT EQ '066'"
+                                         )
+        check.params.append(param001)
+
+        model.insertRow(0, index, nodeObject=check)
         child_count_root = model.rowCount(index)
         self.assertEqual(child_count_root, 1)  #Successfully added one new system
         self.assertTrue(model.hasChildren(index))  #Another test
 
-        #Testing Inserting a new client
-        system_index = model.index(0, 0, index)
-        child_count_system = model.rowCount(system_index)
-        self.assertEqual(child_count_system, 0)  #No new client exists
-        self.assertFalse(model.hasChildren(system_index))  #Another test
-
-        client_node = SystemABAPClient(client='000')
-        model.insertRow(position=0, parent=system_index, nodeObject=client_node)
-        child_count_system = model.rowCount(system_index)
-        self.assertEqual(child_count_system, 1)  #Successfully added one new system
-        self.assertTrue(model.hasChildren(system_index))  #Another test
-
     def test_insertRows(self):
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode, treenode=GenericSystemTreeNode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
         index = model.createIndex(0, 0, rootnode)
         model.insertRows(0, 10, index)
         self.assertEqual(model.rowCount(index), 10)
 
     def test_removeRow(self):
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode, treenode=GenericSystemTreeNode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
         index = model.createIndex(0, 0, rootnode)
-        model.insertRow(0, index)
+        check=CheckAbapCountTableEntries(name = 'Clients 001 and 066 removed',
+                                         description = 'If client 001 is not actively used, it can be deleted. Client 066 is no longer required in any case',
+                                         )
+
+
+        param001 = CheckAbapCountTableEntries__params(
+                                         table_name = 'T000',
+                                         table_fields = 'MANDT',
+                                         expected_count = 0,
+                                         operator = 'NE',
+                                         where_clause = "MANDT EQ '001'"
+                                         )
+        param066 = CheckAbapCountTableEntries__params(
+                                         table_name = 'T000',
+                                         table_fields = 'MANDT',
+                                         expected_count = 0,
+                                         operator = 'NE',
+                                         where_clause = "MANDT EQ '066'"
+                                         )
+        check.params.append(param001)
+
+        model.insertRow(0, index, nodeObject=check)
         self.assertEqual(model.rowCount(index), 1)
         model.removeRow(0, index)
         self.assertEqual(model.rowCount(index), 0)
 
     def test_removeRows(self):
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode, treenode=GenericSystemTreeNode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
         index = model.createIndex(0, 0, rootnode)
         model.insertRows(0, 10, index)
         self.assertEqual(model.rowCount(index), 10)
@@ -169,43 +194,43 @@ class TestAbapTreeModel(TestCase):
 
     def test_parent(self):
         self.populateTree()
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode, treenode=GenericSystemTreeNode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
 
-        node1index = model.index(0, 0, QtCore.QModelIndex())
+        node1index = model.index(1, 0, QtCore.QModelIndex())
         node2index = model.index(0, 0, node1index)
 
-        self.assertEqual(model.data(node1index, QtCore.Qt.DisplayRole), 'DEV')
-        self.assertEqual(model.data(node2index, QtCore.Qt.DisplayRole), 'E1D')
+        self.assertEqual(model.data(node1index, QtCore.Qt.DisplayRole), 'Basis')
+        self.assertEqual(model.data(node2index, QtCore.Qt.DisplayRole), 'Post Install')
 
         data_node1 = model.data(node1index, QtCore.Qt.DisplayRole)
 
         node1_node = node1index.internalPointer()
-        self.assertEqual(node1_node.name, 'DEV')
+        self.assertEqual(node1_node.name, 'Basis')
         node2_node = node2index.internalPointer()
-        self.assertEqual(node2_node.name, 'E1D')
+        self.assertEqual(node2_node.name, 'Post Install')
         node2_parent_index = model.parent(node2index)
         node2_parent_node = node2_parent_index.internalPointer()
-        self.assertEqual(node2_parent_node.name, 'DEV')
+        self.assertEqual(node2_parent_node.name, 'Basis')
 
     def test_index(self):
         self.populateTree()
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode, treenode=GenericSystemTreeNode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
 
         index = model.index(0, 0, QtCore.QModelIndex())
         node = index.internalPointer()
-        self.assertEqual(node.name, 'DEV')
+        self.assertEqual(node.name, 'Authorization')
 
     def test_getNode(self):
         self.populateTree()
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode, treenode=GenericSystemTreeNode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
 
         index = model.index(0, 0, QtCore.QModelIndex())
         node = model.getNode(index)
 
-        self.assertEqual(node.name, 'DEV')
+        self.assertEqual(node.name, 'Authorization')
 
         index = model.index(99, 2, QtCore.QModelIndex())
         node = model.getNode(index)
@@ -214,8 +239,8 @@ class TestAbapTreeModel(TestCase):
 
     def test_recursiveCheck(self):
         self.populateTree()
-        rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        model = GenericTreeModel(rootnode, treenode=GenericSystemTreeNode)
+        rootnode = self.session.query(Check).filter_by(parent_id=None).first()
+        model = GenericTreeModel(rootnode, treenode=Check)
         self.logger.info('setting parent index')
         parent_index = model.index(0, 0, QtCore.QModelIndex())
         self.logger.info('setting parent checked')
