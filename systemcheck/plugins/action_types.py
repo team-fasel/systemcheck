@@ -1,10 +1,12 @@
 import operator
 from yapsy import IPlugin
 import systemcheck.session
+from systemcheck.checks.models import Check
 import datetime
 import logging
 from collections import OrderedDict
 from systemcheck.utils import Result, Fail
+from systemcheck.plugins import BasePlugin
 
 class ActionResult:
     """ Result of a check plugin
@@ -21,17 +23,17 @@ class ActionResult:
 
     def __init__(self):
 
-        self._result = []
+        self.__result = []
         self.timestamp = datetime.datetime.now()
-        self._logoninfo = {}
-        self._rating = 'pass'
-        self._message = False
-        self._result_definition=OrderedDict()
-        self._plugin_name = None
-        self._systeminfo = None
+        self.__logoninfo = {}
+        self.__rating = 'pass'
+        self.__message = False
+        self.__result_definition=OrderedDict()
+        self.__plugin_name = None
+        self.__systeminfo = None
 
     def __str(self):
-        string = '<PluginResult> PluginName: {}, Rating: {}'.format(self.plugin_name, self.rating)
+        string = '<PluginResult> PluginName: {}, Rating: {}'.format(self.check_name, self.rating)
         return string
 
 
@@ -41,7 +43,7 @@ class ActionResult:
 
 
         All results will get returned as table. The table definition consists of an OrderedDict as it """
-        return self._result_definition
+        return self.__result_definition
 
     @resultDefinition.setter
     def resultDefinition(self, definition:OrderedDict):
@@ -57,22 +59,22 @@ class ActionResult:
         :param technical: The short name of the column.
         :param description: The description of the column.
         """
-        self._result_definition[technical]=description
+        self.__result_definition[technical]=description
 
     @property
     def result(self):
         """ Return a Result """
-        return self._result
+        return self.__result
 
     @result.setter
     def result(self, data:list):
-        self._result = data
+        self.__result = data
 
     def add_result(self, data:dict):
         """ Add a Result to the overall Result
 
          """
-        self._result.append(data)
+        self.__result.append(data)
 
     @property
     def logoninfo(self):
@@ -81,7 +83,7 @@ class ActionResult:
 
         """
 
-        return self._logoninfo
+        return self.__logoninfo
 
     @logoninfo.setter
     def logoninfo(self, logoninfo:dict):
@@ -90,7 +92,7 @@ class ActionResult:
 
         """
 
-        self._logoninfo=logoninfo
+        self.__logoninfo=logoninfo
 
     @property
     def rating(self)->str:
@@ -104,29 +106,31 @@ class ActionResult:
            - warning: The result finished with a Warning
         """
 
+        return self.__rating
+
     @rating.setter
     def rating(self, value:str):
         """ Set the Overal rating of the result """
 
-        self._rating = value
+        self.__rating = value
 
     @property
-    def plugin_name(self):
+    def check_name(self):
         """ Return the name of the plugin
 
 
         """
 
-        return self._plugin_name
+        return self.__plugin_name
 
-    @plugin_name.setter
-    def plugin_name(self, name):
+    @check_name.setter
+    def check_name(self, name):
         """ Set the name of the plugin
 
 
         """
 
-        self._plugin_name = name
+        self.__plugin_name = name
 
     @property
     def systeminfo(self):
@@ -135,14 +139,14 @@ class ActionResult:
 
         The system info is used to represent the checked system in a user interface for example. For ABAP systems, a
         system info should be set to SID, Client <client> """
-        return self._systeminfo
+        return self.__systeminfo
 
     @systeminfo.setter
     def systeminfo(self, systeminfo):
         """ Setter for the systeminfo
 
         """
-        self._systeminfo = systeminfo
+        self.__systeminfo = systeminfo
 
     @property
     def message(self):
@@ -150,58 +154,25 @@ class ActionResult:
 
         This message gets displayed upon displaying the detail results.
         """
-        return self._message
+        return self.__message
 
     @message.setter
     def message(self, message):
-        self._message = message
+        self.__message = message
 
 
-class BasePlugin(IPlugin.IPlugin):
-    """ The Base Plugin
-
-    All Plugins are children of this plugin. A Hierarchy is required to enable effective filtering in the yapsy
-    plugin manager.
-
-
-    """
-    OPERATORS = {'EQ':'=', 'NE':'!=', 'GT':'>', 'LT':'<', 'LE':'<=', 'GE':'>=',
-                 '=':'=', '!=':'!=','>':'>','<':'<','>=':'>=','<=':'<='}   # Adding the actual symbols for more flexibility
-
-    OPERATIONS = {'EQ': operator.eq,
-                  'NE': operator.ne,
-                  'GT': operator.gt,
-                  'LT': operator.lt,
-                  'GE': operator.ge,
-                  'LE': operator.le,
-                  '=': operator.eq,
-                  '!=': operator.ne,
-                  '>': operator.gt,
-                  '<': operator.lt,
-                  '>=': operator.ge,
-                  '<=': operator.le}
-
-    INTERVALS = {'D':'Days', 'H': 'Hours', 'M':'Minutes', 'S':'Seconds', 'W':'Weeks', 'Y':'Years'}
-
-    TYPE = None
-
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-        self.actionResult = ActionResult()
-        self.logger = logging.getLogger("{}.{}".format(__name__, self.__class__.__name__))
-
-
-class GenericActionPlugin(BasePlugin):
+class ActionBasePlugin(BasePlugin):
     """ The Foundation for all Action plugins
 
     """
 
-    def __init__(self, *args, parameters=None, **kwargs):
-        super().__init__()
+    def __init__(self, *args, alchemyRoot=Check, parameters:list=None, **kwargs):
+        super().__init__(alchemyRoot)
+        self.actionResult = ActionResult()
+        self.logger = logging.getLogger("{}.{}".format(__name__, self.__class__.__name__))
+        self.__parameters = parameters
 
-        self.parameters = parameters
-        self.alchemyObjects=[]
-
+        self.setAlchemyRoot(Check)
 
     def set_plugin_config(self):
         pass
@@ -215,6 +186,7 @@ class GenericActionPlugin(BasePlugin):
 
     def execute(self, connection):
         """ The entry point for the actual plugin code"""
+        pass
 
     def execute_action(self, system_object, parameters, *args, **kwargs):
         """ Function that gets executed to initiate the plugin execution.
@@ -226,7 +198,6 @@ class GenericActionPlugin(BasePlugin):
 
         self.logger.debug('Starting Execution {}')
         self._system_object = system_object
-        self.init_db()
 
         result = self.system_connection()
         if not result.fail:
@@ -236,9 +207,4 @@ class GenericActionPlugin(BasePlugin):
 
         plugin_result = self.execute(connection)
         return plugin_result
-
-    def init_db(self):
-
-        for object in self.alchemyObjects:
-            object.__table__.create(systemcheck.session.engine)
 

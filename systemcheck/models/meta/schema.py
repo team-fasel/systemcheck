@@ -11,6 +11,7 @@ from typing import Any, Union, List
 import keyring
 import uuid
 from pprint import pprint
+import systemcheck
 
 def bool_or_str(type_):
     return is_string(type_) or is_boolean(type_)
@@ -42,6 +43,7 @@ class Column(sqlalchemy.Column):
         kwargs['info'].setdefault('qt_label', kwargs.pop('qt_label', ''))
         kwargs['info'].setdefault('qt_description', kwargs.pop('qt_description', ''))
         kwargs['info'].setdefault('qt_show', kwargs.pop('qt_show', True))
+        kwargs['info'].setdefault('rel_class', kwargs.pop('rel_class', None))
 
         sqlalchemy.Column.__init__(self, *args, **kwargs)
 
@@ -51,70 +53,22 @@ class Column(sqlalchemy.Column):
 
 class QtModelMixin(object):
 
-    def _column_count(self)->int:
+    __qtmap__ = []
+
+    def _qt_column_count(self)->int:
         """ Return the number of columns """
-        return len(self.__table__.columns)
+        column_count=len(self.__qtmap__)
+        return column_count
 
-    def _colnr_is_valid(self, colnr:int)->bool:
+    def _qt_colnr_is_valid(self, colnr:int)->bool:
+        column_count=self._qt_column_count()
+        return 0 <= colnr < column_count
 
-        if colnr>=0 and colnr < len(self.__table__.columns):
-            return True
-        return False
-
-    def _commit(self):
-        session = inspect(self).session
-        session.commit()
-
-    def _flush(self):
-        session = inspect(self).session
-        session.flush()
-
-    def _info_by_colnr(self, colnr:int)->Union[dict, bool]:
-        """ Return the info metadata for any column"""
-        if self._colnr_is_valid(colnr):
-            value=list(self.__table__.columns)[colnr].info
-            return value
-        else:
-            return False
-
-    def _icon(self):
+    def _qt_icon(self):
         """ Returns the Icon of the node type """
-
         return False
 
-
-    def _info_by_visible_colnr(self, colnr:int)->Union[dict, bool]:
-        """ Return the info metadata for a visible column"""
-        if self._visible_colnr_is_valid(colnr):
-            visible_columns=self._visible_columns()
-            value=visible_columns[colnr].info
-            return value
-        else:
-            return False
-
-
-    def _set_value_by_colnr(self, colnr:int, value:object):
-        """ Get the Value of a Column by its Number
-
-        QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
-        automatically.
-
-        :param colnr: The Qt Column Number
-        :type int:
-
-
-        """
-
-        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
-
-        if self._colnr_is_valid(colnr):
-            setattr(self, list(self.__table__.columns)[colnr].name, value)
-            self._flush()
-            return True
-        else:
-            return False
-
-    def _set_value_by_visible_colnr(self, colnr:int, value:object):
+    def _qt_set_value_by_colnr(self, colnr: int, value: object):
         """ Set the Value of a Column by its its visible Number
 
         QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
@@ -127,43 +81,36 @@ class QtModelMixin(object):
 
         """
 
-        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
+        # TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
 
-        if self._visible_colnr_is_valid(colnr):
-            visible_columns=self._visible_columns()
-            setattr(self, visible_columns[colnr].name, value)
+        if self._qt_colnr_is_valid(colnr):
+            column = self.__qtmap__[colnr]
+            setattr(self, column.name, value)
             self._commit()
             return True
         else:
             return False
 
-    def _visible_headers(self):
+    def _qt_headers(self):
 
-        return [colData.info.get('qt_label')
-                for colData in self.__table__.columns
-                if colData.info.get('qt_show')]
+        headers = []
 
-    def _value_by_colnr(self, colnr:int)->object:
-        """ Get the Value of a Column by its Number
+        for column in self.__qtmap__:
+            col_type = type(column)
+            headers.append(col_type.info.get('qt_label'))
 
-        QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
-        automatically.
+        return headers
 
-        :param colnr: The Qt Column Number
-        :type int:
+    def _qt_header(self, column):
 
+        if self._qt_colnr_is_valid(column):
+            col = self.__qtmap__[column]
+            header = col.info.get('qt_label')
+            return header
 
-        """
+        return False
 
-        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
-
-        if self._colnr_is_valid(colnr):
-            value=getattr(self, list(self.__table__.columns)[colnr].name)
-            return value
-        else:
-            return None
-
-    def _value_by_visible_colnr(self, colnr: int) -> object:
+    def _qt_data_colnr(self, colnr: int) -> object:
         """ Get the Value of a Column by its its visible Number
 
         QtModels refer to the underlying data by rows and columns. Somewhere a mapping has to occur that does this
@@ -175,49 +122,82 @@ class QtModelMixin(object):
 
         """
 
+        # TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
 
-        #TODO: The implementation here is quite ugly. Need to find a better way to do this, but for now it's acceptable
-
-        if self._visible_colnr_is_valid(colnr):
-            visible_columns=self._visible_columns()
+        if self._qt_colnr_is_valid(colnr):
+            #            visible_columns = self._visible_columns()
             try:
-                value=getattr(self, visible_columns[colnr].name)
+                column = self.__qtmap__[colnr]
+                value = getattr(self, column.name)
                 return value
             except Exception as err:
                 pprint(err)
         else:
             return False
 
-    def _visible_columns(self)->List[Any]:
+    def _qt_columns(self) -> List[Any]:
         """ Return a list of columns that have the info medatadata variable qt_show set to True"""
-        return [colData
-                for colData in self.__table__.columns
-                if colData.info.get('qt_show')]
-
-    def _visible_column_count(self)->int:
-        """Returns the number of visible Columns
+        return self.__qtmap__
 
 
-        This is required due to the issue that you can't hide the first column of the QTreeView. If you hide the first column,
-        all you see are entries immediately under the root node. The first column however is usually a primary key or something
-        else that is not relevant for processing.
+    def _dump(self, _indent:int=0)->str:
+        """ Recursively return the structure of the node and all its children as text """
+        return "   " * _indent + repr(self) + \
+            "\n" + \
+            "".join([
+                c._dump(_indent + 1)
+                for c in self.children
+            ])
 
-        The primary key is also determined automatically when inserting a new record and does not need to be maintained
-        manually. Due to this, the handling of visible and invisible columns needs to get added to the tree handling.
+    def _qt_child(self, childnr:int)->Any:
+        """  Return the child object at a specific position"""
+        if self._qt_child_count() >0:
+            if childnr >= 0 and childnr<self._qt_child_count():
+                return self.children[childnr]
 
-        Here, we only return the visible column count.
-        """
-        visible_columns=self._visible_columns()
-        return len(visible_columns)
-
-    def _visible_colnr_is_valid(self, colnr:int)->bool:
-        """ Validate that the column number is ok fo a visible column"""
-
-        visible_columns=self._visible_columns()
-
-        if colnr>=0 and colnr < len(visible_columns):
-            return True
         return False
+
+    def _qt_child_count(self)->int:
+        """ Return the number of children """
+        return len(self.children)
+
+    def _qt_insert_child(self, position:int, node)->bool:
+        self.children.insert(position, node)
+        self._commit()
+        return True
+
+    def _qt_row(self):
+        if self.parent_node is not None:
+            return self.parent_node.children.index(self)
+
+    def _qt_remove_child(self, position:int)->bool:
+        """ Remove a child item at a particular position
+
+        :param position: The position within the list of children
+
+        """
+        if 0 <= position < self._qt_child_count():
+            child=self._qt_child(position)
+
+            session=inspect(child).session
+
+            # Since we are using SQLAlchemy, we can't simply delete objects. If an object is part of a change that was not
+            # committet yet, we need to use 'Session.expunge()' instead of 'Session.delete()'.
+            if child in session.new:
+                session.expunge(child)
+            else:
+                session.delete(child)
+            session.commit()
+
+        return True
+
+    def _commit(self):
+        session = systemcheck.session.SESSION
+        session.commit()
+
+    def _flush(self):
+        session = systemcheck.session.SESSION
+        session.flush()
 
 class StandardAbapAuthSelectionOptionMixin:
 
@@ -274,9 +254,26 @@ class PasswordKeyringMixin():
 
     @password.setter
     def password(self, pwd):
-        namespace='systemcheck'
-        keyring_username=self.keyring_uuid
-        keyring.set_password(namespace, username=keyring_username, password=pwd)
+        if pwd:
+            namespace='systemcheck'
+            keyring_username=self.keyring_uuid
+            keyring.set_password(namespace, username=keyring_username, password=pwd)
+
+class CheckParameterMixin(object):
+    """ Name for Check Parameter Set
+
+    A lot of checks will have multiple sets of parameters. These sets should have specific names to make navigating them
+    easier in the user interface.
+
+    """
+
+    param_set_name = Column(String,
+                        nullable=False,
+                        qt_description='Name of the parameter set. It is easier to navigate a large list of parameter sets, if they have a descriptive name',
+                        qt_label='Parameter Set Name',
+                        qt_show=False,
+                        default = 'Please Maintain'
+                        )
 
 
 def is_string(type_):
@@ -374,3 +371,20 @@ class RichString(String):
 
     def __init__(self):
         super().__init__()
+
+def qtRelationship(*args, **kwargs):
+
+    kwargs.setdefault('info', {})
+
+    info = {}
+
+    info.setdefault('choices', kwargs.pop('choices', None))
+    info.setdefault('qt_label', kwargs.pop('qt_label', ''))
+    info.setdefault('qt_description', kwargs.pop('qt_description', ''))
+    info.setdefault('qt_show', kwargs.pop('qt_show', True))
+    info.setdefault('rel_class', kwargs.pop('rel_class', None))
+
+    relation = relationship(*args, **kwargs)
+    relation.info = info
+
+    return relation

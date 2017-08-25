@@ -14,4 +14,4 @@ __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
 
-from systemcheck.systems.generic.models.generic_model import GenericTreeNode
+from systemcheck.systems.generic.models.generic_model import GenericSystemTreeNode

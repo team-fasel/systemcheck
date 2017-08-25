@@ -1,1 +1,2 @@
-from systemcheck.systems.generic.gui.widgets.systemswidget import SystemsWidget, SettingsWidget
+from systemcheck.systems.generic.gui.widgets.generic_systems_widget import GenericSystemWidget, GenericSystemSettingsWidget
+from systemcheck.systems.generic.gui.widgets.generic_main_widget import GenericSystemMainWidget

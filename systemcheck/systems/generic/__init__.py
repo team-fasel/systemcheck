@@ -16,6 +16,6 @@ __license__     = 'MIT'
 
 import systemcheck.systems.generic.gui
 import systemcheck.systems.generic.models
-import systemcheck.systems.generic.actions
 import systemcheck.systems.generic.utils
+import systemcheck.systems.generic.plugins.actions
 

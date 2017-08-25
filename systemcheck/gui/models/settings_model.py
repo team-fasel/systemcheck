@@ -29,7 +29,7 @@ class SettingsModel(QtCore.QAbstractItemModel):
 
     def columnCount(self, parent=None, *args, **kwargs)->int:
 
-        return self._abstractItem._visible_column_count()
+        return self._abstractItem._qt_column_count()
 
     def rowCount(self, parent=None, *args, **kwargs)->int:
 
@@ -41,7 +41,7 @@ class SettingsModel(QtCore.QAbstractItemModel):
             return False
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
-            return self._abstractItem._value_by_visible_colnr(index.column())
+            return self._abstractItem._qt_data_colnr(index.column())
 
     def flags(self, index:QtCore.QModelIndex)->int:
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
@@ -51,7 +51,7 @@ class SettingsModel(QtCore.QAbstractItemModel):
 
         if index.isValid():
             if role == QtCore.Qt.EditRole:
-                self._abstractItem._set_value_by_visible_colnr(index.column(), value)
+                self._abstractItem._qt_set_value_by_colnr(index.column(), value)
 
             return True
         return False

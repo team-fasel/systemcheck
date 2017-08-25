@@ -1,14 +1,14 @@
-from systemcheck.systems.generic.gui.widgets import SystemsWidget, SettingsWidget
+from systemcheck.systems.generic.gui.widgets import GenericSystemWidget, GenericSystemSettingsWidget
 from PyQt5 import QtWidgets, QtGui, QtCore
 from systemcheck.resources import icon_rc
-from systemcheck.systems.ABAP.models import AbapClient, AbapSystem, AbapTreeNode
-from systemcheck.systems.generic.models import GenericTreeNode
-import systemcheck.gui.utils as guiutils
+from systemcheck.systems.ABAP.models import SystemABAPClient, SystemABAP
+from systemcheck.systems.generic.models import GenericSystemTreeNode
+from systemcheck.gui import utils as guiutils
 import traceback
 
 
 
-class AbapSystemsWidget(SystemsWidget):
+class AbapSystemsWidget(GenericSystemWidget):
 
     def __init__(self, model: QtCore.QAbstractItemModel = None):
         super().__init__()
@@ -27,13 +27,8 @@ class AbapSystemsWidget(SystemsWidget):
 
     def addClient(self):
         index = self.tree.currentIndex()
-        clientItem = AbapClient(client='xxx')
-        try:
-            tree_node = AbapTreeNode(name='New ABAP Client', type=clientItem.RELNAME)
-        except Exception as err:
-            traceback.print_exc(err)
-        setattr(tree_node, tree_node.type, clientItem)
-        self.model.insertRow(position=0, parent=index, nodeObject=tree_node)
+        clientItem = SystemABAPClient(client='xxx')
+        self.system_model.insertRow(position=0, parent=index, nodeObject=clientItem)
 
     def addSystem(self):
         if len(self.tree.selectedIndexes()) == 0:
@@ -41,13 +36,13 @@ class AbapSystemsWidget(SystemsWidget):
         else:
             index = self.tree.currentIndex()
 
-        system_item = AbapSystem()
+        system_item = SystemABAP()
         try:
-            tree_node = AbapTreeNode(name='New ABAP System', type=system_item.RELNAME)
+            tree_node = SystemABAP(name='New ABAP System', type=system_item.RELNAME)
         except Exception as err:
             traceback.print_exc(err)
         setattr(tree_node, tree_node.type, system_item)
-        self.model.insertRow(position=0, parent=index, nodeObject=tree_node)
+        self.system_model.insertRow(position=0, parent=index, nodeObject=tree_node)
 
     def updatePassword(self):
         """ Update the password for a client
@@ -117,7 +112,7 @@ class AbapSystemsWidget(SystemsWidget):
             if treenode.type != 'FOLDER':
                 system_node = getattr(treenode, treenode.type)
             if system_node:
-                settingsw=SettingsWidget(self.model, selected)
+                settingsw=GenericSystemSettingsWidget(self.system_model, selected)
                 return settingsw
 
         return False

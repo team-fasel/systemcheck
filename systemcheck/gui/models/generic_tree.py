@@ -34,11 +34,11 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         else:
             parentNode=parent.internalPointer()
 
-        return parentNode._child_count()
+        return parentNode._qt_child_count()
 
     def columnCount(self, parent=None, *args, **kwargs)->int:
 
-        return self._rootNode._visible_column_count()
+        return self._rootNode._qt_column_count()
 
     def data(self, index: QtCore.QModelIndex, role: int)->Any:
 
@@ -56,14 +56,14 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
 
         if role == QtCore.Qt.DecorationRole:
             if index.column() == 0:
-                icon = node._icon()
+                icon = node._qt_icon()
                 if icon:
-                    icon = QtGui.QIcon(node._icon())
+                    icon = QtGui.QIcon(node._qt_icon())
                     return icon
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             colnr = index.column()
-            return node._value_by_visible_colnr(colnr)
+            return node._qt_data_colnr(colnr)
 
     def setData(self, index:QtCore.QModelIndex, value: Any, role=QtCore.Qt.EditRole)->bool:
         """ setData Method to make the model modifieabls """
@@ -83,7 +83,7 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
 
             if role == QtCore.Qt.EditRole:
                 node = index.internalPointer()
-                node._set_value_by_visible_colnr(index.column(), value)
+                node._qt_set_value_by_colnr(index.column(), value)
 
             self.dataChanged.emit(index, index)
             return True
@@ -111,9 +111,8 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         if role==QtCore.Qt.DisplayRole:
 
             if orientation==QtCore.Qt.Horizontal:
-
-                info=self._rootNode._info_by_visible_colnr(column)
-                return info.get('qt_label') or ''
+                header=self._rootNode._qt_header(column)
+                return header
 
     def flags(self, index:QtCore.QModelIndex)->int:
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsUserCheckable
@@ -133,10 +132,10 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         self.beginInsertRows(parent, position, position + 1)
 
         if nodeObject:
-            parent_node._insert_child(position, nodeObject)
+            parent_node._qt_insert_child(position, nodeObject)
         else:
             childNode = self._treeNode(type='FOLDER', name="untitled")
-            parent_node._insert_child(position, childNode)
+            parent_node._qt_insert_child(position, childNode)
         self.endInsertRows()
         return True
 
@@ -155,9 +154,9 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         self.beginInsertRows(parent, position, position + count - 1)
 
         for row in range(count):
-            childCount = parentNode._child_count()
-            childNode = self._treeNode(type='FOLDER', name="untitled " + str(childCount))
-            success = parentNode._insert_child(position, childNode)
+            childCount = parentNode._qt_child_count()
+            childNode = self._treeNode(name="untitled " + str(childCount))
+            success = parentNode._qt_insert_child(position, childNode)
 
         self.endInsertRows()
 
@@ -209,13 +208,13 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         if parentNode == self._rootNode:
             return QtCore.QModelIndex()
 
-        return self.createIndex(parentNode._row(), 0, parentNode)
+        return self.createIndex(parentNode._qt_row(), 0, parentNode)
 
     def index(self, row: int, column: int, parent: QtCore.QModelIndex)-> QtCore.QModelIndex:
 
         parentNode = self.getNode(parent)
 
-        childItem = parentNode._child(row)
+        childItem = parentNode._qt_child(row)
 
         if childItem:
             return self.createIndex(row, column, childItem)
@@ -230,3 +229,4 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
                 return node
 
         return self._rootNode
+

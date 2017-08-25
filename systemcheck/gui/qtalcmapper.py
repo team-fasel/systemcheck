@@ -4,7 +4,8 @@ import systemcheck
 #from systemcheck.gui import utils
 import sqlalchemy
 import sqlalchemy_utils
-from systemcheck.gui.delegates import PlainTextColumnDelegate, GenericDelegate, ComboBoxDelegate, CenteredCheckBoxDelegate, RichTextColumnDelegate
+from systemcheck.gui.delegates import PlainTextColumnDelegate, GenericDelegate, ComboBoxDelegate, \
+    CenteredCheckBoxDelegate, RichTextColumnDelegate, IntegerColumnDelegate
 
 
 def generateQtDelegate(alchemyObject):
@@ -14,7 +15,7 @@ def generateQtDelegate(alchemyObject):
 
     delegate=GenericDelegate()
 
-    visible_columns = alchemyObject._visible_columns()
+    visible_columns = alchemyObject._qt_columns()
 
     for qtcolumn, column in enumerate(visible_columns):
         alchemyColumnType=sqlalchemy_utils.functions.get_type(column)
@@ -26,6 +27,8 @@ def generateQtDelegate(alchemyObject):
             delegate.insertColumnDelegate(qtcolumn, ComboBoxDelegate)
         elif isinstance(alchemyColumnType, systemcheck.models.meta.Boolean):
             delegate.insertColumnDelegate(qtcolumn, CenteredCheckBoxDelegate)
+        elif isinstance(alchemyColumnType, systemcheck.models.meta.Integer):
+            delegate.insertColumnDelegate(qtcolumn, IntegerColumnDelegate)
 
     return delegate
 
@@ -33,14 +36,13 @@ def getQtWidgetForAlchemyType(column, *args, **kwargs):
 
     alchemyColumnType = sqlalchemy_utils.functions.get_type(column)
     if isinstance(alchemyColumnType, systemcheck.models.meta.RichString):
-
-        editor = QtWidgets.QTextEdit()
-
         return QtWidgets.QTextEdit(*args, **kwargs)
     elif isinstance(alchemyColumnType, systemcheck.models.meta.String):
         return systemcheck.gui.utils.lineEdit(*args, **kwargs)
     elif isinstance(alchemyColumnType, systemcheck.models.meta.Boolean):
         return systemcheck.gui.utils.checkBox( *args, **kwargs)
+    elif isinstance(alchemyColumnType, systemcheck.models.meta.Integer):
+        return systemcheck.gui.utils.lineEdit(*args, **kwargs)
     elif isinstance(alchemyColumnType, systemcheck.models.meta.ChoiceType):
         choices=column.info.get('choices')
         return systemcheck.gui.utils.comboBox(*args, choices=choices, **kwargs)

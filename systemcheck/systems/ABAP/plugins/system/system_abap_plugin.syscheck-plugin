@@ -1,0 +1,12 @@
+[Core]
+Name = ABAP System Plugin
+Module = system_abap_plugin
+
+[Documentation]
+Author = Lars Fasel
+Version = 0.1
+Description = ABAP System Plugin
+
+
+
+

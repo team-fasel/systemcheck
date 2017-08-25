@@ -12,7 +12,3 @@ __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
-import systemcheck.systems.ABAP.plugins.actions
-from systemcheck.systems.ABAP.plugins.action_types import CheckAbapFoundationAction, \
-    CheckAbapAction
-

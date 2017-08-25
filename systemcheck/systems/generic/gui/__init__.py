@@ -13,15 +13,6 @@ __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
 import systemcheck.systems.generic.gui.widgets
-from systemcheck.gui.widgets.widgets import TreeView
+import systemcheck.systems.generic.gui.models
 from PyQt5 import QtCore, QtWidgets
-
-class SystemTreeView(TreeView):
-    """ A Generic QTreeView for systems """
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-
-
 

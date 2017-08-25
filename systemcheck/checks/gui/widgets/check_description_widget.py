@@ -38,7 +38,7 @@ class CheckSettingsWidget(QtWidgets.QWidget):
         self.widgets = OrderedDict()
         self.delegate = generateQtDelegate(alchemy_object)
 
-        columns = alchemy_object._visible_columns()
+        columns = alchemy_object._qt_columns()
 
         for colNr, column in enumerate(columns):
             if colNr in self.delegate.delegates.keys():
@@ -78,7 +78,7 @@ class CheckSettingsModel(QtCore.QAbstractItemModel):
             return False
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
-            return self._abstractItem._value_by_visible_colnr(index.column())
+            return self._abstractItem._qt_data_colnr(index.column())
 
     def flags(self, index:QtCore.QModelIndex)->int:
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
@@ -88,7 +88,7 @@ class CheckSettingsModel(QtCore.QAbstractItemModel):
 
         if index.isValid():
             if role == QtCore.Qt.EditRole:
-                self._abstractItem._set_value_by_visible_colnr(index.column(), value)
+                self._abstractItem._qt_set_value_by_colnr(index.column(), value)
 
             return True
         return False

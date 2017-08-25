@@ -13,7 +13,6 @@ __email__       = 'systemcheck@team-fasel.com'
 
 
 from systemcheck.gui.models import GenericTreeModel
-from systemcheck.systems.ABAP.models import AbapTreeNode
 from systemcheck.resources import icon_rc
 
 class AbapSystemTreeModel(GenericTreeModel):

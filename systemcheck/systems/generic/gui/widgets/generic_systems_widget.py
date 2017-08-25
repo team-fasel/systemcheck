@@ -21,7 +21,7 @@ def exception_hook(exctype, value, traceback):
     sys.exit(1)
 
 
-class SettingsWidget(QtWidgets.QWidget):
+class GenericSystemSettingsWidget(QtWidgets.QWidget):
     """ Configure System Settings
 
 
@@ -35,14 +35,14 @@ class SettingsWidget(QtWidgets.QWidget):
         treeNode=currentIndex.internalPointer()
         self.setVisible(False)
         if treeNode:
-            if treeNode.type != 'FOLDER':
-                self.alchemyObject = getattr(treeNode, treeNode.type)
+            if treeNode.type !='FOLDER':
+                self.alchemyObject = treeNode
                 self.setLayout(layout)
                 self.delegate=generateQtDelegate(self.alchemyObject)
                 self.dataMapper=QtWidgets.QDataWidgetMapper()
                 self.model=SettingsModel(self.alchemyObject)
                 self.dataMapper.setModel(self.model)
-                columns = self.alchemyObject._visible_columns()
+                columns = self.alchemyObject._qt_columns()
 
                 self.tablew = QtWidgets.QTableWidget(len(columns), 2)
                 self.tablew.setAlternatingRowColors(True)
@@ -57,12 +57,6 @@ class SettingsWidget(QtWidgets.QWidget):
                         lblWidget=QtWidgets.QTableWidgetItem(column.info.get('qt_label'))
                         self.tablew.setItem(colNr, 0, lblWidget)
 
-        #                if isinstance(sqlalchemy_utils.functions.get_type(column), meta.ChoiceType):
-        #                    wid=self.delegate.delegates[colNr].createEditor(self, self, column.info['choices'], None)
-        #                else:
-        #                    wid = self.delegate.delegates[colNr].createEditor(self, self, None, None)
-
-
                         wid = getQtWidgetForAlchemyType(column)
                         self.dataMapper.addMapping(wid, colNr)
                         self.widgets[colNr]=wid
@@ -74,7 +68,7 @@ class SettingsWidget(QtWidgets.QWidget):
                 self.tablew.resizeRowsToContents()
 
 
-class SystemsWidget(QtWidgets.QWidget):
+class GenericSystemWidget(QtWidgets.QWidget):
     """ The Generic Systems Widget
 
     The Systems Widget consists of actually 2  or more widgets
@@ -84,32 +78,53 @@ class SystemsWidget(QtWidgets.QWidget):
 
 
     """
+    systemChangePassword_signal = QtCore.pyqtSignal()
+    systemCheckLogon_signal = QtCore.pyqtSignal()
+    systemDelete_signal = QtCore.pyqtSignal()
+    systemExport_signal = QtCore.pyqtSignal()
+    systemImport_signal = QtCore.pyqtSignal()
+    systemNew_signal = QtCore.pyqtSignal()
+    systemNewFolder_signal = QtCore.pyqtSignal()
 
     def __init__(self, model: QtCore.QAbstractItemModel=None):
         super().__init__()
 
         self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
         self.setupUi()
-
         if model:
             self.setModel(model)
 
-    def on_addFolder(self):
+    def on_changePassword(self):
+        pass
+
+    def on_checkLogon(self):
+        pass
+
+    def on_delete(self):
+        index = self.tree.currentIndex()
+
+        parent=index.parent()
+        self.system_model.removeRow(index.row(), parent)
+        pass
+
+    def on_export(self):
+        pass
+
+    def on_import(self):
+        pass
+
+    def on_new(self):
+        pass
+
+    def on_newFolder(self):
         if len(self.tree.selectedIndexes()) == 0:
             index = QtCore.QModelIndex()
         else:
             index = self.tree.currentIndex()
 
-        self.model.insertRow(0, index)
+        self.system_model.insertRow(0, index)
         if not self.tree.isExpanded(index):
             self.tree.expand(index)
-
-
-    def on_deleteItem(self):
-        index = self.tree.currentIndex()
-
-        parent=index.parent()
-        self.model.removeRow(index.row(), parent)
 
     def on_treeSelectionChanged(self, selected: QtCore.QModelIndex, deselected: QtCore.QModelIndex):
 
@@ -119,45 +134,11 @@ class SystemsWidget(QtWidgets.QWidget):
                 widget=self.splitter.widget(index)
                 widget.deleteLater()
 
-        settingsw=self.generateSettingsWidget(selected)
+        settingsw=GenericSystemSettingsWidget(self.system_model, selected)
         if settingsw:
             self.splitter.addWidget(settingsw)
             settingsw.show()
 #        self.logger.debug(pformat(node))
-
-    def generateSettingsWidget(self, selected:QtCore.QModelIndex):
-        """ Generate the widget that allows configuration of systems
-
-        The settings widget is generated dynamically based on the SQLAlchemy object behind the selected tree node.
-
-        """
-
-        settingsw=SettingsWidget(self.model, selected)
-        return settingsw
-
-    def setupUi(self):
-        """ Configure the User Interface """
-
-        layout=QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.splitter=QtWidgets.QSplitter()
-        self.splitter.setOrientation(QtCore.Qt.Vertical )
-        self.tree=TreeView()
-        self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.tree.customContextMenuRequested.connect(self.openContextMenu)
-        self.splitter.addWidget(self.tree)
-        layout.addWidget(self.splitter)
-
-        self.treeContextMenu = QtWidgets.QMenu()
-
-#        self.addSubFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Sub Folder', self)
-        self.addFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Folder', self)
-        self.addFolder_act.triggered.connect(self.on_addFolder)
-        self.deleteItem_act = QtWidgets.QAction(QtGui.QIcon(":Trash"), 'Delete Item', self)
-        self.deleteItem_act.triggered.connect(self.on_deleteItem)
-        self.setLayout(layout)
-        self.show()
-
 
     def openContextMenu(self, position):
 
@@ -165,10 +146,59 @@ class SystemsWidget(QtWidgets.QWidget):
         menu = self.systemSpecificContextMenu(position, menu)
         menu.exec_(self.tree.viewport().mapToGlobal(position))
 
+    def setupUi(self):
+        """ Configure the User Interface """
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.splitter = QtWidgets.QSplitter()
+        self.splitter.setOrientation(QtCore.Qt.Vertical)
+        self.tree = TreeView()
+        self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self.openContextMenu)
+        self.splitter.addWidget(self.tree)
+        layout.addWidget(self.splitter)
+
+        self.treeContextMenu = QtWidgets.QMenu()
+
+        self.systemChangePassword_signal.connect(self.on_changePassword)
+        self.systemCheckLogon_signal.connect(self.on_checkLogon)
+        self.systemDelete_signal.connect(self.on_delete)
+        self.systemExport_signal.connect(self.on_export)
+        self.systemImport_signal.connect(self.on_import)
+        self.systemNew_signal.connect(self.on_new)
+        self.systemNewFolder_signal.connect(self.on_newFolder)
+
+        #        self.addSubFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Sub Folder', self)
+        self.changePassword_act = QtWidgets.QAction(QtGui.QIcon(":Password"), 'Change Password...', self)
+        self.changePassword_act.triggered.connect(self.on_changePassword)
+
+        self.checkLogon_act = QtWidgets.QAction(QtGui.QIcon(":Login"), 'Check Logon', self)
+        self.checkLogon_act.triggered.connect(self.on_checkLogon)
+
+        self.delete_act = QtWidgets.QAction(QtGui.QIcon(":Trash"), 'Delete', self)
+        self.delete_act.triggered.connect(self.on_delete)
+
+        self.export_act = QtWidgets.QAction(QtGui.QIcon(":Export"), 'Export...', self)
+        self.export_act.triggered.connect(self.on_export)
+
+        self.import_act = QtWidgets.QAction(QtGui.QIcon(":Import"), 'Import...', self)
+        self.import_act.triggered.connect(self.on_import)
+
+        self.new_act = QtWidgets.QAction(QtGui.QIcon(":New"), 'New System...', self)
+        self.new_act.triggered.connect(self.on_new)
+
+        self.newFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'New Folder', self)
+        self.newFolder_act.triggered.connect(self.on_newFolder)
+
+        self.setLayout(layout)
+        self.show()
+
     def setModel(self, model):
-        self.model = model
+        self.system_model = model
         self.tree.setModel(model)
         self.tree.selectionModel().currentChanged.connect(self.on_treeSelectionChanged)
+        self.tree.setColumnHidden(1, True)
 
     def systemSpecificContextMenu(self, position:QtCore.QPoint, menu:QtWidgets.QMenu):
         """ Generate the system specific context menu

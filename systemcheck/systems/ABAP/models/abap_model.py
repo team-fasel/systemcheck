@@ -21,113 +21,31 @@ from sqlalchemy import inspect, Integer, ForeignKey, String, Boolean
 from typing import Any, List, Union
 from systemcheck.models.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
     StandardAbapAuthSelectionOptionMixin, Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, \
-    PasswordKeyringMixin, UniqueMixin, Session, DateTime, relationship, declared_attr, attribute_mapped_collection, \
-    one_to_many, many_to_one, Boolean, Integer, ForeignKey, ChoiceType, hybrid_property, UUIDType
+    PasswordKeyringMixin, UniqueMixin, Session, DateTime, qtRelationship, declared_attr, attribute_mapped_collection, \
+    one_to_many, many_to_one, Boolean, Integer, ForeignKey, ChoiceType, hybrid_property, RichString
 from systemcheck.models.credentials import Credential
 from systemcheck.systems.ABAP.utils import get_snc_name
 from systemcheck.config import CONFIG
 import keyring
+from systemcheck.systems.generic.models import GenericSystemTreeNode
+from systemcheck.checks.models import Check
 import uuid
 import logging
 
 @generic_repr
-class AbapTreeNode(Base, QtModelMixin):
-    """ A generic node that is the foundation of the tree stored in a database table"""
-    __tablename__ = 'abap_tree'
-    __table_args__ = {'extend_existing': True}
+class SystemABAPFolder(GenericSystemTreeNode):
 
-    id = Column(Integer, primary_key=True, qt_label='Primary Key', qt_show=False)
-    parent_id = Column(Integer, ForeignKey('abap_tree.id'), qt_label='Parent Key', qt_show=False)
-    type = Column(String(50), qt_show=False, qt_label='Type')
-    name = Column(String(50), qt_show=True, qt_label='Name')
-    abap_system = relationship('AbapSystem', uselist=False, back_populates='tree', cascade='all, delete-orphan')
-    abap_client = relationship('AbapClient', uselist=False, back_populates='tree', cascade='all, delete-orphan')
-    children=relationship('AbapTreeNode',
-                          cascade="all, delete-orphan",
-                          backref=backref("parent_node", remote_side=id),
-                          )
-
-
-    def _dump(self, _indent=0)->str:
-        """ Recursively return the structure of the node and all its children as text """
-        return "   " * _indent + repr(self) + \
-            "\n" + \
-            "".join([
-                c._dump(_indent + 1)
-                for c in self.children
-            ])
-
-    def _child(self, childnr:int)->Any:
-        """  Return the child object at a specific position"""
-        if self._child_count() >0:
-            if childnr >= 0 and childnr<self._child_count():
-                return self.children[childnr]
-
-        return False
-
-    def _child_count(self)->int:
-        """ Return the number of children """
-        return len(self.children)
-
-    def _icon(self):
-        node = self._system_node()
-        if node is not None:
-            return node._icon()
-        else:
-            return ":Folder"
-
-
-    def _insert_child(self, position:int, node)->bool:
-        self.children.insert(position, node)
-        try:
-            self._commit()
-        except Exception as err:
-            print('traceback.print_exc():')
-            traceback.print_exc()
-        return True
-
-    def _row(self):
-        if self.parent_node is not None:
-            return self.parent_node.children.index(self)
-
-    def _remove_child(self, position:int)->bool:
-        """ Remove a child item at a particular position
-
-        :param position: The position within the list of children
-
-        """
-        if 0 <= position < self._child_count():
-            child=self._child(position)
-
-            session=inspect(child).session
-
-            # Since we are using SQLAlchemy, we can't simply delete objects. If an object is part of a change that was not
-            # committet yet, we need to use 'Session.expunge()' instead of 'Session.delete()'.
-            if child in session.new:
-                session.expunge(child)
-            else:
-                session.delete(child)
-            session.commit()
-
-        return True
-
-    def _system_node(self):
-        #TODO: That needs to be done dynamically at some point
-        if self.type != 'FOLDER':
-            return getattr(self, self.type)
-        else:
-            return None
-
+    __mapper_args__ = {
+        'polymorphic_identity':'systems_ABAP_FOLDER',
+    }
 
 @generic_repr
-class AbapSystem(Base, QtModelMixin):
+class SystemABAP(GenericSystemTreeNode):
     """ ABAP System Specification
     """
 
-    __tablename__ = 'abap_systems'
+    __tablename__ = 'systems_ABAP'
     __table_args__ = {'extend_existing': True}
-
-    RELNAME = 'abap_system'
 
 
     SNC_QOP_CHOICES=[
@@ -137,7 +55,7 @@ class AbapSystem(Base, QtModelMixin):
                         ('9', '9: Max. Available')
                     ]
 
-    id = Column(Integer, primary_key=True, qt_show=False)
+    id = Column(Integer, ForeignKey('systems.id'), primary_key=True, qt_show=False)
 
     sid = Column(String(32),
                  unique=False,
@@ -160,11 +78,6 @@ class AbapSystem(Base, QtModelMixin):
                   qt_description='The rail the system resides in (N, N+1)',
                   )
 
-    description= Column(String(250),
-                        nullable=True,
-                        qt_label='Description',
-                        qt_description='Description of the system',
-                        )
 
     enabled = Column(Boolean,
                      default=True,
@@ -232,41 +145,46 @@ class AbapSystem(Base, QtModelMixin):
                     qt_label='AS SysNr.',
                     qt_description='System Number of the application server')
 
-    system_tree_id = Column(Integer, ForeignKey('abap_tree.id'))
-    tree = relationship('AbapTreeNode', back_populates=RELNAME, cascade='all, delete-orphan', single_parent=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity':'systems_ABAP',
+    }
+
+    __qtmap__ = [GenericSystemTreeNode.name, GenericSystemTreeNode.description, sid, tier, rail,
+                 GenericSystemTreeNode.description, enabled, snc_partnername, snc_qop, use_snc, default_client,
+                 ms_hostname, ms_sysnr, ms_logongroup, as_hostname, as_sysnr]
 
     def _icon(self):
         return ":SAP"
 
 
 @generic_repr
-class AbapClient(Base, QtModelMixin, PasswordKeyringMixin):
+class SystemABAPClient(GenericSystemTreeNode, PasswordKeyringMixin):
     """ Contains ABAP specific information"""
-    __tablename__ = 'abap_clients'
+    __tablename__ = 'systems_ABAP_client'
     __table_args__ = {'extend_existing': True}
+    __mapper_args__ = {
+        'polymorphic_identity':'systems_ABAP_client',
+    }
 
-    RELNAME = 'abap_client'
 
-    id = Column(Integer, primary_key=True, qt_show=False)
+    id = Column(Integer, ForeignKey('systems.id'), primary_key=True, qt_show=False)
 
     client = Column(String(3),
                   nullable=False,
                   qt_label='Client',
                   qt_description='The 3 digit number that describes the client',
                   )
-    description = Column(String(250),
-                        nullable=True,
-                        qt_label='Description',
-                        qt_description="Client Description",
-                        )
+
     use_sso = Column(Boolean,
                      default=True,
                      qt_label='Use SSO',
                      qt_description='Use Single Sign On',
                      )
     username = Column(String(40), default='<initial>', nullable=True, qt_label='Username', qt_description='Username to logon to the ABAP Client')
-    system_tree_id = Column(Integer, ForeignKey('abap_tree.id'), qt_show=False)
-    tree = relationship('AbapTreeNode', back_populates=RELNAME, cascade='all, delete-orphan', single_parent=True)
+
+
+    __qtmap__ = [client, GenericSystemTreeNode.description, use_sso, username]
 
     def __init__(self, **kwargs):
         uuid_string = str(uuid.uuid4())
@@ -277,13 +195,6 @@ class AbapClient(Base, QtModelMixin, PasswordKeyringMixin):
         self.password = kwargs.get('password')
         self.use_sso = kwargs.get('use_sso')
 
-    def abap_system(self):
-        parent_node = self.tree.parent_node
-        if parent_node.type == 'abap_system':
-            return parent_node.abap_system
-        else:
-            return None
-
     def _icon(self):
         return ":Client"
 
@@ -291,7 +202,7 @@ class AbapClient(Base, QtModelMixin, PasswordKeyringMixin):
 
         logon_info = {}
         self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
-        abap_system = self.abap_system()
+        abap_system = self.parent_node
         if abap_system:
             sysid = abap_system.sid
             logon_info['sysid'] = sysid  #technically only required for load balancing, but we specify it
@@ -353,3 +264,10 @@ class AbapClient(Base, QtModelMixin, PasswordKeyringMixin):
                     self.logger.error('No SSO, but username or Password missing')
                     return False
         return logon_info
+
+
+@generic_repr
+class CheckABAPFolder(Check):
+    __mapper_args__ = {
+        'polymorphic_identity': 'CheckABAPFolder',
+    }

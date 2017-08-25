@@ -122,12 +122,15 @@ class CheckParameterTableModel(QtCore.QAbstractTableModel):
         if not index.isValid():
             return None
 
-        if not 0 <= index.row() < len(self.__checknode.params):
+        rowNr=index.row()
+        colNr=index.column()
+
+        if not 0 <= rowNr < len(self.__checknode.params):
             return None
 
         if role == QtCore.Qt.DisplayRole:
-            param = self.__checknode.params[index.row()]
-            column = param.__qtmap__[index.column()]
+            param = self.__checknode.params[rowNr]
+            column = param.__qtmap__[colNr]
 
             value = getattr(param, column.name)
             return value
@@ -150,7 +153,7 @@ class CheckParameterTableModel(QtCore.QAbstractTableModel):
 
         for row in range(rows):
             if objectClass:
-                object = objectClass(description='< New >')
+                object = objectClass(param_set_name='< New >')
                 self.__checknode.params.insert(position + row, object)
 
         self.endInsertRows()
@@ -165,6 +168,17 @@ class CheckParameterTableModel(QtCore.QAbstractTableModel):
 
         self.endRemoveRows()
         return True
+
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
+
+        if index.isValid():
+            if role == QtCore.Qt.EditRole:
+                rowNr=index.row()
+                colNr=index.column()
+
+                param = self.__checknode.params[rowNr]
+                param._qt_set_value_by_colnr(colnr=colNr, value=value)
+
 
     def flags(self, index):
         """ Set the item flags at the given index. Seems like we're

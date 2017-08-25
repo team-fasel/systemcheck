@@ -44,6 +44,7 @@
     <file alias="Key">./img/icons8/Key_32px.png</file>
     <file alias="Last">./img/icons8/Last_32px.png</file>
     <file alias="Linux">./img/icons8/Linux_32px.png</file>
+    <file alias="Login">./img/icons8/Login_32px.png</file>
     <file alias="MarkerPen">./img/icons8/Marker Pen_32px.png</file>
     <file alias="Menu">./img/icons8/Menu_32px.png</file>
     <file alias="Minus">./img/icons8/Minus_32px.png</file>

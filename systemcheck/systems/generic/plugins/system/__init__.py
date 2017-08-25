@@ -1,0 +1,1 @@
+from systemcheck.systems.generic.plugins.system.generic_system_plugin import GenericSystemPlugin

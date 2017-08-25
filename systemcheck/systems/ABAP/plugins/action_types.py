@@ -1,15 +1,12 @@
-import ast
-from collections import OrderedDict
 import logging
 from pprint import pformat
 
-from systemcheck.systems.generic import actions as generic_actions
+from systemcheck import plugins
 from systemcheck.systems.ABAP import utils as abaputils
-from systemcheck.utils import Result, Fail
-from systemcheck.config import CONFIG
+from systemcheck.utils import Result
 
 
-class CheckAbapFoundationAction(generic_actions.GenericActionPlugin):
+class CheckAbapFoundationAction(plugins.ActionBasePlugin):
     """ ABAP Foundation Plugin
     Base class for all ABAP Plugins. """
 
@@ -50,6 +47,7 @@ class CheckAbapAction(CheckAbapFoundationAction):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
 
 
 class CheckAbapSUIMAction(CheckAbapFoundationAction):

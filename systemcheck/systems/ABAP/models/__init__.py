@@ -10,5 +10,5 @@ __maintainer__  = 'Lars Fasel'
 __email__       = 'systemcheck@team-fasel.com'
 
 
-from systemcheck.systems.ABAP.models.abap_model import AbapSystem, AbapTreeNode, AbapClient
+from systemcheck.systems.ABAP.models.abap_model import SystemABAP, SystemABAPClient, SystemABAPFolder, CheckABAPFolder
 
