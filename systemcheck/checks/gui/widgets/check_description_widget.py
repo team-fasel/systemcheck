@@ -1,7 +1,6 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 import systemcheck
 import logging
-from systemcheck.gui.qtalcmapper import generateQtDelegate, getQtWidgetForAlchemyType
 from collections import OrderedDict
 from typing import Any
 from pprint import pprint
@@ -36,7 +35,7 @@ class CheckSettingsWidget(QtWidgets.QWidget):
         self.dataMapper = QtWidgets.QDataWidgetMapper()
         self.dataMapper.setModel(self.description_model)
         self.widgets = OrderedDict()
-        self.delegate = generateQtDelegate(alchemy_object)
+        self.delegate = systemcheck.gui.qtalcmapper.generateQtDelegate(alchemy_object)
 
         columns = alchemy_object._qt_columns()
 
@@ -46,7 +45,7 @@ class CheckSettingsWidget(QtWidgets.QWidget):
                 lblWidget = QtWidgets.QTableWidgetItem(column.info.get('qt_label'))
                 self.tablew.setItem(colNr, 0, lblWidget)
 
-                wid = getQtWidgetForAlchemyType(column)
+                wid = systemcheck.gui.qtalcmapper.getQtWidgetForAlchemyType(column)
                 self.dataMapper.addMapping(wid, colNr)
                 self.widgets[colNr] = wid
                 self.tablew.setCellWidget(colNr, 1, wid)
