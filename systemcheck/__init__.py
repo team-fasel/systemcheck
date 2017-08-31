@@ -31,7 +31,7 @@ __revision__ = __version__
 import systemcheck.config
 import systemcheck.models
 import systemcheck.session
+import systemcheck.checks
 import systemcheck.plugins
 import systemcheck.gui
 import systemcheck.systems
-import systemcheck.checks
