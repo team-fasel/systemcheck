@@ -9,6 +9,7 @@ import traceback
 
 
 class AbapSystemsWidget(GenericSystemWidget):
+    """ ABAP Specific System Widget """
 
     def __init__(self, model: QtCore.QAbstractItemModel = None):
         super().__init__()
@@ -77,27 +78,27 @@ class AbapSystemsWidget(GenericSystemWidget):
             else:
                 guiutils.message(windowIcon=pwdicon, text="Passwords Don't Match")
 
-
-
     def systemSpecificContextMenu(self, position, menu):
         index = self.tree.indexAt(position)
-        node = index.internalPointer()
+        node = self.system_model.getNode(index)
 
         if node is None:
             menu.addAction(self.addFolder_act)
             menu.addAction(self.addSystem_act)
             menu.addAction(self.deleteItem_act)
         else:
-            if node.type == 'FOLDER':
+            if isinstance(node, SystemABAP):
+                menu.addAction(self.addClient_act)
+                menu.addAction(self.deleteItem_act)
+            elif isinstance(node, SystemABAPClient):
+                menu.addAction(self.updatePassword_act)
+                menu.addAction(self.deleteItem_act)
+            elif isinstance(node, GenericSystemTreeNode):
                 menu.addAction(self.addFolder_act)
                 menu.addAction(self.addSystem_act)
                 menu.addAction(self.deleteItem_act)
-            elif node.type == 'abap_system':
-                menu.addAction(self.addClient_act)
-                menu.addAction(self.deleteItem_act)
-            elif node.type == 'abap_client':
-                menu.addAction(self.updatePassword_act)
-                menu.addAction(self.deleteItem_act)
+
+
         return menu
 
     def generateSettingsWidget(self, selected:QtCore.QModelIndex):
@@ -114,5 +115,4 @@ class AbapSystemsWidget(GenericSystemWidget):
             if system_node:
                 settingsw=GenericSystemSettingsWidget(self.system_model, selected)
                 return settingsw
-
         return False

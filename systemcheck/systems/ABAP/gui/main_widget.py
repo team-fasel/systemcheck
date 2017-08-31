@@ -1,8 +1,9 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 import systemcheck
+from systemcheck.systems.generic.gui.widgets import GenericSystemMainWidget
 from systemcheck.resources import icon_rc
 
-class AbapWidget(QtWidgets.QWidget):
+class AbapWidget(GenericSystemMainWidget):
 
 #    icon = QtGui.QIcon(':SAP')
 

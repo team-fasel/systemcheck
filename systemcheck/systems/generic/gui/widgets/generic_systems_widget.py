@@ -7,6 +7,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from systemcheck.gui.qtalcmapper import generateQtDelegate, getQtWidgetForAlchemyType
 from systemcheck.gui.widgets import TreeView
 from systemcheck.gui.models import SettingsModel
+
 from pprint import pprint
 
 __authors__     = ['Lars Fasel']
@@ -30,9 +31,11 @@ class GenericSystemSettingsWidget(QtWidgets.QWidget):
     def __init__(self, model, currentIndex, parent=None):
         self.logger=logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
         super().__init__(parent)
+        self.model = model
+
         layout=QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        treeNode=currentIndex.internalPointer()
+        treeNode=self.model.getNode(currentIndex)
         self.setVisible(False)
         if treeNode:
             if treeNode.type !='FOLDER':
@@ -94,6 +97,13 @@ class GenericSystemWidget(QtWidgets.QWidget):
         if model:
             self.setModel(model)
 
+    def toolbar(self):
+        toolbar = QtWidgets.QToolBar()
+        toolbar.addActions([self.systemNew_act, self.systemNewFolder_act])
+        toolbar.addSeparator()
+        toolbar.addActions([self.systemDelete_act, self.systemImport_act, self.systemExport_act])
+
+
     def on_changePassword(self):
         pass
 
@@ -105,6 +115,12 @@ class GenericSystemWidget(QtWidgets.QWidget):
 
         parent=index.parent()
         self.system_model.removeRow(index.row(), parent)
+        pass
+
+    def on_disable(self):
+        pass
+
+    def on_enable(self):
         pass
 
     def on_export(self):
@@ -151,6 +167,8 @@ class GenericSystemWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        label = QtWidgets.QLabel('Systems:')
+        layout.addWidget(label)
         self.splitter = QtWidgets.QSplitter()
         self.splitter.setOrientation(QtCore.Qt.Vertical)
         self.tree = TreeView()
@@ -161,6 +179,10 @@ class GenericSystemWidget(QtWidgets.QWidget):
 
         self.treeContextMenu = QtWidgets.QMenu()
 
+        self.addFolder_act = QtWidgets.QAction(QtGui.QIcon(':AddFolder'), 'Add Folder')
+        self.deleteItem_act = QtWidgets.QAction(QtGui.QIcon(':Trash'), 'Delete')
+
+
         self.systemChangePassword_signal.connect(self.on_changePassword)
         self.systemCheckLogon_signal.connect(self.on_checkLogon)
         self.systemDelete_signal.connect(self.on_delete)
@@ -168,31 +190,9 @@ class GenericSystemWidget(QtWidgets.QWidget):
         self.systemImport_signal.connect(self.on_import)
         self.systemNew_signal.connect(self.on_new)
         self.systemNewFolder_signal.connect(self.on_newFolder)
-
-        #        self.addSubFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'Add Sub Folder', self)
-        self.changePassword_act = QtWidgets.QAction(QtGui.QIcon(":Password"), 'Change Password...', self)
-        self.changePassword_act.triggered.connect(self.on_changePassword)
-
-        self.checkLogon_act = QtWidgets.QAction(QtGui.QIcon(":Login"), 'Check Logon', self)
-        self.checkLogon_act.triggered.connect(self.on_checkLogon)
-
-        self.delete_act = QtWidgets.QAction(QtGui.QIcon(":Trash"), 'Delete', self)
-        self.delete_act.triggered.connect(self.on_delete)
-
-        self.export_act = QtWidgets.QAction(QtGui.QIcon(":Export"), 'Export...', self)
-        self.export_act.triggered.connect(self.on_export)
-
-        self.import_act = QtWidgets.QAction(QtGui.QIcon(":Import"), 'Import...', self)
-        self.import_act.triggered.connect(self.on_import)
-
-        self.new_act = QtWidgets.QAction(QtGui.QIcon(":New"), 'New System...', self)
-        self.new_act.triggered.connect(self.on_new)
-
-        self.newFolder_act = QtWidgets.QAction(QtGui.QIcon(":AddFolder"), 'New Folder', self)
-        self.newFolder_act.triggered.connect(self.on_newFolder)
-
         self.setLayout(layout)
         self.show()
+
 
     def setModel(self, model):
         self.system_model = model

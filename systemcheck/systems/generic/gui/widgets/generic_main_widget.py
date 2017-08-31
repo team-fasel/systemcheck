@@ -1,34 +1,44 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 from systemcheck.gui.models import PolyMorphicFilterProxyModel
+from systemcheck.gui.utils import message
 from systemcheck.systems.generic.gui.widgets import GenericSystemWidget
-from systemcheck.checks.gui.widgets import ChecksWidget
+from systemcheck.checks.gui.widgets.checks_widget import ChecksWidget
+from systemcheck.results.gui.widgets.result_widget import ResultWidget
 from systemcheck.resources import icon_rc
 from typing import Any
 
+class Signals(QtCore.QObject):
+    
+    checksDelete = QtCore.pyqtSignal()
+    checksExport = QtCore.pyqtSignal()
+    checksImport = QtCore.pyqtSignal()
+    checksNew = QtCore.pyqtSignal()
+    checksNewFolder = QtCore.pyqtSignal()
+    checksPause = QtCore.pyqtSignal()
+    checksRun = QtCore.pyqtSignal()
+    checksStop = QtCore.pyqtSignal()
+    resultClear = QtCore.pyqtSignal()
+    resultExport = QtCore.pyqtSignal()
+    resultImport = QtCore.pyqtSignal()
+    systemsCheckLogon = QtCore.pyqtSignal()
+    systemsDelete = QtCore.pyqtSignal()
+    systemsDisable = QtCore.pyqtSignal()
+    systemsEnable = QtCore.pyqtSignal()
+    systemsExport = QtCore.pyqtSignal()
+    systemsImport = QtCore.pyqtSignal()
+    systemsNew = QtCore.pyqtSignal()
+    systemsNewFolder = QtCore.pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+
 class GenericSystemMainWidget(QtWidgets.QWidget):
 
-    checkNew_signal = QtCore.pyqtSignal()
-    checkNewFolder_signal = QtCore.pyqtSignal()
-    checkDelete_signal = QtCore.pyqtSignal()
-    checkImport_signal = QtCore.pyqtSignal()
-    checkExport_signal = QtCore.pyqtSignal()
-    checkRun_signal = QtCore.pyqtSignal()
-    checkPause_signal = QtCore.pyqtSignal()
-    checkStop_signal = QtCore.pyqtSignal()
-    resultAdd_signal = QtCore.pyqtSignal()
-    resultExport_signal = QtCore.pyqtSignal()
-    resultImport_signal = QtCore.pyqtSignal()
-    systemCheckLogon_signal = QtCore.pyqtSignal()
-    systemNewFolder_signal = QtCore.pyqtSignal()
-    systemNew_signal = QtCore.pyqtSignal()
-    systemDelete_signal = QtCore.pyqtSignal()
-    systemImport_signal = QtCore.pyqtSignal()
-    systemExport_signal = QtCore.pyqtSignal()
-
-    def __init__(self, systemFilter:Any = None, checkFilter:list = None):
+    def __init__(self, systemFilter:list = None, checkFilter:list = None, systemsWidget:QtWidgets.QWidget=None):
         super().__init__()
-        self.setupCommonActions()
-        self.setupCommonUi()
+        self.signals = Signals()
+        self.setupCommonUi(systemsWidget)
+
         self.__systemFilter=None
         self.__checkFilter=None
 
@@ -41,13 +51,14 @@ class GenericSystemMainWidget(QtWidgets.QWidget):
     def systemFilter(self):
         return self.__systemFilter
 
-    def setSystemFilter(self, systemFilter:Any):
-        self.__systemFilter = systemFilter
-
     def setCheckFilter(self, checkFilter:list):
         self.__checkFilter=checkFilter
 
-    def setupCommonUi(self):
+    def setSystemFilter(self, systemFilter:list):
+        self.__systemFilter = systemFilter
+
+    def setupCommonUi(self, systemsWidget:QtWidgets.QWidget=None):
+
         layout = QtWidgets.QVBoxLayout()
         self.setLayout(layout)
         self.setWindowTitle('Generic Main Widget')
@@ -55,20 +66,48 @@ class GenericSystemMainWidget(QtWidgets.QWidget):
         self.setMinimumWidth(1024)
         self.setMinimumHeight(768)
 
+        self.checksResults_splitter = QtWidgets.QSplitter()
+        self.checksResults_splitter.setOrientation(QtCore.Qt.Vertical)
         self.systemsChecks_splitter = QtWidgets.QSplitter()
         self.systemsChecks_splitter.setOrientation(QtCore.Qt.Horizontal)
 
-        self.systems = GenericSystemWidget()
+        if systemsWidget:
+            self.systems = systemsWidget()
+        else:
+            self.systems = GenericSystemWidget()
         self.systemsChecks_splitter.addWidget(self.systems)
+        self.systemsChecks_splitter.addWidget(self.checksResults_splitter)
 
         self.checks = ChecksWidget()
-        self.systemsChecks_splitter.addWidget(self.checks)
+        self.checksResults_splitter.addWidget(self.checks)
+
+        self.results = ResultWidget()
+        self.checksResults_splitter.addWidget(self.results)
 
         layout.addWidget(self.systemsChecks_splitter)
+
         self.show()
 
-    def setupCommonActions(self):
-        pass
+        self.signals.checksDelete.connect(self.checks.on_checkDelete)
+        self.signals.checksExport.connect(self.checks.on_checkExport)
+        self.signals.checksImport.connect(self.checks.on_checkImport)
+        self.signals.checksNew.connect(self.checks.on_checkNew)
+        self.signals.checksNewFolder.connect(self.checks.on_checkNewFolder)
+        self.signals.checksPause.connect(self.checks.on_checkPause)
+        self.signals.checksRun.connect(self.checks.on_checkRun)
+        self.signals.checksStop.connect(self.checks.on_checkStop)
+        self.signals.resultClear.connect(self.results.on_resultClear)
+        self.signals.resultExport.connect(self.results.resultHandler.on_resultExport)
+        self.signals.resultImport.connect(self.results.resultHandler.on_resultImport)
+        self.signals.systemsCheckLogon.connect(self.systems.on_checkLogon)
+        self.signals.systemsNewFolder.connect(self.systems.on_newFolder)
+        self.signals.systemsNew.connect(self.systems.on_new)
+        self.signals.systemsDelete.connect(self.systems.on_delete)
+        self.signals.systemsImport.connect(self.systems.on_import)
+        self.signals.systemsExport.connect(self.systems.on_export)
+        self.signals.systemsDisable.connect(self.systems.on_disable)
+        self.signals.systemsEnable.connect(self.systems.on_enable)
+
 
     def setModel(self, system=None, check=None):
 

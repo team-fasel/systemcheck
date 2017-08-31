@@ -1,5 +1,5 @@
 [Core]
-Name = ABAP System Plugin
+Name = systemtype_ABAP
 Module = system_abap_plugin
 
 [Documentation]
