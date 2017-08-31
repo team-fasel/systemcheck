@@ -8,12 +8,10 @@ class ResultDisplay(QtWidgets.QWidget):
         self.setupUi()
 
     def setupUi(self):
-        self.toolbar = QtWidgets.QToolBar()
         self.splitter = QtWidgets.QSplitter()
         self.splitter.setOrientation(QtCore.Qt.Vertical)
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.toolbar)
         self.overview = result_overview.ResultOverview()
         self.splitter.addWidget(self.overview)
         self.details = result_details.ResultDetails()
@@ -25,5 +23,5 @@ class ResultDisplay(QtWidgets.QWidget):
 
     def setModel(self, model):
         self.model = model
-#        self.tree.setModel(model)
+        self.overview.setModel(model)
 

@@ -1,0 +1,1 @@
+from systemcheck.results.result_handler import ResultHandler
