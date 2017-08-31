@@ -1,7 +1,6 @@
 import operator
 from yapsy import IPlugin
 import systemcheck.session
-from systemcheck.checks.models import Check
 import datetime
 import logging
 from collections import OrderedDict
@@ -50,7 +49,7 @@ class ActionResult:
         """ Define the Table that contains the results
 
         """
-        self._tableDefinition = definition
+        self.__result_definition = definition
 
 
     def addResultColumn(self, technical:str, description:str):
@@ -103,6 +102,7 @@ class ActionResult:
            - pass:    The check passed
            - fail:    The check failed
            - error:   There was an error during the execution of the plugin
+           - info:    Just informational
            - warning: The result finished with a Warning
         """
 
@@ -166,13 +166,13 @@ class ActionBasePlugin(BasePlugin):
 
     """
 
-    def __init__(self, *args, alchemyRoot=Check, parameters:list=None, **kwargs):
+    def __init__(self, *args, alchemyRoot=systemcheck.checks.models.Check, parameters:list=None, **kwargs):
         super().__init__(alchemyRoot)
         self.actionResult = ActionResult()
         self.logger = logging.getLogger("{}.{}".format(__name__, self.__class__.__name__))
         self.__parameters = parameters
 
-        self.setAlchemyRoot(Check)
+        self.setAlchemyRoot(systemcheck.checks.models.Check)
 
     def set_plugin_config(self):
         pass

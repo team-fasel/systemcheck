@@ -6,5 +6,5 @@ from systemcheck.systems.ABAP.plugins.action_types import CheckAbapFoundationAct
 
 
 categories = {'check_ABAP':CheckAbapFoundationAction,
-              'systems':SystemBasePlugin}
+              'system':SystemBasePlugin}
 
