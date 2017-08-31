@@ -29,6 +29,7 @@ from systemcheck.models.meta.base import engine_from_config, scoped_session, ses
 from systemcheck.systems.ABAP.plugins.actions.check_abap_count_table_entries import CheckAbapCountTableEntries, \
     CheckAbapCountTableEntries__params
 
+
 from . import tools
 
 class TestChecksTreeModel(TestCase):
