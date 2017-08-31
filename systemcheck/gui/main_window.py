@@ -1,31 +1,45 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from systemcheck.resources import icon_rc
 import systemcheck
-
+from systemcheck.checks.models import Check
+from systemcheck.gui.models import GenericTreeModel
+from systemcheck.systems.generic.models import GenericSystemTreeNode
+from systemcheck.session import SESSION
 
 
 class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
-        super(QtWidgets.QMainWindow, self).__init__()
+        super().__init__()
         self.setupUi()
         self.show()
+
+    def addSystemType(self, object):
+
+        object.setModel(system=self.system_model, check=self.check_model)
+        self.systemTypes_tabw.addTab(object, 'ABAP')
 
 
     def setupUi(self):
         self.setWindowIcon(QtGui.QIcon(':Checked'))
         self.setWindowTitle('SystemCheck')
         self.systemTypes_tabw = QtWidgets.QTabWidget()
+        self.systemTypes_tabw.setContentsMargins(0, 0, 0, 0)
+        #self.systemTypes_tabw.setStyleSheet('QTabWidget::pane { border: 0 solid white; margin: -13px -9px -13px -9px;}')
         self.setMinimumHeight(768)
-        self.setMinimumWidth(1024)
+        self.setMinimumWidth(1366)
 
         self.setupActions()
         self.generateMenu()
 
         self.setCentralWidget(self.systemTypes_tabw)
-
-        self.abap_tab=systemcheck.systems.ABAP.gui.AbapWidget()
         self.systemTypes_tabw.setTabPosition(QtWidgets.QTabWidget.West)
+
+        system_root = SESSION.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
+        check_root = SESSION.query(Check).filter_by(parent_id=None).one()
+
+        self.system_model = GenericTreeModel(system_root)
+        self.check_model = GenericTreeModel(check_root)
 
     def generateMenu(self):
         menubar = self.menuBar()
@@ -107,6 +121,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.systemsDelete_act.triggered.connect(self.on_systemsDelete)
         self.systemsDelete_act.setEnabled(False)
 
+        self.systemsDisable_act = QtWidgets.QAction(QtGui.QIcon(':Hide'), 'Disable Systems')
+        self.systemsDisable_act.triggered.connect(self.on_systemsDisable)
+        self.systemsDisable_act.setEnabled(False)
+
+        self.systemsEnable_act = QtWidgets.QAction(QtGui.QIcon(':Eye'), 'Enable Systems')
+        self.systemsEnable_act.triggered.connect(self.on_systemsEnable)
+        self.systemsEnable_act.setEnabled(False)
+
         self.systemsImport_act = QtWidgets.QAction(QtGui.QIcon(':Import'), '&Import Systems')
         self.systemsImport_act.triggered.connect(self.on_systemsImport)
         self.systemsImport_act.setEnabled(False)
@@ -155,51 +177,65 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resultsImport_act.triggered.connect(self.on_resultsImport)
         self.resultsImport_act.setEnabled(False)
 
-    def on_checksNew(self):
-        self.systemTypes_tabw.currentWidget().checksNew.emit()
+        self.resultsClear_act = QtWidgets.QAction(QtGui.QIcon(':ClearSymbol'), 'Clear Results')
+        self.resultsClear_act.triggered.connect(self.on_resultsClear)
+        self.resultsClear_act.setEnabled(False)
 
-    def on_checksNewFolder(self):
-        self.systemTypes_tabw.currentWidget().checksNewFolder.emit()
 
     def on_checksDelete(self):
-        self.systemTypes_tabw.currentWidget().checksDelete.emit()
-
-    def on_checksImport(self):
-        self.systemTypes_tabw.currentWidget().checksImport.emit()
+        self.systemTypes_tabw.currentWidget().signals.checksDelete.emit()
 
     def on_checksExport(self):
-        self.systemTypes_tabw.currentWidget().checksExport.emit()
+        self.systemTypes_tabw.currentWidget().signals.checksExport.emit()
 
-    def on_checksRun(self):
-        self.systemTypes_tabw.currentWidget().checksRun.emit()
+    def on_checksImport(self):
+        self.systemTypes_tabw.currentWidget().signals.checksImport.emit()
+
+    def on_checksNew(self):
+        self.systemTypes_tabw.currentWidget().signals.checksNew.emit()
+
+    def on_checksNewFolder(self):
+        self.systemTypes_tabw.currentWidget().signals.checksNewFolder.emit()
 
     def on_checksPause(self):
-        self.systemTypes_tabw.currentWidget().checksPause.emit()
+        self.systemTypes_tabw.currentWidget().signals.checksPause.emit()
+
+    def on_checksRun(self):
+        self.systemTypes_tabw.currentWidget().signals.checksRun.emit()
 
     def on_checksStop(self):
-        self.systemTypes_tabw.currentWidget().checksStop.emit()
+        self.systemTypes_tabw.currentWidget().signals.checksStop.emit()
+
+    def on_resultsClear(self):
+        self.systemTypes_tabw.currentWidget().signals.resultClear.emit()
 
     def on_resultsExport(self):
-        self.systemTypes_tabw.currentWidget().resultsExport.emit()
+        self.systemTypes_tabw.currentWidget().signals.resultExport.emit()
 
     def on_resultsImport(self):
-        self.systemTypes_tabw.currentWidget().resultsImport.emit()
+        self.systemTypes_tabw.currentWidget().signals.resultImport_signal.emit()
 
     def on_systemsCheckLogon(self):
-        self.systemTypes_tabw.currentWidget().systemsCheckLogon.emit()
-
-    def on_systemsNewFolder(self):
-        self.systemTypes_tabw.currentWidget().systemsNewFolder.emit()
-
-    def on_systemsNew(self):
-        self.systemTypes_tabw.currentWidget().systemsNew.emit()
+        self.systemTypes_tabw.currentWidget().signals.systemsCheckLogon.emit()
 
     def on_systemsDelete(self):
-        self.systemTypes_tabw.currentWidget().systems.Delete.emit()
+        self.systemTypes_tabw.currentWidget().signals.systemsDelete.emit()
 
-    def on_systemsImport(self):
-        self.systemTypes_tabw.currentWidget().systemsImport.emit()
+    def on_systemsDisable(self):
+        self.systemTypes_tabw.currentWidget().signals.systemsDisable.emit()
+
+    def on_systemsEnable(self):
+        self.systemTypes_tabw.currentWidget().signals.systemsEnable.emit()
 
     def on_systemsExport(self):
-        self.systemTypes_tabw.currentWidget().systemsExport.emit()
+        self.systemTypes_tabw.currentWidget().signals.systemsExport.emit()
+
+    def on_systemsImport(self):
+        self.systemTypes_tabw.currentWidget().signals.systemsImport.emit()
+
+    def on_systemsNew(self):
+        self.systemTypes_tabw.currentWidget().signals.systemsNew.emit()
+
+    def on_systemsNewFolder(self):
+        self.systemTypes_tabw.currentWidget().signals.systemsNewFolder.emit()
 

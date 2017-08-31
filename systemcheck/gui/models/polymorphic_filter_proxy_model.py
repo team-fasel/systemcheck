@@ -1,6 +1,10 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 class PolyMorphicFilterProxyModel(QtCore.QSortFilterProxyModel):
+    """ Polymorphic Filter Proxy Model
+
+    Used to filter based on SQLAlchemy types
+    """
 
 
     def __init__(self, filterClasses:list):
@@ -19,3 +23,8 @@ class PolyMorphicFilterProxyModel(QtCore.QSortFilterProxyModel):
             return True
         return False
 
+    def getNode(self, proxyIndex):
+
+        node = self.mapToSource(proxyIndex).internalPointer()
+
+        return node

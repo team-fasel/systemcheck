@@ -28,14 +28,6 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         self._treeNode=treenode
         self.checkedIndexes = set()
 
-    def rowCount(self, parent: QtCore.QModelIndex) -> int:
-        if not parent.isValid():
-            parentNode=self._rootNode
-        else:
-            parentNode=parent.internalPointer()
-
-        return parentNode._qt_child_count()
-
     def columnCount(self, parent=None, *args, **kwargs)->int:
 
         return self._rootNode._qt_column_count()
@@ -65,47 +57,17 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
             colnr = index.column()
             return node._qt_data_colnr(colnr)
 
-    def setData(self, index:QtCore.QModelIndex, value: Any, role=QtCore.Qt.EditRole)->bool:
-        """ setData Method to make the model modifieabls """
+    def flags(self, index:QtCore.QModelIndex)->int:
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable
 
+    def getNode(self, index:QtCore.QModelIndex) -> Any:
+        """ Returns the actual node object behind a index"""
         if index.isValid():
+            node = index.internalPointer()
+            if node:
+                return node
 
-            if role == QtCore.Qt.CheckStateRole:
-                if index.column() == 0:
-                    if value == QtCore.Qt.Checked:
-                        self.checkedIndexes.add(index)
-                    else:
-                        self.checkedIndexes.remove(index)
-                    if self.hasChildren(index):
-                        self.recursiveCheck(index, value)
-
-
-
-            if role == QtCore.Qt.EditRole:
-                node = index.internalPointer()
-                node._qt_set_value_by_colnr(index.column(), value)
-
-            self.dataChanged.emit(index, index)
-            return True
-        return False
-
-    def recursiveCheck(self, index:QtCore.QModelIndex, value:int):
-        """ Set the CheckBox Status
-
-        :param index: The QModelIndex of the item to check
-        :param value: Status of the checkbox
-
-
-        """
-
-        if self.hasChildren(index):
-            for childnr in range(self.rowCount(index)):
-                child = super().index(childnr, 0, index)
-                self.setData(child, value, QtCore.Qt.CheckStateRole)
-        else:
-            self.setData(index, value, QtCore.Qt.CheckStateRole)
-
-        return True
+        return self._rootNode
 
     def headerData(self, column:int, orientation:int, role:int)->str:
         if role==QtCore.Qt.DisplayRole:
@@ -114,8 +76,16 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
                 header=self._rootNode._qt_header(column)
                 return header
 
-    def flags(self, index:QtCore.QModelIndex)->int:
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsUserCheckable
+    def index(self, row: int, column: int, parent: QtCore.QModelIndex)-> QtCore.QModelIndex:
+
+        parentNode = self.getNode(parent)
+
+        childItem = parentNode._qt_child(row)
+
+        if childItem:
+            return self.createIndex(row, column, childItem)
+        else:
+            return QtCore.QModelIndex()
 
     def insertRow(self, position: int, parent:QtCore.QModelIndex, nodeObject:Any=None)->bool:
         """ Add a single child to the model
@@ -139,7 +109,6 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         self.endInsertRows()
         return True
 
-
     def insertRows(self, position: int, count: int, parent:QtCore.QModelIndex=QtCore.QModelIndex())->bool:
         """ Insert Multiple Children at given position
 
@@ -161,6 +130,42 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         self.endInsertRows()
 
         return success
+
+    def parent(self, index: QtCore.QModelIndex)->QtCore.QModelIndex:
+
+        #self.logger.debug('Find parent of index: {}'.format(pformat(index)))
+        if not index.isValid():
+            return QtCore.QModelIndex()
+
+        node = index.internalPointer()
+
+        #self.logger.debug('Identified node: {}'.format(pformat(node)))
+        #self.logger.debug('Identified Parent node: {}'.format(pformat(node.parent_node)))
+
+        parentNode = node.parent_node
+
+        if parentNode == self._rootNode:
+            return QtCore.QModelIndex()
+
+        return self.createIndex(parentNode._qt_row(), 0, parentNode)
+
+    def recursiveCheck(self, index:QtCore.QModelIndex, value:int):
+        """ Set the CheckBox Status
+
+        :param index: The QModelIndex of the item to check
+        :param value: Status of the checkbox
+
+
+        """
+
+        if self.hasChildren(index):
+            for childnr in range(self.rowCount(index)):
+                child = super().index(childnr, 0, index)
+                self.setData(child, value, QtCore.Qt.CheckStateRole)
+        else:
+            self.setData(index, value, QtCore.Qt.CheckStateRole)
+
+        return True
 
     def removeRow(self, row: int, parent:QtCore.QModelIndex)->bool:
         """ Remove a single child from the model
@@ -192,41 +197,36 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
 
         return True
 
-    def parent(self, index: QtCore.QModelIndex)->QtCore.QModelIndex:
-
-        #self.logger.debug('Find parent of index: {}'.format(pformat(index)))
-        if not index.isValid():
-            return QtCore.QModelIndex()
-
-        node = index.internalPointer()
-
-        #self.logger.debug('Identified node: {}'.format(pformat(node)))
-        #self.logger.debug('Identified Parent node: {}'.format(pformat(node.parent_node)))
-
-        parentNode = node.parent_node
-
-        if parentNode == self._rootNode:
-            return QtCore.QModelIndex()
-
-        return self.createIndex(parentNode._qt_row(), 0, parentNode)
-
-    def index(self, row: int, column: int, parent: QtCore.QModelIndex)-> QtCore.QModelIndex:
-
-        parentNode = self.getNode(parent)
-
-        childItem = parentNode._qt_child(row)
-
-        if childItem:
-            return self.createIndex(row, column, childItem)
+    def rowCount(self, parent: QtCore.QModelIndex) -> int:
+        if not parent.isValid():
+            parentNode=self._rootNode
         else:
-            return QtCore.QModelIndex()
+            parentNode=parent.internalPointer()
 
-    def getNode(self, index:QtCore.QModelIndex) -> Any:
-        """ Returns the actual node object behind a index"""
+        return parentNode._qt_child_count()
+
+    def setData(self, index:QtCore.QModelIndex, value: Any, role=QtCore.Qt.EditRole)->bool:
+        """ setData Method to make the model modifieabls """
+
         if index.isValid():
-            node = index.internalPointer()
-            if node:
-                return node
 
-        return self._rootNode
+            if role == QtCore.Qt.CheckStateRole:
+                if index.column() == 0:
+                    if value == QtCore.Qt.Checked:
+                        self.checkedIndexes.add(index)
+                    else:
+                        self.checkedIndexes.remove(index)
+                    if self.hasChildren(index):
+                        self.recursiveCheck(index, value)
+
+
+
+            if role == QtCore.Qt.EditRole:
+                node = index.internalPointer()
+                node._qt_set_value_by_colnr(index.column(), value)
+
+            self.dataChanged.emit(index, index)
+            return True
+        return False
+
 
