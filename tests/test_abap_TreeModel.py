@@ -19,14 +19,15 @@ __email__ = 'systemcheck@team-fasel.com'
 import os
 
 import sqlalchemy.orm
-import systemcheck.models as models
+from systemcheck import models
+#import systemcheck.models as models
 from systemcheck.systems.generic.models import GenericSystemTreeNode
 from systemcheck.gui.models import GenericTreeModel
 
 from systemcheck.systems.ABAP.models.abap_model import SystemABAP, SystemABAPClient, SystemABAPFolder
 from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import logging
-from . import tools
+import systemcheck_tools
 
 from PyQt5 import QtCore
 
@@ -63,7 +64,7 @@ class TestAbapTreeModel(TestCase):
             os.remove(self.PATH)
 
     def populateTree(self):
-        tools.populateSystemsABAPTree(self.session)
+        systemcheck_tools.populateSystemsABAPTree(self.session)
 
     def test_rowCount(self):
         self.populateTree()

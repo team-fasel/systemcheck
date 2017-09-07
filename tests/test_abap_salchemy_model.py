@@ -31,7 +31,7 @@ from systemcheck.systems.generic.models import GenericSystemTreeNode
 from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import sqlalchemy_utils
 import logging
-from . import tools
+import systemcheck_tools
 
 
 class SqlalchemyAbapModel(unittest.TestCase):
@@ -60,7 +60,7 @@ class SqlalchemyAbapModel(unittest.TestCase):
 
 
     def populate_tree(self):
-        tools.populateSystemsABAPTree(self.session)
+        systemcheck_tools.populateSystemsABAPTree(self.session)
 
     def test_find_root_element(self):
         """ Validate that exactly one root object exists """

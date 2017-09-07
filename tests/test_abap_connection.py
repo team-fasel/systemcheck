@@ -2,9 +2,10 @@ from unittest import TestCase
 from systemcheck.systems.ABAP.utils import Connection
 from systemcheck.utils import Result, Fail
 from pprint import pprint
+from .systemcheck_testtools import GenericTest
 
 
-class TestConnection(TestCase):
+class TestConnection(GenericTest):
     incorrect_logoninfo = dict(ashost='abap001c.team-fasel.lab',
                                sysnr='00',
                                user='DEVELOPER',

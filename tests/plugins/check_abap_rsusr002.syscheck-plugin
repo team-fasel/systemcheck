@@ -1,8 +1,0 @@
-[Core]
-Name = Analyze Users by Complex Search Criteria
-Module = check_abap_rsusr002
-
-[Documentation]
-Author = Lars Fasel
-Version = 0.1
-Description = Analyze Users with complex selection criteria

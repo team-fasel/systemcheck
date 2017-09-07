@@ -8,7 +8,7 @@ from systemcheck.models.meta.base import engine_from_config, scoped_session, ses
 from systemcheck.systems.ABAP.plugins.actions.check_abap_count_table_entries import CheckAbapCountTableEntries, \
     CheckAbapCountTableEntries__params
 from PyQt5 import QtCore, QtWidgets, QtGui
-from . import tools
+import systemcheck_tools
 
 
 from systemcheck.checks.gui.widgets.check_parameterEditor_widget import CheckParameterTableModel
@@ -41,7 +41,7 @@ class TestCheckParamTableModel(TestCase):
             os.remove(self.PATH)
 
     def populateTree(self):
-        tools.populateChecksTree(self.session)
+        systemcheck_tools.populateChecksTree(self.session)
         self.check=self.session.query(CheckAbapCountTableEntries).filter_by(name='Clients 001 and 066 removed').one()
 
 

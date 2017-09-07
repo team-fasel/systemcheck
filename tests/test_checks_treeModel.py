@@ -30,7 +30,7 @@ from systemcheck.systems.ABAP.plugins.actions.check_abap_count_table_entries imp
     CheckAbapCountTableEntries__params
 
 
-from . import tools
+from systemcheck_tools import populateChecksTree
 
 class TestChecksTreeModel(TestCase):
     PATH = r'test_pyqt_model.sqlite'
@@ -59,7 +59,7 @@ class TestChecksTreeModel(TestCase):
             os.remove(self.PATH)
 
     def populateTree(self):
-        tools.populateChecksTree(self.session)
+        populateChecksTree(self.session)
 
     def test_rowCount(self):
         self.populateTree()
@@ -112,7 +112,7 @@ class TestChecksTreeModel(TestCase):
         index = model.createIndex(0, 0, rootnode)
         flags = model.flags(index)
         self.assertEqual(flags, QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable \
-                         | QtCore.Qt.ItemIsUserCheckable |QtCore.Qt.ItemIsEditable)
+                         | QtCore.Qt.ItemIsUserCheckable)
 
     def test_insertRow(self):
         rootnode = self.session.query(Check).filter_by(parent_id=None).first()
