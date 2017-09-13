@@ -27,10 +27,53 @@ from systemcheck.models.credentials import Credential
 from systemcheck.systems.ABAP.utils import get_snc_name
 from systemcheck.config import CONFIG
 import keyring
+from systemcheck.models.meta.orm_choices import choices
 from systemcheck.systems.generic.models import GenericSystemTreeNode
 from systemcheck.checks.models import Check
 import uuid
 import logging
+
+class StandardAuthSelectionOptionMixin:
+
+
+    CHOICE_SIGN = [('I', 'Include'),
+                   ('E', 'Exclude')]
+
+    CHOICE_OPTION = [('EQ', 'Equal'),
+                     ('NE', 'Not Equal'),
+                     ('GT', 'Greater Than'),
+                     ('GE', 'Greater or Equal'),
+                     ('LT', 'Lower Than'),
+                     ('LE', 'Lower or Equal')]
+
+    SIGN = Column(ChoiceType(CHOICE_SIGN),
+                  nullable = False,
+                  default = 'I',
+                  qt_label = 'Incl./Excl.',
+                  qt_description = 'Should the specified items be included or excluded? Default is to include them',
+                  choices = CHOICE_SIGN,
+    )
+
+    OPTION = Column(ChoiceType(CHOICE_SIGN),
+                  nullable = False,
+                  default = 'EQ',
+                  qt_label = 'Sel. Option',
+                  qt_description = 'Selection option',
+                  choices = CHOICE_OPTION,
+    )
+
+    LOW = Column(String(12),
+                 nullable=False,
+                 qt_label='Lower Range Value',
+                 qt_description='Lower Range Value. Must be specified.',
+                )
+
+    HIGH = Column(String(12),
+                 nullable=True,
+                 qt_label='Higher Range Value',
+                 qt_description='Higher Range Value. Optional.',
+                )
+
 
 @generic_repr
 class SystemABAPFolder(GenericSystemTreeNode):
@@ -151,12 +194,18 @@ class SystemABAP(GenericSystemTreeNode):
     }
 
     __qtmap__ = [GenericSystemTreeNode.name, GenericSystemTreeNode.description, sid, tier, rail,
-                 GenericSystemTreeNode.description, enabled, snc_partnername, snc_qop, use_snc, default_client,
+                 enabled, snc_partnername, snc_qop, use_snc, default_client,
                  ms_hostname, ms_sysnr, ms_logongroup, as_hostname, as_sysnr]
 
     def _icon(self):
         return ":SAP"
 
+    def getDefaultClient(self):
+
+        for client in self.children:
+            if client.client == self.default_client:
+                return client
+        raise ValueError('No definition of default client for the system')
 
 @generic_repr
 class SystemABAPClient(GenericSystemTreeNode, PasswordKeyringMixin):
@@ -197,6 +246,11 @@ class SystemABAPClient(GenericSystemTreeNode, PasswordKeyringMixin):
 
     def _icon(self):
         return ":Client"
+
+    def getDefaultClient(self):
+
+        parent = self.parent_node
+        return parent.getDefaultClient()
 
     def logon_info(self):
 
@@ -267,7 +321,41 @@ class SystemABAPClient(GenericSystemTreeNode, PasswordKeyringMixin):
 
 
 @generic_repr
-class CheckABAPFolder(Check):
+class ActionABAPFolder(Check):
     __mapper_args__ = {
-        'polymorphic_identity': 'CheckABAPFolder',
+        'polymorphic_identity': 'ActionABAPFolder',
     }
+
+class ActionABAPIsClientSpecificMixin:
+    """ Define a readonly property for client specific checks """
+
+    client_specific = Column(Boolean,
+                             default=True,
+                             qt_label='Client Specific',
+                             qt_description="This check is client specific. It's not possible to manually "
+                                            "change this value",
+                             qt_enabled=False,
+                             qt_show=True)
+
+
+class ActionABAPIsNotClientSpecificMixin:
+    """ Define a readonly property for client independent checks  """
+
+    client_specific = Column(Boolean,
+                             default=False,
+                             qt_label='Client Specific',
+                             qt_description="This check is not client specific. It's not possible to manually "
+                                            "change this value",
+                             qt_enabled=False,
+                             qt_show=True)
+
+
+class ActionABAPClientSpecificMixin:
+    """ Creates a checkbox for all ABAP checks to define whether they are client specific or not """
+
+    client_specific = Column(Boolean, name='client_specific',
+                             default=True,
+                             qt_label='Client Specific',
+                             qt_description='Check the box if the check is client specific',
+                             qt_show=True)
+
