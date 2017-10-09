@@ -1,6 +1,7 @@
 import sqlalchemy
+from .systemcheck_choices import InclusionChoice, ComponentChoice, OperatorChoice
 from inspect import isclass
-from sqlalchemy import ForeignKey, Table, DateTime, Integer, CHAR, inspect, String
+from sqlalchemy import ForeignKey, Table, DateTime, Integer, CHAR, inspect, String, Date, Time
 from sqlalchemy.orm import relationship
 from sqlalchemy import event, ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.types import TypeDecorator
@@ -43,6 +44,7 @@ class Column(sqlalchemy.Column):
         kwargs['info'].setdefault('qt_label', kwargs.pop('qt_label', ''))
         kwargs['info'].setdefault('qt_description', kwargs.pop('qt_description', ''))
         kwargs['info'].setdefault('qt_show', kwargs.pop('qt_show', True))
+        kwargs['info'].setdefault('qt_enabled', kwargs.pop('qt_enabled', True))
         kwargs['info'].setdefault('rel_class', kwargs.pop('rel_class', None))
 
         sqlalchemy.Column.__init__(self, *args, **kwargs)
@@ -55,6 +57,8 @@ class QtModelMixin(object):
 
     __qtmap__ = []
 
+    __icon__ = None
+
     def _qt_column_count(self)->int:
         """ Return the number of columns """
         column_count=len(self.__qtmap__)
@@ -64,9 +68,6 @@ class QtModelMixin(object):
         column_count=self._qt_column_count()
         return 0 <= colnr < column_count
 
-    def _qt_icon(self):
-        """ Returns the Icon of the node type """
-        return False
 
     def _qt_set_value_by_colnr(self, colnr: int, value: object):
         """ Set the Value of a Column by its its visible Number
@@ -198,6 +199,32 @@ class QtModelMixin(object):
     def _flush(self):
         session = systemcheck.session.SESSION
         session.flush()
+
+class RestrictionsMixin:
+
+    inclusion = Column(String,
+                       name='inclusion',
+                       qt_label='Incl./Excl.',
+                       default=InclusionChoice.INCLUDE, choices=InclusionChoice.CHOICES)
+    component = Column(String, name='component', qt_label='Component for restrictions', choices=ComponentChoice.CHOICES)
+    component_name = Column(String, name='component_name', qt_label='Component Name')
+    operator = Column(String, name='operator', qt_label='Restriction', choices=OperatorChoice.CHOICES)
+    low = Column(String, name='low', qt_label='Lower', qt_description='Lower range value')
+    high = Column(String, name='high', qt_label='High', qt_description='Higher range value')
+
+    __qtmap__ = [inclusion, component, component_name, operator, low, high]
+
+class OperatorMixin:
+
+    operator = Column(Integer,
+                      nullable=False, name='operator',
+                      default=OperatorChoice.EQ,
+                      qt_description='Comparison Operator',
+                      qt_label='Comparison Operator',
+                      qt_show=False,
+                      choices=OperatorChoice.CHOICES
+                      )
+
 
 class StandardAbapAuthSelectionOptionMixin:
 
