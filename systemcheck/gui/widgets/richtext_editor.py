@@ -34,6 +34,9 @@ class TextEditor(QtWidgets.QMainWindow):
         self.fileactions = fileactions
         self.initUI()
 
+    def setText(self, text):
+        self.text.setText(text)
+
     def initToolbar(self):
 
         self.newAction = QtWidgets.QAction(QtGui.QIcon(":New"),"New",self)

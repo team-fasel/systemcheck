@@ -3,9 +3,9 @@ from systemcheck.resources import icon_rc
 import systemcheck
 from systemcheck.checks.models import Check
 from systemcheck.gui.models import GenericTreeModel
-from systemcheck.systems.generic.models import GenericSystemTreeNode
+from systemcheck.systems.generic.models import GenericSystem
 from systemcheck.session import SESSION
-
+from systemcheck import utils
 
 class MainWindow(QtWidgets.QMainWindow):
 
@@ -14,10 +14,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setupUi()
         self.show()
 
-    def addSystemType(self, object):
+    def addSystemType(self, object, name, icon=None):
 
-        object.setModel(system=self.system_model, check=self.check_model)
-        self.systemTypes_tabw.addTab(object, 'ABAP')
+        object.systemModel = self.system_model
+        object.checkModel = self.check_model
+        self.systemTypes_tabw.addTab(object, name)
+        current=self.systemTypes_tabw.currentIndex()
+        self.systemTypes_tabw.setTabIcon(current, QtGui.QIcon(icon))
 
 
     def setupUi(self):
@@ -35,8 +38,38 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.systemTypes_tabw)
         self.systemTypes_tabw.setTabPosition(QtWidgets.QTabWidget.West)
 
-        system_root = SESSION.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        check_root = SESSION.query(Check).filter_by(parent_id=None).one()
+        self.program_toolbar=QtWidgets.QToolBar()
+        self.program_toolbar.addAction(self.quit_act)
+        self.program_toolbar.setToolTip('SystemCheck Tool Bar')
+
+        self.addToolBar(self.program_toolbar)
+
+        self.system_toolbar = QtWidgets.QToolBar()
+        self.system_toolbar.addAction(self.systemsNewFolder_act)
+        self.system_toolbar.setToolTip('System Toolbar')
+        self.system_toolbar.addAction(self.systemsNew_act)
+        self.system_toolbar.addAction(self.systemsDelete_act)
+        self.system_toolbar.addSeparator()
+        self.system_toolbar.addAction(self.systemsExport_act)
+        self.system_toolbar.addAction(self.systemsImport_act)
+        self.addToolBar(self.system_toolbar)
+
+        self.checks_toolbar = QtWidgets.QToolBar()
+        self.checks_toolbar.setToolTip('Checks Toolbar')
+        self.checks_toolbar.addAction(self.checksRun_act)
+        self.checks_toolbar.addAction(self.checksPause_act)
+        self.checks_toolbar.addAction(self.checksStop_act)
+        self.checks_toolbar.addSeparator()
+        self.checks_toolbar.addAction(self.checksExport_act)
+        self.checks_toolbar.addAction(self.checksImport_act)
+        self.checks_toolbar.addSeparator()
+        self.checks_toolbar.addAction(self.checksNew_act)
+        self.checks_toolbar.addAction(self.checksNewFolder_act)
+        self.checks_toolbar.addAction(self.checksDelete_act)
+        self.addToolBar(self.checks_toolbar)
+
+        system_root = utils.get_or_create(SESSION, GenericSystem, parent_id=None, name='RootNode')
+        check_root = utils.get_or_create(SESSION, Check, parent_id=None, name='RootNode')
 
         self.system_model = GenericTreeModel(system_root)
         self.check_model = GenericTreeModel(check_root)
@@ -70,7 +103,6 @@ class MainWindow(QtWidgets.QMainWindow):
         results_menu = menubar.addMenu('&Results')
         results_menu.addAction(self.resultsExport_act)
         results_menu.addAction(self.resultsImport_act)
-
 
         help_menu = menubar.addMenu('&Help')
         help_menu.addAction(self.about_act)
@@ -159,7 +191,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.checksRun_act = QtWidgets.QAction(QtGui.QIcon(':Play'), 'Run Checks')
         self.checksRun_act.triggered.connect(self.on_checksRun)
-        self.checksRun_act.setEnabled(False)
+        self.checksRun_act.setEnabled(True)
 
         self.checksPause_act = QtWidgets.QAction(QtGui.QIcon(':Pause'), 'Pause Checks')
         self.checksPause_act.triggered.connect(self.on_checksPause)

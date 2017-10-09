@@ -26,7 +26,25 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
         self._rootNode=rootnode
         self._treeNode=treenode
-        self.checkedIndexes = set()
+        self._checkedIndexes = set()
+
+    def checkedIndexes(self)->list:
+
+        return self._checkedIndexes
+
+    def checkedNodes(self, objectFilter:list=None)->list:
+
+        indexes = self.checkedIndexes()
+        if objectFilter:
+            if len(objectFilter) == 0:
+                nodes = [self.getNode(item) for item in indexes if self.getNode(item) in objectFilter]
+
+            else:
+                nodes=[]
+        else:
+            nodes = [self.getNode(item) for item in indexes]
+
+        return nodes
 
     def columnCount(self, parent=None, *args, **kwargs)->int:
 
@@ -39,7 +57,7 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
 
         if role==QtCore.Qt.CheckStateRole:
             if index.column() == 0:
-                if index in self.checkedIndexes:
+                if index in self._checkedIndexes:
                     return QtCore.Qt.Checked
                 else:
                     return QtCore.Qt.Unchecked
@@ -47,11 +65,16 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         node = index.internalPointer()
 
         if role == QtCore.Qt.DecorationRole:
+            icon=None
             if index.column() == 0:
-                icon = node._qt_icon()
-                if icon:
-                    icon = QtGui.QIcon(node._qt_icon())
-                    return icon
+                if node.__icon__ is None:
+                    identity = node.__mapper_args__.get('polymorphic_identity')
+                    if identity.endswith('Folder'):
+                        icon = QtGui.QIcon(':Folder')
+                else:
+                    icon=QtGui.QIcon(node.__icon__)
+
+                return icon
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             colnr = index.column()
@@ -68,6 +91,11 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
                 return node
 
         return self._rootNode
+
+    def logonInfo(self, index):
+
+        node = self.getNode(index)
+        return node.logon_info()
 
     def headerData(self, column:int, orientation:int, role:int)->str:
         if role==QtCore.Qt.DisplayRole:
@@ -101,11 +129,9 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
 
         self.beginInsertRows(parent, position, position + 1)
 
-        if nodeObject:
-            parent_node._qt_insert_child(position, nodeObject)
-        else:
-            childNode = self._treeNode(type='FOLDER', name="untitled")
-            parent_node._qt_insert_child(position, childNode)
+        if nodeObject is None:
+            nodeObject = self._treeNode(name="untitled")
+        parent_node._qt_insert_child(position, nodeObject)
         self.endInsertRows()
         return True
 
@@ -201,7 +227,7 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         if not parent.isValid():
             parentNode=self._rootNode
         else:
-            parentNode=parent.internalPointer()
+            parentNode=self.getNode(parent)
 
         return parentNode._qt_child_count()
 
@@ -213,9 +239,9 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
             if role == QtCore.Qt.CheckStateRole:
                 if index.column() == 0:
                     if value == QtCore.Qt.Checked:
-                        self.checkedIndexes.add(index)
+                        self._checkedIndexes.add(index)
                     else:
-                        self.checkedIndexes.remove(index)
+                        self._checkedIndexes.remove(index)
                     if self.hasChildren(index):
                         self.recursiveCheck(index, value)
 
@@ -228,5 +254,3 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
             self.dataChanged.emit(index, index)
             return True
         return False
-
-

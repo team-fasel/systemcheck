@@ -1,7 +1,42 @@
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 import traceback
-from systemcheck.gui.widgets import TextEditor
+from systemcheck.gui.widgets import TextEditor, FlatComboBox
+import functools
+
+
+class ComboBoxModel(QtCore.QAbstractTableModel):
+    def __init__(self, choices:list, header:list=None, parent=None):
+        QtCore.QAbstractTableModel.__init__(self, parent)
+        self.__choices = choices
+        if header is None:
+            self.__header=[]
+        else:
+            self.__header = header
+
+
+    def rowCount(self, parent=None, *args, **kwargs):
+        return len(self.__choices)
+
+    def columnCount(self, parent=None, *args, **kwargs):
+        if self.rowCount() > 0:
+            return len(self.__choices[0])
+        else:
+            return 0
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        if role == QtCore.Qt.DisplayRole:
+            row = index.row()
+            column = index.column()
+            value = self.__choices[row][column]
+            return value
+
+    def headerData(self, col, orientation, role):
+        return None
+
+
 
 def lineEdit(*args, editable:bool=True, transparentBackground:bool=True, borders=False, **kwargs):
     """ Generate a pre-customized QLineEdit Widget
@@ -24,7 +59,6 @@ def lineEdit(*args, editable:bool=True, transparentBackground:bool=True, borders
 
     if stylesheetlist:
         stylesheet = "QLineEdit { " + ' '.join(stylesheetlist) + '}'
-        print(stylesheet)
         widget.setStyleSheet(stylesheet)
     return widget
 
@@ -61,12 +95,76 @@ def checkBox(*args, info:dict=None, **kwargs):
     widget = QtWidgets.QCheckBox()
     return widget
 
-def comboBox(*args, choices=None, **kwargs):
+def comboBox2(*args, choices=None, **kwargs):
 
+    #widget=FlatComboBox()
     widget=QtWidgets.QComboBox()
-    for choice in choices:
-        widget.addItem(choice[1], choice[0])
+#    widget.setEditable(True)
+#    widget.lineEdit().setReadOnly(True)
+
+    if choices:
+
+        for value, text in choices:
+            widget.addItem(text, value)
+
+#        view=QtWidgets.QTreeView()
+#        view.header().hide()
+#        view.setRootIsDecorated(False)
+#        widget=QtWidgets.QComboBox()
+#        widget.setView(view)
+#        widget.setModel(model)
+#        widget.setModelColumn(1)
+
+
     return widget
+
+class comboBox3(QtWidgets.QComboBox):
+
+    activated=QtCore.pyqtSignal('PyQt_PyObject')
+
+    def __init__(self):
+        super().__init__()
+        self.activated.connect(self.triggerVariantActivated)
+
+    def setChoices(self, choices):
+        for value, text in choices:
+            self.addItem(str(value), text)
+
+    def triggerVariantActivated(self, index):
+
+        self.activated.emit(self.itemData(index))
+
+    def paintEvent(self, e):
+        painter=QtWidgets.QStylePainter(self)
+        option=QtWidgets.QStyleOptionComboBox()
+        option.text=self.currentData(QtCore.Qt.DisplayRole)
+        self.initStyleOption(option)
+        painter.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, option)
+        painter.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, option)
+
+
+class comboBox(QtWidgets.QComboBox):
+
+    activated=QtCore.pyqtSignal('PyQt_PyObject')
+
+    def __init__(self, choices):
+        super().__init__()
+
+        local_view=QtWidgets.QTableView()
+        self.setView(local_view)
+        local_model=QtGui.QStandardItemModel()
+        for value, text in choices:
+
+            textItem=QtGui.QStandardItem(text)
+            valueItem=QtGui.QStandardItem(str(value))
+            local_model.appendRow([valueItem, textItem])
+
+        self.setModel(local_model)
+        local_view.resizeColumnsToContents()
+        local_view.resizeRowsToContents()
+        local_view.horizontalHeader().setVisible(False)
+
+
 
 def message(text, icon:int = QtWidgets.QMessageBox.Information, title=None, informativeText=None, details=None,
             buttons=None, defaultButton=None, exc_info=False, parent=None, windowIcon:QtGui.QIcon=None):

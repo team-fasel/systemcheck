@@ -1,6 +1,6 @@
-from systemcheck.gui.main_window import MainWindow
-import systemcheck.gui.models
-import systemcheck.gui.widgets
-import systemcheck.gui.delegates
-import systemcheck.gui.qtalcmapper
-import systemcheck.gui.utils
+from .main_window import MainWindow
+from . import models
+from . import widgets
+from . import delegates2
+from . import qtalcmapper
+from . import utils

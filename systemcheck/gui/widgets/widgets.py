@@ -44,8 +44,6 @@ class CheckWidget(QtWidgets.QWidget):
         self.tree.setModel(model)
 
 
-
-
 class FlatComboBox(QtWidgets.QComboBox):
     """ A Flat QComboBox
 
@@ -99,6 +97,8 @@ class FlatComboBox(QtWidgets.QComboBox):
     def setArrowAlignment(self, alignment):
         self._arrowAlignment = alignment
 
+
+
 class TreeView(QtWidgets.QTreeView):
     """ Customized Tree View
     """
@@ -115,4 +115,3 @@ class TreeView(QtWidgets.QTreeView):
         self.setSortingEnabled(True)
         self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-

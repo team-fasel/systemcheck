@@ -14,6 +14,6 @@ __license__     = 'MIT'
 
 
 from systemcheck.gui.models.generic_tree import GenericTreeModel
-from systemcheck.gui.models.settings_model import SettingsModel
+from systemcheck.gui.models.settings_model import SettingsModel, SettingsTableModel
 from systemcheck.gui.models.polymorphic_filter_proxy_model import PolyMorphicFilterProxyModel
 

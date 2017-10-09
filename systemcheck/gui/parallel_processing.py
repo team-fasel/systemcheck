@@ -2,7 +2,7 @@
 
 """ concurrent - A module for handing concurrency with PyQt
 
-
+Adapted from Orange3: https://github.com/biolab/orange3/blob/master/Orange/widgets/utils/concurrent.py
 
 """
 
@@ -583,7 +583,7 @@ class methodinvoke(object):
     0
     """
     @staticmethod
-    def from_method(method, arg_types=(), *, conntype=Qt.QueuedConnection):
+    def from_method(method, arg_types=(), *, conntype=QtCore.Qt.QueuedConnection):
         """
         Create and return a `methodinvoke` instance from a bound method.
         Parameters
@@ -605,7 +605,7 @@ class methodinvoke(object):
         return methodinvoke(obj, name, arg_types, conntype=conntype)
 
     def __init__(self, obj, method, arg_types=(), *,
-                 conntype=Qt.QueuedConnection):
+                 conntype=QtCore.Qt.QueuedConnection):
         self.obj = obj
         self.method = method
         self.arg_types = tuple(arg_types)
