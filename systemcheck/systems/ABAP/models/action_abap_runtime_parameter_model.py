@@ -1,11 +1,11 @@
 from systemcheck.checks.models.checks import Check
 from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, qtRelationship, \
-    relationship, RichString, generic_repr
-from systemcheck.systems.ABAP.models import ActionABAPIsNotClientSpecificMixin
+    relationship, RichString, generic_repr, OperatorMixin
+from systemcheck.systems.ABAP.models import ActionAbapIsNotClientSpecificMixin
 
 @generic_repr
-class ActionAbapRuntimeParameter__params(QtModelMixin, Base):
-    __tablename__ = 'ActionAbapCountTableEntries__params'
+class ActionAbapRuntimeParameter__params(QtModelMixin, Base, OperatorMixin):
+    __tablename__ = 'ActionAbapRuntimeParameter__params'
 
     __table_args__ = {'extend_existing':True}
 
@@ -19,18 +19,10 @@ class ActionAbapRuntimeParameter__params(QtModelMixin, Base):
 #        ('Lower or Equal', 'LE')
 #
 
-    CHOICE_OPERATOR = [
-        ('EQ', 'Equal'),
-        ('NE', 'Not Equal'),
-        ('GT', 'Greater Than'),
-        ('LT', 'Lower Than'),
-        ('GE', 'Greater or Equal'),
-        ('LE', 'Lower or Equal')
-                       ]
 
     id = Column(Integer, primary_key=True)
 
-    parent_id = Column(Integer, ForeignKey('ActionAbapCountTableEntries.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRuntimeParameter.id'))
 
     param_set_name = Column(String,
                         nullable=False,
@@ -51,24 +43,22 @@ class ActionAbapRuntimeParameter__params(QtModelMixin, Base):
                         nullable=True,
                         qt_description='The expected value of the parameter. Regular Expressions are initiated with regex: at the beginning',
                         qt_label='Expected Value',
-                        default = 'Please Maintain'
                         )
 
+    check = qtRelationship("ActionAbapRuntimeParameter", back_populates="params")
 
-    check = relationship("ActionAbapCountTableEntries", back_populates="params")
 
-
-    __qtmap__ = [param_set_name, parameter, expected_value]
+    __qtmap__ = [param_set_name, parameter, OperatorMixin.operator, expected_value]
 
 @generic_repr
-class ActionAbapRuntimeParameter(Check, ActionABAPIsNotClientSpecificMixin):
+class ActionAbapRuntimeParameter(Check, ActionAbapIsNotClientSpecificMixin):
 
     __tablename__ = 'ActionAbapRuntimeParameter'
 
     __table_args__ = {'extend_existing':True}
 
-    id = Column(Integer, ForeignKey('checks_metadata.id'), primary_key=True, qt_show=False)
-    params = qtRelationship('ActionAbapRuntimeParameter__params', qt_show=True, rel_class = ActionAbapRuntimeParameter__params)
+    id = Column(Integer, ForeignKey('checks_metadata.id'), primary_key=True)
+    params = qtRelationship('ActionAbapRuntimeParameter__params', cascade="all, delete-orphan")
 
 
     __mapper_args__ = {

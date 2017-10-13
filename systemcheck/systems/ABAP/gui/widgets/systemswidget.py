@@ -1,8 +1,10 @@
 from systemcheck.systems.generic.gui.widgets import GenericSystemWidget, GenericSystemSettingsWidget
 from PyQt5 import QtWidgets, QtGui, QtCore
 from systemcheck.resources import icon_rc
-from systemcheck.systems.ABAP.models import SystemABAPClient, SystemABAP
-from systemcheck.systems.generic.models import GenericSystemTreeNode
+from systemcheck.systems import ABAP
+from systemcheck.systems import generic
+#from systemcheck.systems.ABAP.models import SystemAbapClient, SystemAbap
+#from systemcheck.systems.generic.models import GenericSystemTreeNode
 from systemcheck.gui import utils as guiutils
 import traceback
 
@@ -14,36 +16,22 @@ class AbapSystemsWidget(GenericSystemWidget):
     def __init__(self, model: QtCore.QAbstractItemModel = None):
         super().__init__()
 
-        self.addSystem_act = QtWidgets.QAction(QtGui.QIcon(":Plus"), 'Add ABAP System', self)
-        self.addSystem_act.triggered.connect(self.addSystem)
 
-        self.addClient_act = QtWidgets.QAction(QtGui.QIcon(":Plus"), 'Add ABAP Client', self)
-        self.addClient_act.triggered.connect(self.addClient)
 
-        self.updatePassword_act = QtWidgets.QAction(QtGui.QIcon(":Password"), 'Update Password', self)
-        self.updatePassword_act.triggered.connect(self.updatePassword)
+        self.newClient_act = QtWidgets.QAction(QtGui.QIcon(":Plus"), 'New ABAP Client', self)
+        self.newClient_act.triggered.connect(self.newClient)
+
         if model:
             self.setModel(model)
 
 
-    def addClient(self):
+    def newClient(self):
         index = self.tree.currentIndex()
-        clientItem = SystemABAPClient(client='xxx')
-        self.system_model.insertRow(position=0, parent=index, nodeObject=clientItem)
+        source_index = self.system_model.mapToSource(index)
+        source_model=self.system_model.sourceModel()
+        clientItem = ABAP.models.SystemAbapClient(client='xxx')
+        source_model.insertRow(position=0, parent=source_index, nodeObject=clientItem)
 
-    def addSystem(self):
-        if len(self.tree.selectedIndexes()) == 0:
-            index = QtCore.QModelIndex()
-        else:
-            index = self.tree.currentIndex()
-
-        system_item = SystemABAP()
-        try:
-            tree_node = SystemABAP(name='New ABAP System', type=system_item.RELNAME)
-        except Exception as err:
-            traceback.print_exc(err)
-        setattr(tree_node, tree_node.type, system_item)
-        self.system_model.insertRow(position=0, parent=index, nodeObject=tree_node)
 
     def updatePassword(self):
         """ Update the password for a client
@@ -83,19 +71,21 @@ class AbapSystemsWidget(GenericSystemWidget):
         node = self.system_model.getNode(index)
 
         if node is None:
-            menu.addAction(self.addFolder_act)
-            menu.addAction(self.addSystem_act)
+            menu.addAction(self.newFolder_act)
+            menu.addAction(self.newSystem_act)
             menu.addAction(self.deleteItem_act)
+            self._rootLevelSelected=True
         else:
-            if isinstance(node, SystemABAP):
-                menu.addAction(self.addClient_act)
+            self._rootLevelSelected=False
+            if isinstance(node, ABAP.models.SystemAbap):
+                menu.addAction(self.newClient_act)
                 menu.addAction(self.deleteItem_act)
-            elif isinstance(node, SystemABAPClient):
+            elif isinstance(node, ABAP.models.SystemAbapClient):
                 menu.addAction(self.updatePassword_act)
                 menu.addAction(self.deleteItem_act)
-            elif isinstance(node, GenericSystemTreeNode):
-                menu.addAction(self.addFolder_act)
-                menu.addAction(self.addSystem_act)
+            elif isinstance(node, generic.models.GenericSystemTreeNode):
+                menu.addAction(self.newFolder_act)
+                menu.addAction(self.newSystem_act)
                 menu.addAction(self.deleteItem_act)
 
 

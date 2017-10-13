@@ -14,6 +14,6 @@ __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
-import systemcheck.systems.ABAP.gui.models
-import systemcheck.systems.ABAP.gui.widgets
-from systemcheck.systems.ABAP.gui.main_widget import AbapWidget
+from . import models
+from . import widgets
+

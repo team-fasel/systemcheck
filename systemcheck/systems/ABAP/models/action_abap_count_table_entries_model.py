@@ -1,10 +1,10 @@
 from systemcheck.checks.models.checks import Check
 from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, qtRelationship, \
-    relationship, RichString, generic_repr
-from systemcheck.systems.ABAP.models import ActionABAPClientSpecificMixin
+    relationship, RichString, generic_repr, OperatorMixin
+from systemcheck.systems.ABAP.models import ActionAbapClientSpecificMixin
 
 @generic_repr
-class ActionAbapCountTableEntries__params(QtModelMixin, Base):
+class ActionAbapCountTableEntries__params(QtModelMixin, Base, OperatorMixin):
     __tablename__ = 'ActionAbapCountTableEntries__params'
 
     __table_args__ = {'extend_existing':True}
@@ -18,15 +18,6 @@ class ActionAbapCountTableEntries__params(QtModelMixin, Base):
 #        ('Greater or Equal', 'GE'),
 #        ('Lower or Equal', 'LE')
 #
-
-    CHOICE_OPERATOR = [
-        ('EQ', 'Equal'),
-        ('NE', 'Not Equal'),
-        ('GT', 'Greater Than'),
-        ('LT', 'Lower Than'),
-        ('GE', 'Greater or Equal'),
-        ('LE', 'Lower or Equal')
-                       ]
 
     id = Column(Integer, primary_key=True)
 
@@ -63,41 +54,35 @@ class ActionAbapCountTableEntries__params(QtModelMixin, Base):
                         )
 
     expected_count = Column(Integer,
-                            nullable=False,
+                            nullable=True,
                             qt_description = 'Expected Count',
                             qt_label = 'Expected Count',
                             qt_show = False,
-                            default=0
                             )
 
-    operator = Column(ChoiceType(CHOICE_OPERATOR),
-                      nullable=True,
-                      default='EQ',
-                      qt_description='Comparison Operator',
-                      qt_label='Comparison Operator',
-                      qt_show=False,
-                      choices=CHOICE_OPERATOR
-                      )
 
     check = relationship("ActionAbapCountTableEntries", back_populates="params")
 
 
-    __qtmap__ = [param_set_name, table_name, table_fields, where_clause, expected_count, operator]
+    __qtmap__ = [param_set_name, table_name, table_fields, where_clause, expected_count, OperatorMixin.operator]
 
 @generic_repr
-class ActionAbapCountTableEntries(Check, ActionABAPClientSpecificMixin):
+class ActionAbapCountTableEntries(Check, ActionAbapClientSpecificMixin):
 
     __tablename__ = 'ActionAbapCountTableEntries'
 
     __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, ForeignKey('checks_metadata.id'), primary_key=True, qt_show=False)
-    params = qtRelationship('ActionAbapCountTableEntries__params', qt_show=True, rel_class = ActionAbapCountTableEntries__params)
+
+    params = qtRelationship('ActionAbapCountTableEntries__params',
+                            qt_show=True,
+                            cascade="all, delete-orphan")
 
 
     __mapper_args__ = {
         'polymorphic_identity':'ActionAbapCountTableEntries',
     }
 
-    __qtmap__ = [Check.name, Check.description, Check.failcriteria, ActionABAPClientSpecificMixin.client_specific]
+    __qtmap__ = [Check.name, Check.description, Check.failcriteria, ActionAbapClientSpecificMixin.client_specific]
 

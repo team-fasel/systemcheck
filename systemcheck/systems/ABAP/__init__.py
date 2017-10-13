@@ -15,7 +15,7 @@ __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
 
-import systemcheck.systems.ABAP.gui
-import systemcheck.systems.ABAP.models
-import systemcheck.systems.ABAP.plugins
-import systemcheck.systems.ABAP.utils
+from . import plugins
+from . import models
+from . import gui
+from . import utils

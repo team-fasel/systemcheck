@@ -1,35 +1,22 @@
 import logging
 from pprint import pformat
-
-from systemcheck import plugins
-from systemcheck.systems.ABAP import utils as abaputils
+import systemcheck
+from systemcheck.systems import ABAP
 from systemcheck.utils import Result
 
-
-class CheckAbapFoundationAction(plugins.ActionBasePlugin):
+class ActionAbapFoundation(systemcheck.plugins.ActionBasePlugin):
     """ ABAP Foundation Plugin
     Base class for all ABAP Plugins. """
 
-    TYPE='ABAP'
+    SYSTEMTYPE='ABAP'
 
     BAPI_MSG_TYPES = {'S':'Success', 'E':'Error', 'W':'Warning', 'I':'Info', 'A':'Abort'}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def system_connection(self):
-        """ Get RFC System Connection
-        """
-        logon_info = self._system_object.logon_info()
-        result = abaputils.get_connection(logon_info)
 
-        if not result.fail:
-            self.conn = result.data
-
-        return result
-
-
-class CheckAbapAction(CheckAbapFoundationAction):
+class ActionAbapCheck(ActionAbapFoundation):
     """ Generic ABAP Plugin
 
     This is the basic plugin that all plugins should be based on. If you want to code your own plugin, us this as the
@@ -44,13 +31,14 @@ class CheckAbapAction(CheckAbapFoundationAction):
 
     """
 
+    CATEGORY='check'
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-
-class CheckAbapSUIMAction(CheckAbapFoundationAction):
+class ActionAbapSUIM(ActionAbapFoundation):
     """ SUIM API Plugin
     The SUIM API exposes the report that make up transaction SUIM via RFC. The API consists of several function modules:
 

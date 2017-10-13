@@ -1,4 +1,4 @@
-from yapsy.PluginManager import PluginManager
+from systemcheck.plugins import SysCheckPM
 import os
 from configparser import ConfigParser
 import logging
@@ -16,12 +16,11 @@ class CheckPluginManager:
 
     def __init__(self):
         self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
-        self._pm = PluginManager(plugin_info_ext='syscheck-plugin')
-        self.plugin_location = get_absolute_systemcheck_path(CONFIG['systemtype_ABAP']['pluginlocation'])
-        self._pm.setPluginPlaces([self.plugin_location])
-        self._pm.collectPlugins()
+        self.pm = SysCheckPM()
 
-        for plugin in self._pm.getAllPlugins():
+
+
+        for plugin in self.pm.pm.getAllPlugins():
             plugin.details.add_section('RuntimeParameters')
             plugin.details['RuntimeParameters'] = plugin.details['Parameters']
             path = plugin.path
@@ -40,7 +39,7 @@ class CheckPluginManager:
 
         def plugin_count()->int:
             """ Returns the number of plugins """
-            count = len(self._pm.getAllPlugins())
+            count = len(self.pm.pm.getAllPlugins())
             self.logger.debug('Identified %i plugins', count)
             return count
 

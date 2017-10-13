@@ -1,25 +1,32 @@
 from systemcheck.checks.models.checks import Check
 from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, qtRelationship, \
-    relationship, RichString, generic_repr, Boolean
-from systemcheck.systems.ABAP.models import ActionABAPIsClientSpecificMixin, StandardAuthSelectionOptionMixin
+    relationship, RichString, generic_repr, Boolean, OperatorMixin
+from systemcheck.models.meta.orm_choices import choices
+from systemcheck.systems.ABAP.models import ActionAbapIsClientSpecificMixin, StandardAuthSelectionOptionMixin
+
+
+@choices
+class ActionAbapRsusr002ResultConsolidationChoice:
+    class Meta:
+        MERGE = ['MERGE', 'Merge All Parameter Sets']
+        INDIVIDUAL = ['INDIVIDUAL', 'Treat each result set individually']
 
 @generic_repr
-class ActionAbapRsusr002(Check, ActionABAPIsClientSpecificMixin):
+class ActionAbapRsusr002(Check, ActionAbapIsClientSpecificMixin):
 
-    CHOICE_OPERATION = [('MERGE', 'Merge'),
-                        ('INDIVIDUAL', 'Treat Individually')]
-
-    __tablename__ = 'ActionAbapRsusr002Plugin'
+    __tablename__ = 'ActionAbapRsusr002'
 
     __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, ForeignKey('checks_metadata.id'), primary_key=True)
-    params = relationship('ActionAbapRsusr002')
-    operation = Column(ChoiceType(CHOICE_OPERATION),
-                       default = 'INDIVIUAL',
-                       qt_description='Merge so that only common results are presented',
-                       qt_label = 'Operator',
-                       choices=CHOICE_OPERATION)
+    params = relationship('ActionAbapRsusr002__params', cascade="all, delete-orphan")
+    consolidation = Column(Integer,
+                           default = ActionAbapRsusr002ResultConsolidationChoice.INDIVIDUAL,
+                           qt_description='Merge so that only common results are presented',
+                           qt_label = 'Result Set Merge Strategy',
+                           choices=ActionAbapRsusr002ResultConsolidationChoice.CHOICES)
+
+    __qtmap__ = [Check.name, Check.description, Check.failcriteria, consolidation]
 
     __mapper_args__ = {
         'polymorphic_identity':'ActionAbapRsusr002',
@@ -81,15 +88,22 @@ class ActionAbapRsusr002__params(QtModelMixin, Base):
                            ('N', 'Not Locked'),
                            (' ', 'Irrelevant')]
 
+    check = relationship("ActionAbapRsusr002", back_populates="params")
+
+
     id = Column(Integer, ForeignKey('checks_metadata.id'), primary_key=True)
 
-    IT_USER = relationship('ActionAbapRsusr002__IT_USER')
-    IT_GROUP = relationship('ActionAbapRsusr002__IT_GROUP')
-    IT_UGROUP = relationship('ActionAbapRsusr002__IT_UGROUP')
-    IT_UALIAS = relationship('ActionAbapRsusr002__IT_UALIAS')
-    IT_UTYPE = relationship('ActionAbapRsusr002__IT_UTYPE')
-    IT_SECPOL = relationship('ActionAbapRsusr002__IT_SECPOL')
-    IT_SNC = relationship('ActionAbapRsusr002__IT_SNC')
+    param_set_name = Column(String,
+                            qt_label='Parameter Set Name',
+                            qt_description='Parameter Set Description')
+
+    IT_USER = qtRelationship('ActionAbapRsusr002__IT_USER', qt_label='User')
+    IT_GROUP = qtRelationship('ActionAbapRsusr002__IT_GROUP', qt_label='Group for Authorization')
+    IT_UGROUP = qtRelationship('ActionAbapRsusr002__IT_UGROUP', qt_label='User group (general)')
+    IT_UALIAS = qtRelationship('ActionAbapRsusr002__IT_UALIAS', qt_label='Alias')
+    IT_UTYPE = qtRelationship('ActionAbapRsusr002__IT_UTYPE', qt_label='User Type')
+    IT_SECPOL = qtRelationship('ActionAbapRsusr002__IT_SECPOL', qt_label='Security Policy')
+    IT_SNC = qtRelationship('ActionAbapRsusr002__IT_SNC', qt_label='SNC Name')
 
     IV_USER_LOCK = Column(ChoiceType(CHOICE_SUIM_LOCK_SEL),
                  nullable=False,
@@ -120,19 +134,17 @@ class ActionAbapRsusr002__params(QtModelMixin, Base):
                    )
 
     IV_FDATE = Column(String,
-                      default=True,
                       qt_label='Valid From Date',
                       qt_description='Valid From Date',
                       )
 
     IV_TDATE = Column(String,
-                      default=True,
                       qt_label='Valid To Date',
                       qt_description='Valid To Date',
                       )
 
     IV_TCODE = Column(String(20),
-                      default=True,
+                      default='',
                       qt_label='Transaction Code',
                       qt_description='Transaction Code',
                       )
@@ -143,21 +155,21 @@ class ActionAbapRsusr002__params(QtModelMixin, Base):
                      qt_description='Only Executable Transactions',
                    )
 
-    IT_UREF = relationship('ActionAbapRsusr002__IT_UREF')
+    IT_UREF = qtRelationship('ActionAbapRsusr002__IT_UREF', qt_label='Reference User')
 
-    IT_ACTGRPS = relationship('ActionAbapRsusr002__IT_ACTGRPS')
+    IT_ACTGRPS = qtRelationship('ActionAbapRsusr002__IT_ACTGRPS', qt_label='Role')
 
-    IT_PROF1 = relationship('ActionAbapRsusr002__IT_PROF1')
+    IT_PROF1 = qtRelationship('ActionAbapRsusr002__IT_PROF1', qt_label='Profile Name')
 
     IV_PROF2 = Column(String(12),
                         nullable=True,
-                        qt_label='Profile Name',
-                        qt_description='Authorization Profile Name',
+                        qt_label='AND Profile',
+                        qt_description='Additional Authorization Profile Name',
                         )
 
     IV_PROF3 = Column(String(12),
                         nullable=True,
-                        qt_label='Profile Name',
+                        qt_label='AND Profile',
                         qt_description='Authorization Profile Name',
                         )
 
@@ -179,8 +191,8 @@ class ActionAbapRsusr002__params(QtModelMixin, Base):
                         qt_description='Authorization Value',
                         )
 
-    IT_OBJCT = relationship('ActionAbapRsusr002__IT_OBJCT')
-    IT_AUTH = relationship('ActionAbapRsusr002__IT_AUTH')
+    IT_OBJCT = qtRelationship('ActionAbapRsusr002__IT_OBJCT', qt_label='Authorization Object')
+    IT_AUTH = qtRelationship('ActionAbapRsusr002__IT_AUTH', qt_label='Authorization')
 
     IV_CONV = Column(Boolean,
                      default=False,
@@ -188,38 +200,44 @@ class ActionAbapRsusr002__params(QtModelMixin, Base):
                      qt_description='Always Convert Value',
                    )
 
-    IT_VALUES = relationship('ActionAbapRsusr002__IT_VALUES')
+    IT_VALUES = qtRelationship('ActionAbapRsusr002__IT_VALUES')
+
+    __qtmap__ = [param_set_name, IV_PWD_LOCK, IV_TCODE, IT_USER, IT_GROUP, IT_UGROUP]
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_USER(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_USER(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Users"""
     __tablename__ = 'ActionAbapRsusr002__IT_USER'
-    __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(12),
                  nullable=False,
+                 default='',
                  qt_label='User Name in User Master Record',
                  qt_description='User Name in User Master Record. Must be specified.',
                 )
 
     HIGH = Column(String(12),
                  nullable=True,
+                 default='',
                  qt_label='User Name in User Master Record',
                  qt_description='User Name in User Master Record (Upper range limit). Optional.',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_USER")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_GROUP(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_GROUP(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Groups """
     __tablename__ = 'ActionAbapRsusr002__IT_GROUP'
     __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(12),
                  nullable=False,
@@ -233,15 +251,18 @@ class ActionAbapRsusr002__IT_GROUP(QtModelMixin, Base, StandardAuthSelectionOpti
                  qt_description='User Group (Upper range limit). Optional.',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_GROUP")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_UGROUP(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_UGROUP(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for User Groups  """
 
-    __tablename__ = 'ActionAbapRsusr002__IT_GROUP'
+    __tablename__ = 'ActionAbapRsusr002__IT_UGROUP'
     __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(12),
                  nullable=False,
@@ -255,14 +276,16 @@ class ActionAbapRsusr002__IT_UGROUP(QtModelMixin, Base, StandardAuthSelectionOpt
                  qt_description='User Group (Upper range limit). Optional.',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_UGROUP")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_UALIAS(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_UALIAS(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for User Aliases """
     __tablename__ = 'ActionAbapRsusr002__IT_UALIAS'
-    __table_args__ = {'extend_existing':True}
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(40),
                  nullable=False,
@@ -276,8 +299,11 @@ class ActionAbapRsusr002__IT_UALIAS(QtModelMixin, Base, StandardAuthSelectionOpt
                  qt_description='User Alias',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_UALIAS")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_UTYPE(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_UTYPE(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for User Types """
     __tablename__ = 'ActionAbapRsusr002__IT_UTYPE'
     __table_args__ = {'extend_existing':True}
@@ -290,7 +316,7 @@ class ActionAbapRsusr002__IT_UTYPE(QtModelMixin, Base, StandardAuthSelectionOpti
 
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(ChoiceType(CHOICE_USERTYPE),
                  nullable=False,
@@ -307,15 +333,18 @@ class ActionAbapRsusr002__IT_UTYPE(QtModelMixin, Base, StandardAuthSelectionOpti
                  choices=CHOICE_USERTYPE
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_UTYPE")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_SECPOL(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_SECPOL(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Security Policy """
     __tablename__ = 'ActionAbapRsusr002__IT_SECPOL'
     __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(40),
                  nullable=False,
@@ -329,8 +358,11 @@ class ActionAbapRsusr002__IT_SECPOL(QtModelMixin, Base, StandardAuthSelectionOpt
                  qt_description='Security Policy (Upper range limit). Optional.',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_SECPOL")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_SNC(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_SNC(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for SNC """
 
     __tablename__ = 'ActionAbapRsusr002__IT_SNC'
@@ -338,7 +370,7 @@ class ActionAbapRsusr002__IT_SNC(QtModelMixin, Base, StandardAuthSelectionOption
 
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(255),
                  nullable=False,
@@ -352,15 +384,18 @@ class ActionAbapRsusr002__IT_SNC(QtModelMixin, Base, StandardAuthSelectionOption
                  qt_description='SNC: Printable Name',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_SNC")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_ACTGRPS(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_ACTGRPS(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Roles """
     __tablename__ = 'ActionAbapRsusr002__IT_ACTGRPS'
     __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(30),
                  nullable=False,
@@ -374,15 +409,16 @@ class ActionAbapRsusr002__IT_ACTGRPS(QtModelMixin, Base, StandardAuthSelectionOp
                  qt_description='Role Name',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_ACTGRPS")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_PROF1(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_PROF1(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Profiles """
     __tablename__ = 'ActionAbapRsusr002__IT_PROF1'
-    __table_args__ = {'extend_existing':True}
-
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(12),
                  nullable=False,
@@ -396,15 +432,18 @@ class ActionAbapRsusr002__IT_PROF1(QtModelMixin, Base, StandardAuthSelectionOpti
                  qt_description='Profile Name',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_PROF1")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_OBJCT(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_OBJCT(Base, StandardAuthSelectionOptionMixin):
 
     __tablename__ = 'ActionAbapRsusr002__IT_OBJCT'
     __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(10),
                  nullable=False,
@@ -418,8 +457,11 @@ class ActionAbapRsusr002__IT_OBJCT(QtModelMixin, Base, StandardAuthSelectionOpti
                  qt_description='Authorization Object',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_OBJCT")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_AUTH(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_AUTH(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Authorizations """
 
     __tablename__ = 'ActionAbapRsusr002__IT_AUTH'
@@ -427,7 +469,7 @@ class ActionAbapRsusr002__IT_AUTH(QtModelMixin, Base, StandardAuthSelectionOptio
 
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(12),
                  nullable=False,
@@ -441,16 +483,17 @@ class ActionAbapRsusr002__IT_AUTH(QtModelMixin, Base, StandardAuthSelectionOptio
                  qt_description='Auth. Name',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_AUTH")
+
+
 @generic_repr
 class ActionAbapRsusr002__IT_VALUES(QtModelMixin, Base):
     """ Sel. According to Authorization Values """
 
-    __tablename__ = 'ActionAbapRsusr002__IT_AUTH'
-    __table_args__ = {'extend_existing':True}
-
+    __tablename__ = 'ActionAbapRsusr002__IT_VALUES'
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     NR = Column(String(1),
                  nullable=False,
@@ -500,15 +543,18 @@ class ActionAbapRsusr002__IT_VALUES(QtModelMixin, Base):
                  qt_description='Value',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_VALUES")
+
+
 @generic_repr
-class ActionAbapRsusr002__IT_UREF(QtModelMixin, Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_UREF(Base, StandardAuthSelectionOptionMixin):
     """ Selection Options for Reference Users """
     __tablename__ = 'ActionAbapRsusr002__IT_UREF'
     __table_args__ = {'extend_existing':True}
 
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002.id'))
+    parent_id = Column(Integer, ForeignKey('ActionAbapRsusr002__params.id'))
 
     LOW = Column(String(12),
                  nullable=False,
@@ -522,3 +568,4 @@ class ActionAbapRsusr002__IT_UREF(QtModelMixin, Base, StandardAuthSelectionOptio
                  qt_description='Refernce User',
                 )
 
+    paramset = qtRelationship("ActionAbapRsusr002__params", back_populates="IT_UREF")

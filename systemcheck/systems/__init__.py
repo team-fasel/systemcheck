@@ -15,5 +15,5 @@ __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
 __license__     = 'MIT'
 
-import systemcheck.systems.ABAP
-import systemcheck.systems.generic
+from . import ABAP
+from . import generic

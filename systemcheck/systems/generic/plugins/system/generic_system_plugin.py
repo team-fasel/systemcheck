@@ -5,6 +5,7 @@ class GenericSystemPlugin(SystemBasePlugin):
 
     def __init__(self, *args, **kwargs):
         super().__init__()
+        self.systemType='generic'
 
     def alchemyObjects(self):
         return [GenericSystemTreeNode]

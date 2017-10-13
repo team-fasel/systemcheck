@@ -21,20 +21,26 @@ from typing import Any, List, Union
 from systemcheck.models.meta import Base, UniqueConstraint, \
     Column, String, generic_repr, validates, backref, QtModelMixin, \
     relationship, Integer, ForeignKey, RichString
+from systemcheck.models.meta.orm_choices import choices
+
+@choices
+class SystemCategoryChoices:
+    class Meta:
+        DEV = [0, 'Development']
+        QAS = [1, 'Quality Assurance']
+        SBX = [2, 'Sandbox']
+        PRD = [3, 'Production']
+
 
 @generic_repr
 class GenericSystemTreeNode(Base, QtModelMixin):
     """ A generic node that is the foundation of the tree stored in a database table"""
+
     __tablename__ = 'systems'
 
-    __table_args__ = (
-        UniqueConstraint("type", "name"),
-        {'extend_existing' : True}
-    )
 
-
-    id = Column(Integer, primary_key=True, qt_label='Primary Key', qt_show=False)
-    parent_id = Column(Integer, ForeignKey('systems.id'), qt_label='Parent Key', qt_show=False)
+    id = Column(Integer, primary_key=True, qt_label='Primary Key')
+    parent_id = Column(Integer, ForeignKey('systems.id'), qt_label='Parent Key')
     type = Column(String(50), qt_show=False, qt_label='Type')
     name = Column(String(50), qt_show=True, qt_label='Name')
 
@@ -42,7 +48,6 @@ class GenericSystemTreeNode(Base, QtModelMixin):
                          nullable=True,
                          qt_label='Description',
                          qt_description='Brief description',
-                         qt_show=False,
                          )
 
     children=relationship('GenericSystemTreeNode',
@@ -71,4 +76,19 @@ class GenericSystemTreeNode(Base, QtModelMixin):
             return None
 
     def logon_info(self):
+        """ Provide the Logon Information to the system
+
+
+        Reimplement this method for all relevant system nodes
+        """
+
         return None
+
+class GenericSystem(GenericSystemTreeNode):
+
+    category = Column(Integer, choices=SystemCategoryChoices.CHOICES, default=SystemCategoryChoices.DEV,
+                      qt_label='System Category', qt_description='System Category')
+
+    __mapper_args__ = {
+        'polymorphic_identity':'GenericSystem',
+    }

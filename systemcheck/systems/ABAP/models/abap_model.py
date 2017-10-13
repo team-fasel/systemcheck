@@ -10,93 +10,113 @@ __maintainer__  = 'Lars Fasel'
 __email__       = 'systemcheck@team-fasel.com'
 
 
-from pprint import pprint, pformat
-import traceback
-import re
 
-import sqlalchemy_utils
-
-import enum
-from sqlalchemy import inspect, Integer, ForeignKey, String, Boolean
 from typing import Any, List, Union
 from systemcheck.models.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
     StandardAbapAuthSelectionOptionMixin, Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, \
     PasswordKeyringMixin, UniqueMixin, Session, DateTime, qtRelationship, declared_attr, attribute_mapped_collection, \
-    one_to_many, many_to_one, Boolean, Integer, ForeignKey, ChoiceType, hybrid_property, RichString
-from systemcheck.models.credentials import Credential
+    one_to_many, many_to_one, Boolean, Integer, ForeignKey, hybrid_property, RichString
 from systemcheck.systems.ABAP.utils import get_snc_name
 from systemcheck.config import CONFIG
 import keyring
 from systemcheck.models.meta.orm_choices import choices
-from systemcheck.systems.generic.models import GenericSystemTreeNode
+from systemcheck.models.meta.systemcheck_choices import YesNoChoice
+from systemcheck.systems import generic
+#from systemcheck.systems.generic.models import GenericSystem
+from systemcheck import checks
 from systemcheck.checks.models import Check
 import uuid
 import logging
 
-class StandardAuthSelectionOptionMixin:
+@choices
+class SystemAbapIncludeChoice:
+    class Meta:
+        INCLUDE = ['I', 'Include']
+        EXCLUDE = ['E', 'Exclude']
 
+@choices
+class SystemAbapOptionChoice:
+    class Meta:
+        NE = ['NE', 'not equal']
+        EQ = ['EQ', 'equal']
+        GT = ['GT', 'greater']
+        GE = ['GE', 'greater or equal']
+        LT = ['LT', 'lower']
+        LE = ['LE', 'lower or equal']
 
-    CHOICE_SIGN = [('I', 'Include'),
-                   ('E', 'Exclude')]
+@choices
+class SystemAbapSncChoice:
+    class Meta:
+        AUTHENTICATION = ['1', '1: Secure Authentication Only']
+        INTEGRITY = ['2', '2: Data Integrity ']
+        CONFIDENTIALITY = ['3', '3: Data Confidentiality']
+        MAX = ['9', '9: Max. Available']
 
-    CHOICE_OPTION = [('EQ', 'Equal'),
-                     ('NE', 'Not Equal'),
-                     ('GT', 'Greater Than'),
-                     ('GE', 'Greater or Equal'),
-                     ('LT', 'Lower Than'),
-                     ('LE', 'Lower or Equal')]
+@choices
+class AbapAppServerOsChoices:
+    class Meta:
+        WINDOWS = ['Windows NT', 'Windows']
+        ANYOS = ['ANYOS', 'Any OS']
+        OS400 = ['OS/400', 'OS/400']
+        UNIX = ['UNIX', 'Unix']
+        SYNOS = ['SUNOS', 'Solaris, SunOS']
 
-    SIGN = Column(ChoiceType(CHOICE_SIGN),
+@choices
+class AbapLanguageChoices:
+    class Meta:
+        EN = ['E', 'English']
+        DE = ['D', 'German']
+
+class StandardAuthSelectionOptionMixin(QtModelMixin):
+
+    SIGN = Column(String, name='SIGN',
                   nullable = False,
-                  default = 'I',
+                  default = SystemAbapIncludeChoice.INCLUDE,
                   qt_label = 'Incl./Excl.',
                   qt_description = 'Should the specified items be included or excluded? Default is to include them',
-                  choices = CHOICE_SIGN,
-    )
+                  choices = SystemAbapIncludeChoice.CHOICES,
+                  )
 
-    OPTION = Column(ChoiceType(CHOICE_SIGN),
-                  nullable = False,
-                  default = 'EQ',
-                  qt_label = 'Sel. Option',
-                  qt_description = 'Selection option',
-                  choices = CHOICE_OPTION,
-    )
+    OPTION = Column(Integer, name='OPTION',
+                    nullable = False,
+                    default = SystemAbapOptionChoice.EQ,
+                    qt_label = 'Sel. Option',
+                    qt_description = 'Selection option',
+                    choices = SystemAbapOptionChoice.CHOICES,
+                    )
 
-    LOW = Column(String(12),
+    LOW = Column(String(12), name='LOW',
                  nullable=False,
                  qt_label='Lower Range Value',
                  qt_description='Lower Range Value. Must be specified.',
                 )
 
-    HIGH = Column(String(12),
+    HIGH = Column(String(12), name='HIGH',
                  nullable=True,
                  qt_label='Higher Range Value',
                  qt_description='Higher Range Value. Optional.',
                 )
 
+    __qtmap__ = [SIGN, OPTION, LOW, HIGH]
 
 @generic_repr
-class SystemABAPFolder(GenericSystemTreeNode):
+class SystemAbapFolder(generic.models.GenericSystem):
 
     __mapper_args__ = {
-        'polymorphic_identity':'systems_ABAP_FOLDER',
+        'polymorphic_identity':'SystemAbapFolder',
     }
 
+
 @generic_repr
-class SystemABAP(GenericSystemTreeNode):
+class SystemAbap(generic.models.GenericSystem):
     """ ABAP System Specification
     """
 
     __tablename__ = 'systems_ABAP'
     __table_args__ = {'extend_existing': True}
 
+    __icon__ = ':Server'
 
-    SNC_QOP_CHOICES=[
-                        ('1', '1: Secure Auth. Only'),
-                        ('2', '2: Data Integrity'),
-                        ('3', '3: Data Confidentiality.'),
-                        ('9', '9: Max. Available')
-                    ]
 
     id = Column(Integer, ForeignKey('systems.id'), primary_key=True, qt_show=False)
 
@@ -123,7 +143,8 @@ class SystemABAP(GenericSystemTreeNode):
 
 
     enabled = Column(Boolean,
-                     default=True,
+                     default=YesNoChoice.YES,
+                     choices=YesNoChoice.CHOICES,
                      qt_label='Enabled',
                      qt_description='System enabled',
                      )
@@ -134,16 +155,17 @@ class SystemABAP(GenericSystemTreeNode):
                              qt_description="SNC Partner Name",
                              )
 
-    snc_qop=Column(ChoiceType(SNC_QOP_CHOICES),
+    snc_qop=Column(String,
                    nullable=True,
-                   default='9',
+                   default=SystemAbapSncChoice.MAX,
                    qt_label='SNC QoP',
                    qt_description='SNC Quality of Protection',
-                   choices=SNC_QOP_CHOICES,
+                   choices=SystemAbapSncChoice.CHOICES,
                    )
 
     use_snc=Column(Boolean,
-                   default=True,
+                   default=YesNoChoice.YES,
+                   choices=YesNoChoice.CHOICES,
                    qt_label='Use SNC',
                    qt_description='Use a secured connection',
                    )
@@ -193,7 +215,8 @@ class SystemABAP(GenericSystemTreeNode):
         'polymorphic_identity':'systems_ABAP',
     }
 
-    __qtmap__ = [GenericSystemTreeNode.name, GenericSystemTreeNode.description, sid, tier, rail,
+    __qtmap__ = [generic.models.GenericSystem.name, generic.models.GenericSystem.description,
+                 generic.models.GenericSystem.category, sid, tier, rail,
                  enabled, snc_partnername, snc_qop, use_snc, default_client,
                  ms_hostname, ms_sysnr, ms_logongroup, as_hostname, as_sysnr]
 
@@ -207,15 +230,17 @@ class SystemABAP(GenericSystemTreeNode):
                 return client
         raise ValueError('No definition of default client for the system')
 
+
 @generic_repr
-class SystemABAPClient(GenericSystemTreeNode, PasswordKeyringMixin):
+class SystemAbapClient(generic.models.GenericSystemTreeNode, PasswordKeyringMixin):
     """ Contains ABAP specific information"""
-    __tablename__ = 'systems_ABAP_client'
+    __tablename__ = 'SystemAbapClient'
     __table_args__ = {'extend_existing': True}
     __mapper_args__ = {
-        'polymorphic_identity':'systems_ABAP_client',
+        'polymorphic_identity':'SystemAbapClient',
     }
 
+    __icon__ = ':Brief'
 
     id = Column(Integer, ForeignKey('systems.id'), primary_key=True, qt_show=False)
 
@@ -226,14 +251,15 @@ class SystemABAPClient(GenericSystemTreeNode, PasswordKeyringMixin):
                   )
 
     use_sso = Column(Boolean,
-                     default=True,
+                     default=YesNoChoice.YES,
+                     choices=YesNoChoice.CHOICES,
                      qt_label='Use SSO',
                      qt_description='Use Single Sign On',
                      )
     username = Column(String(40), default='<initial>', nullable=True, qt_label='Username', qt_description='Username to logon to the ABAP Client')
 
 
-    __qtmap__ = [client, GenericSystemTreeNode.description, use_sso, username]
+    __qtmap__ = [client, generic.models.GenericSystem.description, use_sso, username]
 
     def __init__(self, **kwargs):
         uuid_string = str(uuid.uuid4())
@@ -253,7 +279,8 @@ class SystemABAPClient(GenericSystemTreeNode, PasswordKeyringMixin):
         return parent.getDefaultClient()
 
     def logon_info(self):
-
+        snc_qop = None
+        snc_partnername = None
         logon_info = {}
         self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
         abap_system = self.parent_node
@@ -321,41 +348,287 @@ class SystemABAPClient(GenericSystemTreeNode, PasswordKeyringMixin):
 
 
 @generic_repr
-class ActionABAPFolder(Check):
+class ActionAbapFolder(Check):
     __mapper_args__ = {
-        'polymorphic_identity': 'ActionABAPFolder',
+        'polymorphic_identity': 'ActionAbapFolder',
     }
 
-class ActionABAPIsClientSpecificMixin:
+class ActionAbapIsClientSpecificMixin:
     """ Define a readonly property for client specific checks """
 
     client_specific = Column(Boolean,
-                             default=True,
+                             default=YesNoChoice.YES,
+                             choices=YesNoChoice.CHOICES,
                              qt_label='Client Specific',
                              qt_description="This check is client specific. It's not possible to manually "
                                             "change this value",
-                             qt_enabled=False,
-                             qt_show=True)
+                             qt_enabled=False)
 
-
-class ActionABAPIsNotClientSpecificMixin:
+class ActionAbapIsNotClientSpecificMixin:
     """ Define a readonly property for client independent checks  """
 
     client_specific = Column(Boolean,
-                             default=False,
-                             qt_label='Client Specific',
+                             default=YesNoChoice.NO,
+                             choices=YesNoChoice.CHOICES,
                              qt_description="This check is not client specific. It's not possible to manually "
                                             "change this value",
-                             qt_enabled=False,
-                             qt_show=True)
+                             qt_enabled=False)
 
-
-class ActionABAPClientSpecificMixin:
+class ActionAbapClientSpecificMixin:
     """ Creates a checkbox for all ABAP checks to define whether they are client specific or not """
 
     client_specific = Column(Boolean, name='client_specific',
-                             default=True,
-                             qt_label='Client Specific',
-                             qt_description='Check the box if the check is client specific',
-                             qt_show=True)
+                             default=YesNoChoice.YES,
+                             choices=YesNoChoice.CHOICES,
+                             qt_description='Check the box if the check is client specific')
+
+class AbapSpoolParams_BAPIXMPRNT_Mixin:
+
+    DESTIN = Column(String(4),
+                    qt_label='Spool Output Device',
+                    nullable=False)
+
+    PRINTIMM = Column(Boolean,
+                      qt_label='Immediate Spool Print',
+                      choices=YesNoChoice.CHOICES,
+                      default=YesNoChoice.NO, nullable=False)
+
+    RELEASE = Column(Boolean,
+                     qt_label='Immediate Spool Deletion',
+                     choices=YesNoChoice.CHOICES,
+                     default=YesNoChoice.NO,
+                     nullable=False)
+
+    COPIES = Column(Integer,
+                    qt_label='Number of Spool Copies',
+                    nullable=True)
+
+    PRIARCMODE = Column(Boolean,
+                        qt_label='Print: Archiving mode',
+                        choices=YesNoChoice.CHOICES,
+                        default=YesNoChoice.NO,
+                        nullable=True)
+
+    SHOWPASSWD = Column(String(12),
+                        qt_label='Print: Authorization',
+                        nullable=True)
+
+    SAPBANNER = Column(Boolean,
+                       qt_label='Print: SAP Cover Page',
+                       choices=YesNoChoice.CHOICES,
+                       default=YesNoChoice.NO,
+                       nullable=True)
+    BANNERPAGE = Column(Boolean,
+                        qt_label='Spool Cover Sheet',
+                       choices=YesNoChoice.CHOICES,
+                       default=YesNoChoice.NO,
+                       nullable=True)
+
+    EXPIRATION =  Column(Integer,
+                         qt_label='Spool Retention Period',
+                         nullable=True)
+
+    PRINTRECEIP =  Column(String(12),
+                          qt_label='Spool Receipient Name',
+                          nullable=True)
+
+    NUMLINES = Column(Integer,
+                      qt_label='Page Lenth of List',
+                      nullable=True)
+
+    NUMCOLUMNS = Column(Integer,
+                        qt_label='Line Width of List',
+                        nullable=True)
+
+class AbapSpoolParams_BAPIPRIPAR_Mixin:
+    PDEST = Column(String(4),
+                    qt_label='Spool Output Device',
+                    nullable=True,
+                   name='PDEST',
+                   default='LP01')
+
+    PRCOP = Column(Integer,
+                    qt_label='Number of Spool Copies',
+                   name='PRCOP',
+                   nullable=True)
+
+    PLIST = Column(String(12),
+                   qt_label='Spool Request',
+                   name='PLIST',
+                   nullable=True)
+
+    PRTXT = Column(String(68),
+                   qt_label='Spool Description',
+                   name='PRTXT',
+                   nullable=True)
+
+    PRIMM = Column(Boolean,
+                   qt_label='Immediate Spool Print',
+                   choices=YesNoChoice.CHOICES,
+                   default=YesNoChoice.NO,
+                   name='PRIMM',
+                   nullable=False)
+
+    PRREL = Column(Boolean,
+                   qt_label='Immediate Spool Deletion',
+                   choices=YesNoChoice.CHOICES,
+                   name='PRREL',
+                   nullable=True)
+
+    PRNEW  = Column(Boolean,
+                     qt_label='Immediate Spool Deletion',
+                     choices=YesNoChoice.CHOICES,
+                    name='PRNEW',
+                    nullable=True)
+
+    PEXPI = Column(Integer,
+                   qt_label='Spool Retention Period',
+                   nullable=True,
+                   name='PEXPI')
+
+    LINCT = Column(Integer,
+                   qt_label='Page Lenth of List',
+                   name='LINCT',
+                   nullable=True)
+
+    LINSZ = Column(Integer,
+                   qt_label='Line Width of List',
+                   name='LINSZ',
+                   nullable=True)
+
+    PAART = Column(String(68),
+                   qt_label='Spool Format',
+                   nullable=True,
+                   name='PAART'
+                   )
+
+    PRBIG = Column(Boolean,
+                   qt_label='Spool Cover Sheet',
+                   choices=YesNoChoice.CHOICES,
+                   nullable=True,
+                   name='PRBIG')
+
+    PRSAP = Column(Boolean,
+                   qt_label='Print: SAP Cover Page',
+                   choices=YesNoChoice.CHOICES,
+                   nullable=True,
+                   name='PRSAP')
+
+    PRREC =  Column(String(12),
+                    qt_label='Spool Receipient Name',
+                    nullable=True,
+                    name='PRREC')
+
+    PRABT =  Column(String(12),
+                          qt_label='Spool Department Name',
+                          nullable=True, name='PRABT')
+
+    PRBER = Column(String(12),
+                        qt_label='Print: Authorization',
+                        nullable=True, name='PRBER')
+
+    PRDSN = Column(String(6),
+                   qt_label='Spool File',
+                   nullable=True,
+                   name='PRDSN')
+
+    PTYPE = Column(String(12),
+                        qt_label='Print: Type of Spool Request',
+                        nullable=True,
+                   name='PTYPE')
+
+    ARMOD = Column(Boolean,
+                        qt_label='Print: Archiving mode',
+                        choices=YesNoChoice.CHOICES,
+                        nullable=True,
+                   name='ARMOD')
+
+    FOOTL = Column(Boolean,
+                        qt_label='Print: Output Footer',
+                        choices=YesNoChoice.CHOICES,
+                        nullable=True,
+                   name='FOOTL')
+
+    PRIOT = Column(Integer,
+                   qt_label='Print: Spool Request Priority',
+                   nullable=True,
+                   name='PRIOT')
+
+    PRUNX = Column(Boolean,
+                        qt_label='Print: Host Spool Cover Page',
+                        choices=YesNoChoice.CHOICES,
+                        nullable=True,
+                   name='PRUNX')
+
+class Abap_BPJOBSTEP_Mixin:
+
+    PROGRAM = Column(String(128),
+                     nullable=True,
+                     qt_label='Program Name')
+
+    TYP = Column(String(1),
+                 nullable=True,
+                 qt_description='Identification of Step as ABAP, ext. command or program',
+                 qt_label='Step Type')
+
+    PARAMETER = Column(String(255),
+                       nullable=True,
+                       qt_description='Parameters of external program',
+                       qt_label='Ext. Prog. Params')
+
+    OPSYSTEM = Column(String(10),
+                      nullable=True,
+                      choices = AbapAppServerOsChoices,
+                      qt_label='App Server OS')
+
+    AUTHCKNAM = Column(String(12),
+                       qt_label='Step User',
+                       qt_description='Background User Name for Authorization Check',
+                       nullable=True)
+
+    LISTIDENT = Column(String(10),
+                       qt_label='Job Output Id',
+                       qt_description='ID of batch job output list in the spool',
+                       nullable=True)
+
+    XPGPID = Column(String(10),
+                    qt_label='ID of ext. Program',
+                    qt_description='ID of External Program',
+                    nullable=True)
+
+    XPGTGTSYS = Column(String(32),
+                    qt_label='Target System',
+                    qt_description='Target System to Run Background Job',
+                    nullable=True)
+
+    XPGRFCDEST = Column(String(32),
+                    qt_label='Logical Destination',
+                    qt_description='Logical Destination (Specified in function call)',
+                    nullable=True)
+
+    LANGUAGE = Column(String(10),
+                      choices=AbapLanguageChoices.CHOICES,
+                      default=AbapLanguageChoices.EN,
+                      qt_label='Language',
+                      qt_description='Language',
+                      nullable=True)
+
+    STATUS = Column(String(1),
+                      qt_label='Step Status',
+                      qt_description='Language',
+                      nullable=True)
+
+    CONNCNTL  = Column(String(1),
+                      qt_label='Control Flag for ext. Prog',
+                      qt_description='Language',
+                      nullable=True)
+
+#    STDINCNTL
+#    STDOUTCNTL
+#    STDERRCNTL
+#    TRACECNTL
+#    TERMCNTL
+
+
+
 
