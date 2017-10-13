@@ -1,0 +1,10 @@
+[Core]
+Name = ActionAbapRuntimeParameter
+Module = action_abap_runtime_parameter
+
+[Documentation]
+Author = Lars Fasel
+Version = 0.1
+Description = Configuration of Runtime Parameters
+
+

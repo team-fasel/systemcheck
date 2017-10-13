@@ -1,0 +1,14 @@
+[Core]
+Name = ActionAbapJobSchedulingValidation
+Module = action_abap_job_scheduling_validation
+system = ABAP
+type = action
+
+[Documentation]
+Author = Lars Fasel
+Version = 0.1
+Description = Validate the scheduling of a job
+
+
+
+

@@ -1,0 +1,14 @@
+[Core]
+Name = ActionAbapProfileValidation
+Module = action_abap_profile_validation
+system = ABAP
+type = action
+
+[Documentation]
+Author = Lars Fasel
+Version = 0.1
+Description = Validate Profiles and Parameters
+
+
+
+
