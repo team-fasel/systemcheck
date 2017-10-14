@@ -4,9 +4,8 @@ import systemcheck
 #from systemcheck.gui import utils
 import sqlalchemy
 import sqlalchemy_utils
-from systemcheck.gui import delegates
-from systemcheck.gui.delegates2 import PlainTextColumnDelegate, GenericStyledItemDelegate, ComboDelegate, \
-    CenteredCheckBoxDelegate, RichTextColumnDelegate, IntegerColumnDelegate, GenericStyledItemDelegateColumToRow
+from systemcheck.gui.delegates import PlainTextDelegate, ComboBoxDelegateQt, \
+    RichTextDelegate, IntegerDelegate, GenericStyledItemDelegateColumToRow, TextLineDelegate
 
 
 from sqlalchemy.inspection import inspect
@@ -38,53 +37,20 @@ def generateQtDelegate(alchemyObject, sectionName=None):
         if column.choices:
 #            ComboDelegate(choices=column.choices)
             choices = [(choice[1], choice[0]) for choice in column.choices]
-            delegate.insertRowDelegate(qtcolumn, delegates.ComboBoxDelegateQt(choices=choices))
+            delegate.insertRowDelegate(qtcolumn, ComboBoxDelegateQt(choices=choices))
         else:
             if isinstance(alchemyColumnType, systemcheck.models.meta.RichString):
-                delegate.insertRowDelegate(qtcolumn, RichTextColumnDelegate())
-
-            elif isinstance(alchemyColumnType, systemcheck.models.meta.Boolean):
-                delegate.insertRowDelegate(qtcolumn, delegates.CheckBoxDelegateQt())
+                delegate.insertRowDelegate(qtcolumn, RichTextDelegate())
+            elif isinstance(alchemyColumnType, systemcheck.models.meta.LongString):
+                delegate.insertRowDelegate(qtcolumn, PlainTextDelegate())
             elif isinstance(alchemyColumnType, systemcheck.models.meta.String):
-                delegate.insertRowDelegate(qtcolumn, PlainTextColumnDelegate())
+                delegate.insertRowDelegate(qtcolumn, TextLineDelegate())
             elif isinstance(alchemyColumnType, systemcheck.models.meta.Integer):
-                delegate.insertRowDelegate(qtcolumn, IntegerColumnDelegate)
+                delegate.insertRowDelegate(qtcolumn, IntegerDelegate())
+            else:
+                delegate.insertRowDelegate(qtcolumn, PlainTextDelegate())
     return delegate
 
-def generateQtDelegate2(alchemyObject, sectionName=None):
-    """ Generates a QItemDelegate from a SQLAlchemy Object
-
-    :param alchemyObject: The SQLAlchemy object for which the delegate should be generated"""
-
-    delegate=GenericStyledItemDelegateColumToRow()
-    visible_columns=[]
-    if sectionName is None:
-        visible_columns = alchemyObject._qt_columns()
-
-    else:
-        section=getattr(alchemyObject, sectionName)
-        if len(section)>0:
-            item=section[0]
-            visible_columns=item.__qtmap__
-
-    for qtcolumn, column in enumerate(visible_columns):
-
-        alchemyColumnType = sqlalchemy_utils.functions.get_type(column)
-
-        if column.choices:
-#            ComboDelegate(choices=column.choices)
-            delegate.insertRowDelegate(qtcolumn, ComboDelegate, alchemyObject=column)
-        else:
-            if isinstance(alchemyColumnType, systemcheck.models.meta.RichString):
-                delegate.insertRowDelegate(qtcolumn, RichTextColumnDelegate, alchemyObject=column)
-
-            elif isinstance(alchemyColumnType, systemcheck.models.meta.Boolean):
-                delegate.insertRowDelegate(qtcolumn, CenteredCheckBoxDelegate, alchemyObject=column)
-            elif isinstance(alchemyColumnType, systemcheck.models.meta.String):
-                delegate.insertRowDelegate(qtcolumn, PlainTextColumnDelegate, alchemyObject=column)
-            elif isinstance(alchemyColumnType, systemcheck.models.meta.Integer):
-                delegate.insertRowDelegate(qtcolumn, IntegerColumnDelegate, alchemyObject=column)
-    return delegate
 
 def getQtWidgetForAlchemyType(column, *args, **kwargs):
     widget=None

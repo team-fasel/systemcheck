@@ -18,7 +18,7 @@ class ResultWidget(QtWidgets.QWidget):
 
 
     def on_resultClear(self):
-        raise NotImplemented
+        pass
 
     def on_resultExport(self):
         raise NotImplemented
@@ -31,14 +31,16 @@ class ResultWidget(QtWidgets.QWidget):
         index = self.ui.overview.tree.currentIndex()
         node = index.internalPointer()
         if node:
-            if node.typeInfo() == 'RESULT':
-                resultObject = node.resultObject
+            resultObject = node.resultObject
+            if resultObject:
                 detailModel = self.resultHandler.buildResultTableModel(resultObject)
-                print(detailModel.rowCount())
                 self.ui.details.setModel(detailModel)
                 self.ui.details.setVisible(True)
-                return
-            else:
+            else:  #That means, a tree node was clicked that didn't contain a result. 
+                self.ui.details.setModel(None)
+                self.ui.details.setVisible(False)
+            return
+        else:
                 self.ui.details.setModel(None)
         self.ui.details.setVisible(False)
 

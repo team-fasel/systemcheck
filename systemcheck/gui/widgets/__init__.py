@@ -14,4 +14,7 @@ __license__     = 'MIT'
 
 
 from systemcheck.gui.widgets.widgets import TreeView, FlatComboBox, CheckWidget
-from systemcheck.gui.widgets.richtext_editor import TextEditor
+from systemcheck.gui.widgets.text_editor import TextEditor
+from systemcheck.gui.widgets.parameters import ParameterWidget
+from systemcheck.gui.widgets.rich_text_editor import RichTextEditor
+from systemcheck.gui.widgets.text_line_edit import TextLineEdit

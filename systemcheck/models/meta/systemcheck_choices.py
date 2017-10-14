@@ -130,7 +130,7 @@ class Operators:
         }
 
     def lookup(self, value:int):
-        """ Get String Representation for numeric value
+        """ Get String Representation for the technical representation
 
         :param value: numeric value that represents the operation
         """
@@ -138,19 +138,27 @@ class Operators:
         operation = self.__int_description[value]
         return operation
 
-    def operation(self, operation, value1, value2, value3=None):
-        """ Execute Operation configured based on the numeric value
+    def operation(self, operation_name, value1, value2, value3=None):
+        """ Execute Operation configured based on the technical value
 
 
         """
-        self.logger.debug("Execute Operation: %i, Value 1: %s, Value 2: %s, Value3: %s", operation, value1, value2, value3)
+        self.logger.debug("Execute Operation: %s, Value 1: %s, Value 2: %s, Value3: %s", operation_name, value1, value2, value3)
         value1, value2, value3 = self._convert_values(value1, value2, value3)
 
-        if isinstance(operation, int):
-            operation = self.__int_description[operation]
 
-        result = self.__str_operation[operation](value1, value2, value3)
-        return result
+        operation = self.__int_description.get(operation_name)
+        if operation is None:
+            if operation_name in self.__str_operation:
+                result = self.__str_operation[operation_name](value1, value2, value3)
+                return result
+        else:
+            result = self.__str_operation[operation_name](value1, value2, value3)
+            return result
+
+        self.logger.error("Can't find operation for %s", operation_name)
+
+        raise ValueError()
 
     def _to_int(self, value1, value2, value3=None):
 

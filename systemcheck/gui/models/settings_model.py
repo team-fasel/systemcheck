@@ -19,6 +19,8 @@ from typing import Any
 from sqlalchemy_utils.functions import get_type
 from systemcheck import models
 from PyQt5 import QtCore, QtGui, QtWidgets
+from pprint import pformat
+
 
 class SettingsModel(QtCore.QAbstractItemModel):
 
@@ -43,6 +45,7 @@ class SettingsModel(QtCore.QAbstractItemModel):
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             return self._abstractItem._qt_data_colnr(index.column())
+
 
     def flags(self, index:QtCore.QModelIndex)->int:
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
@@ -99,16 +102,23 @@ class SettingsTableModel(QtCore.QAbstractTableModel):
             elif table_column==1:
                 # The actual value
                 name=self._abstractItem.__qtmap__[table_row].name
+                if name is None:
+                    self.logger.error('No Name configured in model. Column: %s', pformat(self._abstractItem.__qtmap__[table_row]))
                 value = getattr(self._abstractItem, name)
                 return value
 
             return self._abstractItem._qt_data_colnr(index.column())
 
-
+        if role == QtCore.Qt.FontRole and index.column()==0:
+            font = QtGui.QFont()
+            font.setBold(True)
+            return font
 
     def flags(self, index:QtCore.QModelIndex)->int:
 
-        flags=QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsSelectable
+        flags = QtCore.Qt.ItemIsEnabled
+        if index.column() != 0:
+            flags= flags | QtCore.Qt.ItemIsEditable
 
         return flags
 
@@ -124,6 +134,7 @@ class SettingsTableModel(QtCore.QAbstractTableModel):
 
             if table_column==1:
                 self._abstractItem._qt_set_value_by_colnr(table_row, value)
+                self.dataChanged.emit(index, index)
                 return True
         return False
 

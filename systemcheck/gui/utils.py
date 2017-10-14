@@ -1,7 +1,9 @@
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 import traceback
-from systemcheck.gui.widgets import TextEditor, FlatComboBox
+from systemcheck import gui
+
+
 import functools
 
 
@@ -62,7 +64,7 @@ def lineEdit(*args, editable:bool=True, transparentBackground:bool=True, borders
         widget.setStyleSheet(stylesheet)
     return widget
 
-def richTextEditor(*args, editable:bool=True, transparentBackground:bool=True, borders=False, **kwargs):
+def richTextEditor(parent, *args, editable:bool=True, transparentBackground:bool=True, borders=False, **kwargs):
     """ Generate a pre-customized RichTextEditor Widget
 
     :param parent: Parent Index
@@ -81,7 +83,7 @@ def richTextEditor(*args, editable:bool=True, transparentBackground:bool=True, b
     if not borders:
         stylesheetlist.append('border: none;')
 
-    widget=TextEditor(**kwargs)
+    widget=gui.widgets.RichTextEditor(parent, **kwargs)
 
     if stylesheetlist:
         stylesheet = "QTextEdit { " + ' '.join(stylesheetlist) + '}'

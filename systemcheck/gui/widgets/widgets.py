@@ -49,14 +49,25 @@ class FlatComboBox(QtWidgets.QComboBox):
 
     The default QComboBox arrow button to open the selections, is raised, which looks weird if the rest is flat
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
         self._flat = True
         self._arrowAlignment = QtCore.Qt.AlignRight
-        self.setAutoFillBackground(True)
         pallete = QtGui.QPalette()
         pallete.setColor(QtGui.QPalette.Background, QtCore.Qt.white)
         self.setPalette(pallete)
+
+
+        stylesheet="""QComboBox:editable {
+    background: transparent;
+}
+
+QComboBox:!editable, QComboBox::drop-down:editable {
+     background: transparent);
+}
+"""
+
+        self.setStyleSheet(stylesheet)
 
     def flat(self):
         return self._flat

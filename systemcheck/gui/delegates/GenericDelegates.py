@@ -26,7 +26,7 @@ class GenericStyledItemDelegateColumToRow(QtWidgets.QStyledItemDelegate):
         :param alchemyObject: The SQLAlchemy column object
 
         """
-        delegate.setParent(self, self)
+#        delegate.setParent(self, self)
         self.delegates[row]=delegate
         self.delegates_alchemyObjects[row]=alchemyObject
 
@@ -40,7 +40,7 @@ class GenericStyledItemDelegateColumToRow(QtWidgets.QStyledItemDelegate):
         if column==1:
             delegate = self.delegates.get(row)
             if delegate is not None:
-                delegate.paint(self, painter, option, index)
+                delegate.paint(painter, option, index)
 #            else:
 #                QtWidgets.QStyledItemDelegate.paint(self, painter, option, index)
         else:
@@ -53,7 +53,7 @@ class GenericStyledItemDelegateColumToRow(QtWidgets.QStyledItemDelegate):
             delegate = self.delegates.get(row)
             if delegate is not None:
                 alchemyObject=self.delegates_alchemyObjects.get(row)
-                return delegate.createEditor(self, parent, option, index, *args, alchemyObject=alchemyObject, **kwargs)
+                return delegate.createEditor(parent, option, index)
             else:
                 return QtWidgets.QStyledItemDelegate.createEditor(self, parent, option, index)
 
@@ -63,7 +63,7 @@ class GenericStyledItemDelegateColumToRow(QtWidgets.QStyledItemDelegate):
         if column==1:
             delegate = self.delegates.get(row)
             if delegate is not None:
-                delegate.setEditorData(self, editor, index)
+                delegate.setEditorData(editor, index)
             else:
                 QtWidgets.QStyledItemDelegate.setEditorData(self, editor, index)
         else:
@@ -75,8 +75,11 @@ class GenericStyledItemDelegateColumToRow(QtWidgets.QStyledItemDelegate):
         if column==1:
             delegate=self.delegates.get(row)
             if delegate is not None:
-                delegate.setModelData(self, editor, model, index)
-        QtWidgets.QStyledItemDelegate.setModelData(self, editor, model, index)
+                delegate.setModelData(editor, model, index)
+            else:
+                QtWidgets.QStyledItemDelegate.setModelData(self, editor, model, index)
+        else:
+            QtWidgets.QStyledItemDelegate.setModelData(self, editor, model, index)
 
     def updateEditorGeometry(self, editor, option, index):
         column=index.column()
@@ -84,19 +87,20 @@ class GenericStyledItemDelegateColumToRow(QtWidgets.QStyledItemDelegate):
         if column==1:
             delegate = self.delegates.get(row)
             if delegate is not None:
-                delegate.updateEditorGeometry(self, editor, option, index)
-#            else:
-#                QtWidgets.QStyledItemDelegate.paint(self, editor, option, index)
-#        else:
-#            QtWidgets.QStyledItemDelegate.paint(self, editor, option, index)
+                delegate.updateEditorGeometry(editor, option, index)
+            else:
+                QtWidgets.QStyledItemDelegate.updateEditorGeometry(self, editor, option, index)
+        else:
+            QtWidgets.QStyledItemDelegate.updateEditorGeometry(self, editor, option, index)
 
-    def editorEvent(self, event, model, option, index):
+    def sizeHint(self, option, index):
         column=index.column()
         row=index.row()
-        delegate = self.delegates.get(row)
-        if delegate is not None:
-            alchemyObject=self.delegates_alchemyObjects.get(row)
-            result=delegate.editorEvent(self, event, model, option, index)
+        if column==1:
+            delegate=self.delegates.get(row)
+            if delegate is not None:
+                return delegate.sizeHint(option, index)
+            else:
+                return QtWidgets.QStyledItemDelegate.sizeHint(self, option, index)
         else:
-            result=QtWidgets.QStyledItemDelegate.editorvEent(self, event, model, option, index)
-        return result
+            return QtWidgets.QStyledItemDelegate.sizeHint(self, option, index)

@@ -130,7 +130,7 @@ class ResultTreeModel(QtCore.QAbstractItemModel):
 
         self._rootNode = root
         self._header = header
-        self._groupBy = groupBy
+        self.groupBy = groupBy
 
 
     def rowCount(self, parent:QtCore.QModelIndex)->int:
@@ -239,8 +239,8 @@ class ResultTreeModel(QtCore.QAbstractItemModel):
         return success
 
     def insertResult(self, resultObject, parent=QtCore.QModelIndex()):
-
-        for levelNr, level in enumerate(self.orderBy):
+        success = False
+        for levelNr, level in enumerate(self.groupBy):
             text=getattr(resultObject, level)
             index = self.findIndexByName(text, parent)
             if index:
@@ -273,13 +273,26 @@ class ResultTreeModel(QtCore.QAbstractItemModel):
         return success
 
     @property
-    def orderBy(self):
+    def groupBy(self):
         return self._groupBy
 
+    @groupBy.setter
+    def groupBy(self, groupBy):
+        self._groupBy = groupBy
 
 class ResultTableModel(QtCore.QAbstractTableModel):
+    """ The Table Model for the Results Details
+
+
+    """
 
     def __init__(self, resultObject):
+        """ Initialize Tesult Table Model
+
+
+        :param resultObject: The result object of the check
+
+        """
         super().__init__()
         self._resultObject = resultObject
 
@@ -301,7 +314,7 @@ class ResultTableModel(QtCore.QAbstractTableModel):
 
             if role == QtCore.Qt.DisplayRole:
                 relevant_result = self._resultObject.result[row]
-                value = relevant_result[columnName]
+                value = relevant_result.get(columnName)
                 return value
 
     def flags(self, index):
@@ -335,17 +348,18 @@ class ResultHandler(QtCore.QObject):
 
         :param result: The result object of a check """
 
-        self.__results.append(result)
+
+#        self.__results.append(result)
         self.resultAdded_signal.emit(result)
 
 
     def buildTreeModel(self, groupBy=None):
         if groupBy is None:
-            groupBy=['rating', 'check_name', 'systeminfo']
+            groupBy=['rating', 'checkName', 'systeminfo']
         model = ResultTreeModel(header=['Results Overview'], groupBy=groupBy)
         self.resultAdded_signal.connect(model.insertResult)
-        for result in self.__results:
-            model.insertResult(result)
+#        for result in self.__results:
+#            model.insertResult(result)
         return model
 
     def buildResultTableModel(self, resultObject):

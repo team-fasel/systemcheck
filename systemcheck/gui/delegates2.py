@@ -193,8 +193,8 @@ class GenericStyledItemDelegateColumToRow(QtWidgets.QStyledItemDelegate):
                 delegate.setEditorData(editor, index)
             else:
                 QtWidgets.QStyledItemDelegate.setEditorData(editor, index)
-        else:
-            QtWidgets.QStyledItemDelegate.setEditorData(editor, index)
+#        else:
+#            QtWidgets.QStyledItemDelegate.setEditorData(editor, index)
 
     def setModelData(self, editor, model, index):
         column=index.column()
@@ -222,10 +222,14 @@ class GenericStyledItemDelegateColumToRow(QtWidgets.QStyledItemDelegate):
         row=index.row()
         delegate = self.delegates.get(row)
         if delegate is not None:
-            delegate.editorEvent(event, model, option, index)
+            result=delegate.editorEvent(event, model, option, index)
         else:
-            QtWidgets.QStyledItemDelegate.editorEvent(self, event, model, option, index)
-
+            result=QtWidgets.QStyledItemDelegate.editorEvent(self, event, model, option, index)
+        if result is None:
+            result=False
+        else:
+            result=True
+        return result
 
 class IntegerColumnDelegate(QtWidgets.QStyledItemDelegate):
 
@@ -256,7 +260,7 @@ class PlainTextColumnDelegate(QtWidgets.QStyledItemDelegate):
 
 
     def createEditor(self, parent, option, index, *args, **kwargs):
-        lineedit = utils.lineEdit(parent)
+        lineedit = utils.lineEdit()
         return lineedit
 
 
@@ -270,24 +274,6 @@ class PlainTextColumnDelegate(QtWidgets.QStyledItemDelegate):
 
 
 
-class RichTextColumnDelegate(QtWidgets.QStyledItemDelegate):
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-
-    def createEditor(self, parent, option, index, *args, **kwargs):
-        editor = utils.richTextEditor(parent)
-        return editor
-
-
-    def setEditorData(self, editor, index, *args, **kwargs):
-        value = index.model().data(index, QtCore.Qt.DisplayRole)
-        editor.setText(value)
-
-
-    def setModelData(self, editor, model, index, *args, **kwargs):
-        model.setData(index, editor.document())
 
 
 class CenteredCheckBoxDelegate(QtWidgets.QStyledItemDelegate):

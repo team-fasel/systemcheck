@@ -1,5 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
+    <file alias="ABAP">./img/icons8/SAP_32px.png</file>
     <file alias="AddFile">./img/icons8/Add File_32px.png</file>
     <file alias="AddFolder">./img/icons8/Add Folder_32px.png</file>
     <file alias="AddList">./img/icons8/Add List_32px.png</file>
@@ -13,6 +14,7 @@
     <file alias="AlignJustify">./img/icons8/Align Justify_32px.png</file>
     <file alias="Back">./img/icons8/Back_32px.png</file>
     <file alias="BulletedList">./img/icons8/Bulleted List_32px.png</file>
+    <file alias="Brief">./img/icons8/Brief_32px.png</file>
     <file alias="Bold">./img/icons8/Bold_32px.png</file>
     <file alias="Checked">./img/icons8/Checked_48px.png</file>
     <file alias="CheckedCheckbox">./img/icons8/Checked Checkbox_32px.png</file>

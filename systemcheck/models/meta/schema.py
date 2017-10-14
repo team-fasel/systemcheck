@@ -399,6 +399,16 @@ class RichString(String):
     def __init__(self):
         super().__init__()
 
+class LongString(String):
+    """ Represents a Long String
+
+    This column type will get mapped to a the plain text editor in PyQt which allows the editing of larger texts
+
+    """
+
+    def __init__(self):
+        super().__init__()
+
 def qtRelationship(*args, **kwargs):
 
     kwargs.setdefault('info', {})

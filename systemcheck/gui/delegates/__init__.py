@@ -6,4 +6,7 @@ from .FloatEditDelegateQt import FloatEditDelegateQt
 #from .ObjectListTableModelViewQt import ObjectListTableModelQt, ObjectListTableViewQt, MyObject
 from .PushButtonDelegateQt import PushButtonDelegateQt
 from .GenericDelegates import GenericStyledItemDelegateColumToRow
-
+from .RichTextDelegateQt import RichTextDelegate
+from .PlainTextDelegate import PlainTextDelegate
+from .IntegerDelegate import IntegerDelegate
+from .TextLineDelegateQt import TextLineDelegate
