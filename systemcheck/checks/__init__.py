@@ -1,2 +1,3 @@
-import systemcheck.checks.gui
-import systemcheck.checks.models
+from . import gui
+from . import models
+#import systemcheck.checks.models

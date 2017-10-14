@@ -1,4 +1,4 @@
-from systemcheck.checks.gui.widgets.check_description_widget import CheckSettingsWidget
-from systemcheck.checks.gui.widgets.check_parameterEditor_widget import CheckParameterEditorWidget
-from systemcheck.checks.gui.widgets.checks_widget import ChecksWidget
-
+from .check_settings_widget import CheckSettingsWidget
+from .check_parameterEditor_widget import CheckParameterEditorWidget
+from .checks_widget import ChecksWidget
+from .check_restrictionsEditor_widget import CheckRestrictionsEditorWidget

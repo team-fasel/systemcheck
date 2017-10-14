@@ -1,7 +1,8 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 import systemcheck
 import logging
-from systemcheck.gui.qtalcmapper import generateQtDelegate, getQtWidgetForAlchemyType
+#from systemcheck.gui.qtalcmapper import generateQtDelegate, getQtWidgetForAlchemyType
+#from systemcheck import checks
 from systemcheck.checks.gui.widgets import CheckSettingsWidget
 from collections import OrderedDict
 from typing import Any
@@ -17,7 +18,7 @@ class CheckParameterEditorWidget(CheckSettingsWidget):
     #TODO: Drag and Drop for Parameter sets
 
 
-    updateCheck = QtCore.pyqtSignal('PyQt_PyObject')
+    updateCheck = QtCore.pyqtSignal('PyQt_PyObject', 'PyQt_PyObject')
 
     def __init__(self):
         self.logger=logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
@@ -40,17 +41,16 @@ class CheckParameterEditorWidget(CheckSettingsWidget):
         self.toolbar.addAction(self.deleteParamSet_act)
 
 
-
         self.setLayout(layout)
 
         self.parameter_layout = QtWidgets.QVBoxLayout()
         self.parameter_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.parameters_table = QtWidgets.QTableView()
-        self.parameters_table.setSelectionBehavior(QtWidgets.QTableView.SelectRows)
-        self.parameters_table.setSelectionMode(QtWidgets.QTableView.SingleSelection)
+        self.parameterSets_table = QtWidgets.QTableView()
+        self.parameterSets_table.setSelectionBehavior(QtWidgets.QTableView.SelectRows)
+        self.parameterSets_table.setSelectionMode(QtWidgets.QTableView.SingleSelection)
 
-        self.parameter_layout.addWidget(self.parameters_table)
+        self.parameter_layout.addWidget(self.parameterSets_table)
         self.parameter_layout.addWidget(self.toolbar)
 
         iterimWidget=QtWidgets.QWidget()
@@ -59,39 +59,50 @@ class CheckParameterEditorWidget(CheckSettingsWidget):
         self.parameters_splitter = QtWidgets.QSplitter()
         self.parameters_splitter.addWidget(iterimWidget)
 
-        self.parameter_settings_widget = CheckSettingsWidget()
-        self.parameters_splitter.addWidget(self.parameter_settings_widget)
+        self.parameterSettings_widget = CheckSettingsWidget()
+        self.parameters_splitter.addWidget(self.parameterSettings_widget)
         layout.addWidget(self.parameters_splitter)
 
     def on_parameter_selectionChanged(self):
-        current = self.parameters_table.currentIndex()
-        object = self.alchemy_object.params[current.row()]
-        self.parameter_settings_widget.updateCheck.emit(object)
-        self.parameter_settings_widget.setVisible(True)
+        """ Update Widget with selected Parameter Set
 
-    def on_upateCheck(self, alchemy_object):
+        Gets executed when a parameter set is selected
+        """
+        current = self.parameterSets_table.currentIndex()
+        object = self.alchemy_object.params[current.row()]
+        self.parameterSettings_widget.updateCheck.emit(object, self.parameterForm)
+        self.parameterSettings_widget.setVisible(True)
+
+    def on_upateCheck(self, alchemy_object, parameter_form):
+        """ Update Generic Check Parameter Widget with selected Check
+
+
+        """
+
+
+        self.parameterForm=parameter_form
         self.alchemy_object=alchemy_object
-        self.parameter_settings_widget.setVisible(False)
-        self.parameter_table_model = CheckParameterTableModel(alchemy_object)
-        self.parameters_table.setModel(self.parameter_table_model)
-        self.parameters_table.selectionModel().selectionChanged.connect(self.on_parameter_selectionChanged)
-        self.parameters_table.horizontalHeader().setStretchLastSection(True)
-        self.parameters_table.resizeColumnsToContents()
-        self.parameters_table.resizeRowsToContents()
+        self.parameterSettings_widget.setVisible(False)
+        self.parameterTable_model = CheckParameterTableModel(alchemy_object)
+        self.parameterSets_table.setModel(self.parameterTable_model)
+        self.parameterSets_table.selectionModel().selectionChanged.connect(self.on_parameter_selectionChanged)
+        self.parameterSets_table.horizontalHeader().setStretchLastSection(True)
+        self.parameterSets_table.resizeColumnsToContents()
+        self.parameterSets_table.resizeRowsToContents()
 
     def on_addParamSet(self):
-        self.parameter_table_model.insertRows(self.parameter_table_model.rowCount())
-
+        """ Add a new Parameter Set """
+        self.parameterTable_model.insertRows(self.parameterTable_model.rowCount())
 
     def on_insertParamSet(self):
         current = self.parameter_table.currentIndex()
         if current.isValid():
-            self.parameter_table_model.insertRows(current.row())
+            self.parameterTable_model.insertRows(current.row())
 
     def on_deleteParamSet(self):
-        current = self.parameters_table.currentIndex()
+        current = self.parameterSets_table.currentIndex()
         if current.isValid():
-            self.parameter_table_model.removeRows(current.row())
+            self.parameterTable_model.removeRows(current.row())
 
 class CheckParameterTableModel(QtCore.QAbstractTableModel):
 
@@ -110,8 +121,7 @@ class CheckParameterTableModel(QtCore.QAbstractTableModel):
 
     def columnCount(self, index:QtCore.QModelIndex=QtCore.QModelIndex()):
         """ Returns the number of columns the model holds. """
-        if self.rowCount():
-            return 1
+        return 1
 
 
     def data(self, index, role:int=QtCore.Qt.DisplayRole):
@@ -140,7 +150,7 @@ class CheckParameterTableModel(QtCore.QAbstractTableModel):
     def headerData(self, section, orientation:int, role:int=QtCore.Qt.DisplayRole):
         """ Set the headers to be displayed. """
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            return 'Param. Description'
+            return 'Parameter Set'
 
         return None
 
@@ -149,7 +159,8 @@ class CheckParameterTableModel(QtCore.QAbstractTableModel):
         self.beginInsertRows(QtCore.QModelIndex(), position, position + rows - 1)
 
         check_alc_object = type(self.__checknode)
-        objectClass = check_alc_object.params.info.get('rel_class')
+        objectClass = check_alc_object.params.property.mapper.class_
+
 
         for row in range(rows):
             if objectClass:

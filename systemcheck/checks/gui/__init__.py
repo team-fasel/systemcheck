@@ -1,1 +1,2 @@
-import systemcheck.checks.gui.widgets
+from . import models
+from . import widgets

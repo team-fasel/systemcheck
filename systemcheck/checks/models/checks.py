@@ -14,7 +14,12 @@ __email__       = 'systemcheck@team-fasel.com'
 
 from systemcheck.models.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
     Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, \
-    Integer, ForeignKey, ChoiceType, UUIDType, relationship, RichString, qtRelationship
+    Integer, ForeignKey, ChoiceType, UUIDType, relationship, RichString, qtRelationship, OperatorMixin
+
+
+from systemcheck.models.meta.orm_choices import choices
+from systemcheck.models.meta.systemcheck_choices import OperatorChoice, InclusionChoice, \
+    CheckFailCriteriaOptions
 
 #from systemcheck.session import SESSION
 
@@ -23,44 +28,35 @@ from sqlalchemy.inspection import inspect
 from typing import Union, List
 from pprint import pprint
 import systemcheck
+from systemcheck.models.meta.orm_choices import choices
 
-example_text="""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-<html><head><meta name="qrichtext" content="1" /><style type="text/css">
-p, li { white-space: pre-wrap; }
-</style></head><body style=" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;">
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-size:20pt; font-weight:600;">Heading</span></p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:20pt; font-weight:600;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-size:14pt;">This is an example text</span></p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:14pt;"><br /></p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:14pt;"><br /></p></body></html>"""
+@choices
+class OptionChoice:
+    class Meta:
+        NE = ['NE', 'not equal']
+        EQ = ['EQ', 'equal']
+        GT = ['GT', 'greater']
+        GE = ['GT', 'greater or equal']
+        LT = ['LT', 'lower']
+        LE = ['LE', 'lower or equal']
+
 
 class StandardAbapAuthSelectionOptionMixin:
 
-
-    CHOICE_SIGN = [('I', 'Include'),
-                   ('E', 'Exclude')]
-
-    CHOICE_OPTION = [('EQ', 'Equal'),
-                     ('NE', 'Not Equal'),
-                     ('GT', 'Greater Than'),
-                     ('GE', 'Greater or Equal'),
-                     ('LT', 'Lower Than'),
-                     ('LE', 'Lower or Equal')]
-
-    SIGN = Column(ChoiceType(CHOICE_SIGN),
+    SIGN = Column(String,
                   nullable = False,
-                  default = 'I',
+                  default = InclusionChoice.INCLUDE,
                   qt_label = 'Incl./Excl.',
                   qt_description = 'Should the specified items be included or excluded? Default is to include them',
-                  choices = CHOICE_SIGN,
+                  choices = InclusionChoice.CHOICES
     )
 
-    OPTION = Column(ChoiceType(CHOICE_SIGN),
+    OPTION = Column(String,
                   nullable = False,
-                  default = 'EQ',
+                  default = OptionChoice.EQ,
                   qt_label = 'Sel. Option',
                   qt_description = 'Selection option',
-                  choices = CHOICE_OPTION,
+                  choices = OptionChoice.CHOICES,
     )
 
     LOW = Column(String(12),
@@ -89,16 +85,6 @@ class Check(QtModelMixin, Base):
         {'extend_existing' : True}
     )
 
-    SYSTEM_TYPE_CHOICES=[
-                        ('ABAP', 'ABAP System'),
-                    ]
-
-    FAILURE_CRITERIA = [
-        ('FAIL_IF_ANY_FAILS', 'Rate Fail if any parameter set fails'),
-        ('FAIL_IF_ALL_FAIL',  'Rate Fail if all sets fail'),
-    ]
-
-
     id = Column(Integer, primary_key=True, qt_show=False)
 
     parent_id = Column(Integer, ForeignKey('checks_metadata.id'), qt_label='Parent Key', qt_show=False)
@@ -115,7 +101,6 @@ class Check(QtModelMixin, Base):
                           backref=backref("parent_node", remote_side=id),
                           )
 
-
     type = Column(String(250),
                         nullable=False,
                         qt_label='Node Type',
@@ -123,22 +108,31 @@ class Check(QtModelMixin, Base):
                         qt_show=False
                         )
 
-
     description = Column(RichString,
                          nullable=True,
                          qt_label='Check Description',
                          qt_description='Brief description what the check does',
                          qt_show=False,
-                         default=example_text
                          )
+
+    failcriteria = Column(String,
+                       default = CheckFailCriteriaOptions.FAIL_IF_ANY_FAILS,
+                       qt_description='Defines when a check is considered as failed. ',
+                       qt_label = 'Fail Criteria',
+                       choices=CheckFailCriteriaOptions.CHOICES,
+                       qt_show=True)
 
     __qtmap__ = [name, description]
 
 
 
     def _parameter_count(self):
-        return len(self.params)
+        count = len(self.params)
 
+        return count
+
+    def _restriction_count(self):
+        return len(self.restrictions)
 
     __mapper_args__ = {
         'polymorphic_identity':'FOLDER',

@@ -6,28 +6,77 @@ import logging
 from collections import OrderedDict
 from typing import Any
 from pprint import pprint
+import functools
+
+class CheckHandler(QtCore.QObject):
+    """ Check Handler
+
+    The handler contains manages the plugins and their execution.
+
+    """
+    def __init__(self):
+        super().__init__()
+        self.pm = systemcheck.plugins.SysCheckPM()
+
+    def runCheck(self, logons, checks):
+
+        for check in checks:
+            plugin=self.pm.getPluginByName(check.__name__)
+            result = plugin.plugin_object.execute_plugin()
+
+    def parameterForm(self, check_name):
+
+        plugin = self.pm.getPlugin(check_name)
+        form = plugin.plugin_object.parameterForm
+        return form
+
+
+    def checkActions(self):
+        pass
+
 
 class ChecksWidget(QtWidgets.QWidget):
 
 
     checksNewFolder_signal = QtCore.pyqtSignal()
-    checksNew_signal = QtCore.pyqtSignal()
+    checksNew_signal = QtCore.pyqtSignal('PyQt_PyObject')
     checksDelete_signal = QtCore.pyqtSignal()
     checksImport_signal = QtCore.pyqtSignal()
     checksExport_signal = QtCore.pyqtSignal()
     checksPause_signal = QtCore.pyqtSignal()
-    checksRun_signal = QtCore.pyqtSignal()
+    checksRun_signal = QtCore.pyqtSignal('PyQt_PyObject')
     checksStop_signal = QtCore.pyqtSignal()
     pauseChecks_signal = QtCore.pyqtSignal()
     stopChecks_signal = QtCore.pyqtSignal()
 
-    def __init__(self, model = None):
+    def __init__(self, systemtype, model = None):
         super().__init__()
         self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
         self.setupUi()
+        self.systemType=systemtype
+        self.checkHandler = CheckHandler()
         if model is not None:
             self.setModel(model)
         self.show()
+        self.folderObject=systemcheck.checks.models.Check
+        self.actions = OrderedDict()
+
+        for check in self.availableChecks.values():
+            description=check.get('description')
+            classobj = check.get('saclass')
+            self.actions[description] = QtWidgets.QAction(QtGui.QIcon(':Checkmark'), description)
+            self.actions[description].triggered.connect(functools.partial(self.on_checkNew, classobj, description))
+
+
+    @property
+    def folderObject(self):
+        """ Return the folder object of the tree model """
+        return self.__folderObject
+
+    @folderObject.setter
+    def folderObject(self, folderObject):
+        """ Set the folder object of the tree model """
+        self.__folderObject = folderObject
 
     def setupUi(self):
         vlayout = QtWidgets.QVBoxLayout()
@@ -44,7 +93,7 @@ class ChecksWidget(QtWidgets.QWidget):
         self.checksTreeAtrributes_splitter = QtWidgets.QSplitter()
         self.checksTreeAtrributes_splitter.setOrientation(QtCore.Qt.Horizontal)
         self.tree = QtWidgets.QTreeView()
-        self.tree.setContentsMargins(0,0,0,0)
+        self.tree.setContentsMargins(0, 0, 0, 0)
         self.tree.setHeaderHidden(True)
         self.tree.sortByColumn(0, QtCore.Qt.AscendingOrder)
         self.tree.setSortingEnabled(True)
@@ -58,11 +107,11 @@ class ChecksWidget(QtWidgets.QWidget):
         self.checksTreeAtrributes_splitter.addWidget(self.checkAttributes_tabw)
 
         self.checkDescription_widget=systemcheck.checks.gui.widgets.CheckSettingsWidget()
-        self.checkAttributes_tabw.addTab(self.checkDescription_widget, 'Description')
+        self.checkAttributes_tabw.addTab(self.checkDescription_widget, 'Generic Configuration')
 
 
         self.checkParameters_widget = systemcheck.checks.gui.widgets.CheckParameterEditorWidget()
-        self.checkAttributes_tabw.addTab(self.checkParameters_widget, 'Parameters')
+        self.checkAttributes_tabw.addTab(self.checkParameters_widget, 'Detailed Configuration')
         self.checkAttributes_tabw.setTabEnabled(1, False)
         self.checksTreeAtrributes_splitter.setContentsMargins(0, 0, 0, 0)
 
@@ -73,11 +122,14 @@ class ChecksWidget(QtWidgets.QWidget):
         self.setLayout(hlayout)
         self.setupActions()
 
+        self.tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self.openContextMenu)
+
     def setupActions(self):
 
         self.checksNewFolder_act = QtWidgets.QAction(QtGui.QIcon(':AddFolder'), 'Add Folder')
         self.checksNewFolder_act.triggered.connect(self.on_checkNewFolder)
-        self.checksNewFolder_act.setEnabled(False)
+        self.checksNewFolder_act.setEnabled(True)
 
         self.checksNew_act = QtWidgets.QAction(QtGui.QIcon(':AddFile'), 'Add New Check...')
         self.checksNew_act.triggered.connect(self.on_checkNew)
@@ -85,7 +137,7 @@ class ChecksWidget(QtWidgets.QWidget):
 
         self.checksDelete_act =  QtWidgets.QAction(QtGui.QIcon(':Trash'), 'Delete Selected Checks')
         self.checksDelete_act.triggered.connect(self.on_checkDelete)
-        self.checksDelete_act.setEnabled(False)
+        self.checksDelete_act.setEnabled(True)
 
         self.checksImport_act = QtWidgets.QAction(QtGui.QIcon(':Import'), 'Import Checks...')
         self.checksImport_act.triggered.connect(self.on_checkImport)
@@ -97,7 +149,7 @@ class ChecksWidget(QtWidgets.QWidget):
 
         self.checksRun_act = QtWidgets.QAction(QtGui.QIcon(':Play'), 'Run Checks')
         self.checksRun_act.triggered.connect(self.on_checkRun)
-        self.checksRun_act.setEnabled(False)
+        self.checksRun_act.setEnabled(True)
 
         self.checksPause_act = QtWidgets.QAction(QtGui.QIcon(':Pause'), 'Pause Checks')
         self.checksPause_act.triggered.connect(self.on_checkPause)
@@ -106,6 +158,31 @@ class ChecksWidget(QtWidgets.QWidget):
         self.checksStop_act = QtWidgets.QAction(QtGui.QIcon(':Stop'), 'Stop Checks')
         self.checksStop_act.triggered.connect(self.on_checkPause)
         self.checksStop_act.setEnabled(False)
+
+
+
+    @property
+    def systemType(self):
+        return self.__systemType
+
+    @systemType.setter
+    def systemType(self, systemType:str):
+        self.__systemType=systemType
+
+    @property
+    def availableChecks(self):
+        """ Determine the available checks for the context Menu
+
+
+        """
+
+        available = OrderedDict()
+        for plugin in self.checkHandler.pm.getPlugins(category='check', systemtype=self.systemType):
+            for saclass in plugin.plugin_object.alchemyObjects:
+                if plugin.name==saclass.__name__:
+                    available[plugin.name]={'saclass':saclass, 'description':plugin.description}
+
+        return available
 
     def menu(self):
         menu = QtWidgets.QMenu('&Checks')
@@ -116,28 +193,72 @@ class ChecksWidget(QtWidgets.QWidget):
         menu.addActions([self.checksRun_act, self.checksStop_act, self.checksPause_act])
 
     def on_tree_selectionChanged(self):
+        """ Click on a different Check in the Checks tree
+
+        In this case, the following happens:
+
+            - the clicked SQLAlchemy Node is analyzed. If it has subparameters, a second tab will be displayed.
+
+        """
 
         print('selection changed')
         current = self.tree.currentIndex()
-        node = current.internalPointer()
-        self.checkDescription_widget.updateCheck.emit(node)
-        if node.type == 'FOLDER':
-            self.checkAttributes_tabw.setTabEnabled(1, False)
-        else:
+        node = self.tree.model().getNode(current)
+        self.checkDescription_widget.updateCheck.emit(node, None)
+        if hasattr(node, 'params'):
             self.checkAttributes_tabw.setTabEnabled(1, True)
-            self.checkParameters_widget.updateCheck.emit(node)
+            form = self.checkHandler.parameterForm(node.__class__.__name__)
+            self.checkParameters_widget.updateCheck.emit(node, form)
+        else:
+            self.checkAttributes_tabw.setTabEnabled(1, False)
 
-    def on_checkNew(self):
-        raise NotImplemented
+    def on_checkNew(self, classobject, description):
+        """ Create a new Check
+
+        :param classobject: The SQLAlchemy Model that represents the check
+        :param description: The description of the check
+
+        """
+
+        if len(self.tree.selectionModel().selectedIndexes())==0:
+            parent_index=QtCore.QModelIndex()
+        else:
+            parent_index = self.tree.currentIndex()
+
+
+        node=classobject(name='<< {} >>'.format(description))
+
+        self.checks_model.insertRow(position=0, parent=parent_index, nodeObject=node)
+        #self.tree.expand(parent_index)
+
 
     def on_checkNewFolder(self):
-        raise NotImplemented
+        """ Create a new folder """
+
+        if len(self.tree.selectionModel().selectedIndexes())==0:
+            parent_index=QtCore.QModelIndex()
+        else:
+            parent_index = self.tree.currentIndex()
+        folder = systemcheck.checks.models.Check(name='new Check')
+        self.checks_model.insertRow(position=0, parent=parent_index, nodeObject=folder)
+        self.tree.expand(parent_index)
 
     def on_checkDelete(self):
-        raise NotImplemented
+        """ Delete a tree item and all its children """
+        index = self.tree.currentIndex()
 
-    def on_checkRun(self):
-        raise NotImplemented
+        if len(self.tree.selectedIndexes()) == 0:
+            currentProxyIndex = self.tree.currentIndex()
+            currentProxyParentIndex = currentProxyIndex.parent()
+            self.system_model.removeRows(row=currentProxyIndex.row(), count=1, parent=currentProxyParentIndex)
+        else:
+            for index in self.tree.selectedIndexes():
+                proxyPoxyParentIndex = index.parent()
+                self.checks_model.removeRows(row=index.row(), count=1, parent=proxyPoxyParentIndex)
+
+    def on_checkRun(self, logonInfos:list):
+        for info in logonInfos:
+            pprint(info)
 
     def on_checkExport(self):
         raise NotImplemented
@@ -151,8 +272,34 @@ class ChecksWidget(QtWidgets.QWidget):
     def on_checkPause(self):
         raise NotImplemented
 
+    def openContextMenu(self, position):
+
+        menu=QtWidgets.QMenu()
+        menu = self.systemSpecificContextMenu(position, menu)
+        menu.exec_(self.tree.viewport().mapToGlobal(position))
+
     def setModel(self, checks_model):
         self.checks_model = checks_model
         self.tree.setModel(checks_model)
         self.tree.setColumnHidden(1, True)
         self.tree.selectionModel().selectionChanged.connect(self.on_tree_selectionChanged)
+
+    def systemSpecificContextMenu(self, position, menu):
+        index = self.tree.indexAt(position)
+        node = self.checks_model.getNode(index)
+
+        if node is None:
+            menu.addAction(self.checksNewFolder_act)
+            menu.addSeparator()
+            for action in self.actions.values():
+                menu.addAction(action)
+        elif type(node).__mapper_args__.get('polymorphic_identity').endswith('Folder'):
+            menu.addAction(self.checksNewFolder_act)
+            menu.addAction(self.checksDelete_act)
+            menu.addSeparator()
+            for action in self.actions.values():
+                menu.addAction(action)
+        else:
+            menu.addAction(self.checksDelete_act)
+
+        return menu

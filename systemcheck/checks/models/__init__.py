@@ -1,1 +1,2 @@
-from systemcheck.checks.models.checks import Check
+
+from .checks import Check
