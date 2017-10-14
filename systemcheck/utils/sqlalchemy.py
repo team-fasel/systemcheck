@@ -1,5 +1,5 @@
 import systemcheck
-
+from systemcheck.systems.ABAP.models import *
 def get_or_create(session, model, **kwargs):
     """ Get or create a SQLAlchemy Object
 

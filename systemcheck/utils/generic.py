@@ -65,6 +65,22 @@ def get_lower_interval(parameters:dict, basetime):
     return dateFrom
 
 
+def get_user_attributes(cls, exclude_methods:bool=True)-> list:
+    """ Get Attributes of a Class
+
+    :param cls: Class Object
+    :param exclude_methods: Exclude Methods
+    :return:
+    """
+    base_attrs = dir(type('dummy', (object,), {}))
+    this_cls_attrs = dir(cls)
+    res = []
+    for attr in this_cls_attrs:
+        if base_attrs.count(attr) or (callable(getattr(cls,attr)) and exclude_methods):
+            continue
+        res += [attr]
+    return res
+
 class Result(object):
     '''
     Alternative implementation for error handling.

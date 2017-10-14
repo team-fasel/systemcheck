@@ -28,10 +28,18 @@ __version_info__ = (0, 1, 0)
 __version__ = 'v{}.{}.{}'.format(*__version_info__)
 __revision__ = __version__
 
+#from systemcheck import plugins
+#from systemcheck import config
+#from systemcheck import models
+#from systemcheck import session
+#from systemcheck import systems
+#from systemcheck import checks
+#from systemcheck import gui
+
+import systemcheck.checks
+import systemcheck.plugins
 import systemcheck.config
 import systemcheck.models
 import systemcheck.session
-import systemcheck.checks
-import systemcheck.plugins
-import systemcheck.gui
 import systemcheck.systems
+import systemcheck.gui

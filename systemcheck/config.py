@@ -19,8 +19,7 @@ __maintainer__  = 'Lars Fasel'
 __email__       = 'systemcheck@team-fasel.com'
 
 from configparser import ConfigParser
-import systemcheck.utils as utils
-
+from systemcheck import utils
 
 import os
 
