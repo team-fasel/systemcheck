@@ -5,10 +5,10 @@ import systemcheck
 from systemcheck.gui.models import GenericTreeModel
 from systemcheck.gui.models import SettingsModel
 from systemcheck.systems.generic.models import GenericSystemTreeNode
-from systemcheck.systems.ABAP.models import SystemABAP, SystemABAPClient
+from systemcheck.systems.ABAP.models import SystemAbap, SystemAbapClient
 from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import logging
-from . import tools
+import systemcheck_tools
 
 from PyQt5 import QtCore
 
@@ -48,7 +48,7 @@ class TestSettingsModel(TestCase):
             os.remove(self.PATH)
 
     def populate_tree(self):
-        tools.populateSystemsABAPTree(self.session)
+        systemcheck_tools.populateSystemsABAPTree(self.session)
 
     def test_columnCount(self):
         dev_index = self.model.index(0, 0, QtCore.QModelIndex())

@@ -27,8 +27,8 @@ class TestResultsHandling(TestCase):
                       OPERATOR='EQ')
 
         result.add_result(record)
-        result.check_name='Clients 000 deleted'
-        result.logoninfo=dict(ashost='abap001.team-fasel.lab',
+        result.checkName= 'Clients 000 deleted'
+        result.logonInfo=dict(ashost='abap001.team-fasel.lab',
                               sysnr='00',
                               client='001',
                               user='DEVELOPER',
@@ -52,13 +52,13 @@ class TestResultsHandling(TestCase):
                       OPERATOR='EQ')
 
         result1.add_result(record)
-        result1.check_name='Clients 066 deleted'
-        result1.logoninfo=dict(ashost='abap001.team-fasel.lab',
-                              sysnr='00',
-                              client='001',
-                              user='DEVELOPER',
-                              passwd='Appl1ance',
-                              sid='NPL')
+        result1.checkName= 'Clients 066 deleted'
+        result1.logonInfo=dict(ashost='abap001.team-fasel.lab',
+                               sysnr='00',
+                               client='001',
+                               user='DEVELOPER',
+                               passwd='Appl1ance',
+                               sid='NPL')
         result1.systeminfo = 'NPL:001'
 
         self._results.append(result)
@@ -136,8 +136,8 @@ class TestResultsTableModel(TestCase):
                       OPERATOR='EQ')
 
         result.add_result(record)
-        result.check_name='Clients 001 and 066 deleted'
-        result.logoninfo=dict(ashost='abap001.team-fasel.lab',
+        result.checkName= 'Clients 001 and 066 deleted'
+        result.logonInfo=dict(ashost='abap001.team-fasel.lab',
                               sysnr='00',
                               client='001',
                               user='DEVELOPER',

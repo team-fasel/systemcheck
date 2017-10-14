@@ -25,13 +25,11 @@ import os
 import systemcheck.models as models
 from systemcheck.utils import get_or_create
 from systemcheck.session import SESSION
-from systemcheck.models.credentials import Credential
-from systemcheck.systems.ABAP.models import SystemABAPFolder, SystemABAP, SystemABAPClient
+from systemcheck.systems.ABAP.models import SystemAbapFolder, SystemAbap, SystemAbapClient
 from systemcheck.systems.generic.models import GenericSystemTreeNode
 from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import sqlalchemy_utils
 import logging
-import systemcheck_tools
 
 
 class SqlalchemyAbapModel(unittest.TestCase):
@@ -72,14 +70,14 @@ class SqlalchemyAbapModel(unittest.TestCase):
     def test_password(self):
         self.populate_tree()
 
-        e1s_client000 = SystemABAPClient(client='000', username ='TestUser', password='PassWord1', use_sso=True)
+        e1s_client000 = SystemAbapClient(client='000', username ='TestUser', password='PassWord1', use_sso=True)
         pwd = e1s_client000.password
         self.assertEqual(pwd, 'PassWord1')
 
     def test_logon_info(self):
         rootnode = get_or_create(self.session, GenericSystemTreeNode, parent_id=None, name='RootNode')
-        dev_folder = SystemABAPFolder(name='DEV', parent_node=rootnode)
-        e1d_abap = SystemABAP(sid='E1D', tier='Dev', rail='N',
+        dev_folder = SystemAbapFolder(name='DEV', parent_node=rootnode)
+        e1d_abap = SystemAbap(sid='E1D', tier='Dev', rail='N',
                               description='ECC Development System',
                               enabled=True,
                               snc_partnername="Fill SNC Name Here",
@@ -91,7 +89,7 @@ class SqlalchemyAbapModel(unittest.TestCase):
                               ms_logongroup='PUBLIC')
         dev_folder.children.append(e1d_abap)
 
-        e1d_client000 = SystemABAPClient(client='000', username ='TestUser', password ='PassWord1', use_sso=False)
+        e1d_client000 = SystemAbapClient(client='000', username ='TestUser', password ='PassWord1', use_sso=False)
         e1d_abap.children.append(e1d_client000)
         logon_info = e1d_client000.logon_info()
 
@@ -140,11 +138,11 @@ class SqlalchemyAbapModel(unittest.TestCase):
         print('step_006: Insert child at a specific position')
         self.populate_tree()
         rootnode=self.session.query(GenericSystemTreeNode).filter(GenericSystemTreeNode.parent_id == None).one()
-        position_folder=SystemABAPFolder(parent_node=rootnode, name='Position Test')
-        pos1_node = SystemABAPFolder(parent_node=position_folder, name='Pos 1')
-        pos2_node = SystemABAPFolder(parent_node=position_folder, name='Pos 2')
-        pos3_node = SystemABAPFolder(parent_node=position_folder, name='Pos 3')
-        pos4_node = SystemABAPFolder(name='Pos 4')
+        position_folder=SystemAbapFolder(parent_node=rootnode, name='Position Test')
+        pos1_node = SystemAbapFolder(parent_node=position_folder, name='Pos 1')
+        pos2_node = SystemAbapFolder(parent_node=position_folder, name='Pos 2')
+        pos3_node = SystemAbapFolder(parent_node=position_folder, name='Pos 3')
+        pos4_node = SystemAbapFolder(name='Pos 4')
         position_folder._qt_insert_child(1, pos4_node)
 
         print(position_folder._dump())
@@ -156,11 +154,11 @@ class SqlalchemyAbapModel(unittest.TestCase):
         print('step_007: Delete child at a specific position')
         self.populate_tree()
         rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
-        delete_folder=SystemABAPFolder(parent_node=rootnode, name='Position Test')
-        del1_node = SystemABAPFolder(parent_node=delete_folder, name='Del 1')
-        del2_node = SystemABAPFolder(parent_node=delete_folder, name='Del 2')
-        del3_node = SystemABAPFolder(parent_node=delete_folder, name='Del 3')
-        del4_node = SystemABAPFolder(parent_node=delete_folder, name='Del 4')
+        delete_folder=SystemAbapFolder(parent_node=rootnode, name='Position Test')
+        del1_node = SystemAbapFolder(parent_node=delete_folder, name='Del 1')
+        del2_node = SystemAbapFolder(parent_node=delete_folder, name='Del 2')
+        del3_node = SystemAbapFolder(parent_node=delete_folder, name='Del 3')
+        del4_node = SystemAbapFolder(parent_node=delete_folder, name='Del 4')
 
         childcount=delete_folder._qt_child_count()
 
@@ -178,10 +176,10 @@ class SqlalchemyAbapModel(unittest.TestCase):
         self.populate_tree()
         rootnode = self.session.query(GenericSystemTreeNode).filter_by(parent_id=None).one()
         self.assertEqual(rootnode._qt_child_count(), 4)
-        self.assertEqual(self.session.query(SystemABAP).count(), 2)
+        self.assertEqual(self.session.query(SystemAbap).count(), 2)
         rootnode._qt_remove_child(0)
         self.assertEqual(rootnode._qt_child_count(), 3)
-        self.assertEqual(self.session.query(SystemABAP).count(), 1)
+        self.assertEqual(self.session.query(SystemAbap).count(), 1)
 
     # pprint(result)
 

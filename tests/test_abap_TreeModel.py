@@ -24,7 +24,7 @@ from systemcheck import models
 from systemcheck.systems.generic.models import GenericSystemTreeNode
 from systemcheck.gui.models import GenericTreeModel
 
-from systemcheck.systems.ABAP.models.abap_model import SystemABAP, SystemABAPClient, SystemABAPFolder
+from systemcheck.systems.ABAP.models.abap_model import SystemAbap, SystemAbapClient, SystemAbapFolder
 from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import logging
 import systemcheck_tools
@@ -125,7 +125,7 @@ class TestAbapTreeModel(TestCase):
         index = model.createIndex(0, 0, rootnode)
         child_count_root = model.rowCount(index)
         self.assertEqual(child_count_root, 0)
-        system_node = SystemABAP(name='New SID', sid='NEW')
+        system_node = SystemAbap(name='New SID', sid='NEW')
         model.insertRow(0, index, nodeObject=system_node)
         child_count_root = model.rowCount(index)
         self.assertEqual(child_count_root, 1)  #Successfully added one new system
@@ -137,7 +137,7 @@ class TestAbapTreeModel(TestCase):
         self.assertEqual(child_count_system, 0)  #No new client exists
         self.assertFalse(model.hasChildren(system_index))  #Another test
 
-        client_node = SystemABAPClient(client='000')
+        client_node = SystemAbapClient(client='000')
         model.insertRow(position=0, parent=system_index, nodeObject=client_node)
         child_count_system = model.rowCount(system_index)
         self.assertEqual(child_count_system, 1)  #Successfully added one new system
