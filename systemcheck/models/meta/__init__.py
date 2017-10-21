@@ -1,8 +1,9 @@
 from .types import Integer, String, Boolean, CHAR
 from .orm import UniqueMixin, many_to_one, one_to_many
-from systemcheck.models.meta.schema import SurrogatePK, SurrogateUuidPK, References, utcnow, \
+from .schema import SurrogatePK, SurrogateUuidPK, References, utcnow, \
     UniqueConstraint, Column, QtModelMixin, PasswordKeyringMixin, Password, StandardAbapAuthSelectionOptionMixin, \
-    RichString, qtRelationship, CheckParameterMixin, RestrictionsMixin, OperatorMixin, Date, Time, LongString
+    RichString, qtRelationship, CheckParameterMixin, RestrictionsMixin, OperatorMixin, Date, Time, LongString,\
+    BaseMixin, TableNameMixin
 from .base import Base, CheckBase, Session, commit_on_success
 from sqlalchemy.orm import relationship, validates, backref, mapper
 from sqlalchemy.orm.collections import attribute_mapped_collection

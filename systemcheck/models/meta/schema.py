@@ -1,11 +1,16 @@
 import sqlalchemy
-from .systemcheck_choices import InclusionChoice, ComponentChoice, OperatorChoice
+from uuid import UUID
+import json
+from datetime import datetime
+from systemcheck.models.meta.systemcheck_choices import InclusionChoice, ComponentChoice, OperatorChoice
 from inspect import isclass
 from sqlalchemy import ForeignKey, Table, DateTime, Integer, CHAR, inspect, String, Date, Time
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, class_mapper, ColumnProperty,  RelationshipProperty
+from sqlalchemy.orm.collections import InstrumentedDict, InstrumentedList, InstrumentedSet
 from sqlalchemy import event, ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.sql import functions
+from sqlalchemy.ext import declarative
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_utils.types import UUIDType, ChoiceType
 from typing import Any, Union, List
@@ -13,9 +18,16 @@ import keyring
 import uuid
 from pprint import pprint
 import systemcheck
+from functools import reduce
+from typing import Union
+import yaml
 
 def bool_or_str(type_):
     return is_string(type_) or is_boolean(type_)
+
+def deepgetattr(obj, attr):
+    """Recurses through an attribute chain to get the ultimate value."""
+    return reduce(getattr, attr.split('.'), obj)
 
 
 class Column(sqlalchemy.Column):
@@ -224,6 +236,120 @@ class OperatorMixin:
                       qt_show=False,
                       choices=OperatorChoice.CHOICES
                       )
+
+class TableNameMixin(object):
+    """ MixIn to automatically return the table name """
+
+    @declarative.declared_attr
+    def __tablename__(cls):
+        return cls.__name__.lower()
+
+
+class BaseMixin(object):
+    """ Standard Mixin
+
+
+    """
+
+    @declarative.declared_attr
+    def __tablename__(cls):
+        return cls.__name__.lower()
+
+    @declarative.declared_attr
+    def saClassName(cls):
+        return cls.__name__.lower()
+
+    def __iter__(self):
+        return self.to_dict().items()
+
+    def to_dict(self, *args, backref:tuple=None, include_relationships=True, ignore_keys=True, ignore_attrs:Union[list, None]=None,
+                override_default_ignore_attrs:bool=False, rel_ignore_list=None, ignore_parents=True, **kwargs):
+        """ Convert the values of a SQLAlchemy ORM Object into a dictionary
+
+
+        :param backref: a tuple that consists of the table object as back reference and the primary key id of the record
+        :param include_relationships: If set to False, only columns will be part of the dictionary
+        :param ignore_keys: If set to True, the resulting dictionary will not include primary key values
+        :param ignore_attributes: The list that contains the schema attributes that should be ignored.
+        :param override_default_ignore_attrs: By default the attribute 'parent_node' is excluded
+            since that would traverse the tree upwards. Had to be added since the the relationships for systemcheck
+            are bidirectional.
+        :param ignore_parents: If set to True, the attribute 'parent_node' will not get traversed.
+
+        """
+
+        default_ignore_attrs=[]
+
+        if ignore_attrs is None:
+            ignore_attrs=default_ignore_attrs
+        else:
+            if override_default_ignore_attrs is False:
+                ignore_attrs.extend(default_ignore_attrs)
+
+        if ignore_parents:
+            ignore_attrs.append('parent_node')
+
+        primary_keys=[item.name for item in inspect(self.__class__).primary_key]
+        foreign_keys=[item.name
+                      for item in inspect(self.__class__).columns
+                      if len(item.foreign_keys)>0]
+
+        if ignore_keys:
+            result = {str(column.key): getattr(self, attr)
+                      for attr, column in self.__mapper__.c.items()
+                      if str(column.key) not in primary_keys and column.key not in foreign_keys}
+        else:
+            result = {str(column.key): getattr(self, attr)
+                      for attr, column in self.__mapper__.c.items()}
+
+        for b in self.__class__.__bases__:
+            pprint(b)
+
+        if include_relationships:
+            for attr, relation in self.__mapper__.relationships.items():
+                # Avoid recursive loop between to tables.
+
+                if relation.key not in ignore_attrs:
+                    if backref is not None:
+                        if relation.table._is_join:
+                            if relation.table.right==backref[0] or relation.table.left==backref[0]:
+                                continue
+
+                        #
+                        elif backref[0] == relation.target:
+                            if backref[1] == self.id:
+                                continue
+#                        else:
+#                            print('========== should not have happened ============')
+#                            continue
+                    value = getattr(self, attr)
+                    if value is None:
+                        result[str(relation.key)] = None
+                    elif isinstance(value.__class__, declarative.DeclarativeMeta):
+                        result[str(relation.key)] = value.to_dict(backref=(self.__table__, self.id))
+                    else:
+                        result[str(relation.key)] = [i.to_dict(backref=(self.__table__, self.id))
+                                             for i in value]
+        return result
+
+    def to_json(self, *args, **kwargs):
+
+        def extended_encoder(x):
+            if isinstance(x, datetime):
+                return x.isoformat()
+            if isinstance(x, UUID):
+                return str(x)
+
+        return json.dumps(self.to_dict(*args, **kwargs))
+
+    def to_yaml(self, *args, **kwargs):
+
+        """ Converts the SQLAlchemy object to yaml
+
+
+        """
+
+        return yaml.dump(self.to_dict(*args, **kwargs))
 
 
 class StandardAbapAuthSelectionOptionMixin:
