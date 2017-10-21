@@ -12,7 +12,7 @@ __authors__     = ['Lars Fasel']
 __author__      = ','.join(__authors__)
 __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
-__license__     = 'MIT'
+__license__     = 'GNU AGPLv3'
 
 
 from .generic import get_absolute_path, get_absolute_systemcheck_path, Result, Fail, \

@@ -3,7 +3,7 @@ __authors__     = ['Lars Fasel']
 __author__      = ','.join(__authors__)
 __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
-__license__     = 'MIT'
+__license__     = 'GNU AGPLv3'
 
 # maintanence information
 __maintainer__  = 'Lars Fasel'
@@ -105,7 +105,6 @@ class SystemAbapFolder(generic.models.GenericSystem):
     __mapper_args__ = {
         'polymorphic_identity':'SystemAbapFolder',
     }
-
 
 @generic_repr
 class SystemAbap(generic.models.GenericSystem):
@@ -230,7 +229,6 @@ class SystemAbap(generic.models.GenericSystem):
                 return client
         raise ValueError('No definition of default client for the system')
 
-
 @generic_repr
 class SystemAbapClient(generic.models.GenericSystemTreeNode, PasswordKeyringMixin):
     """ Contains ABAP specific information"""
@@ -345,7 +343,6 @@ class SystemAbapClient(generic.models.GenericSystemTreeNode, PasswordKeyringMixi
                     self.logger.error('No SSO, but username or Password missing')
                     return False
         return logon_info
-
 
 @generic_repr
 class ActionAbapFolder(Check):

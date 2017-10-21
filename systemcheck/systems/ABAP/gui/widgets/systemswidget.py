@@ -100,7 +100,7 @@ class AbapSystemsWidget(GenericSystemWidget):
         system_node = False
         treenode = selected.internalPointer()
         if treenode is not None:
-            if treenode.type != 'FOLDER':
+            if treenode.parent_id is not None:
                 system_node = getattr(treenode, treenode.type)
             if system_node:
                 settingsw=GenericSystemSettingsWidget(self.system_model, selected)

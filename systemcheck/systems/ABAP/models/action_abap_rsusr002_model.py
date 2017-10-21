@@ -1,6 +1,6 @@
 from systemcheck.checks.models.checks import Check
 from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, qtRelationship, \
-    relationship, RichString, generic_repr, Boolean, OperatorMixin
+    relationship, RichString, generic_repr, Boolean, OperatorMixin, BaseMixin
 from systemcheck.models.meta.orm_choices import choices
 from systemcheck.systems.ABAP.models import ActionAbapIsClientSpecificMixin, StandardAuthSelectionOptionMixin
 
@@ -33,7 +33,7 @@ class ActionAbapRsusr002(Check, ActionAbapIsClientSpecificMixin):
     }
 
 @generic_repr
-class ActionAbapRsusr002__params(QtModelMixin, Base):
+class ActionAbapRsusr002__params(QtModelMixin, Base, BaseMixin):
     """ The config data for the RSUSR002 plugin. Possible Parameters of the Function Module:
 
     ok: IT_USER	TYPE	SUSR_T_RANGE_4_XUBNAME	                     	Benutzerliste
@@ -206,7 +206,7 @@ class ActionAbapRsusr002__params(QtModelMixin, Base):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_USER(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_USER(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for Users"""
     __tablename__ = 'ActionAbapRsusr002__IT_USER'
 
@@ -231,7 +231,7 @@ class ActionAbapRsusr002__IT_USER(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_GROUP(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_GROUP(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for Groups """
     __tablename__ = 'ActionAbapRsusr002__IT_GROUP'
     __table_args__ = {'extend_existing':True}
@@ -255,7 +255,7 @@ class ActionAbapRsusr002__IT_GROUP(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_UGROUP(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_UGROUP(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for User Groups  """
 
     __tablename__ = 'ActionAbapRsusr002__IT_UGROUP'
@@ -280,7 +280,7 @@ class ActionAbapRsusr002__IT_UGROUP(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_UALIAS(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_UALIAS(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for User Aliases """
     __tablename__ = 'ActionAbapRsusr002__IT_UALIAS'
 
@@ -303,7 +303,7 @@ class ActionAbapRsusr002__IT_UALIAS(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_UTYPE(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_UTYPE(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for User Types """
     __tablename__ = 'ActionAbapRsusr002__IT_UTYPE'
     __table_args__ = {'extend_existing':True}
@@ -337,7 +337,7 @@ class ActionAbapRsusr002__IT_UTYPE(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_SECPOL(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_SECPOL(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for Security Policy """
     __tablename__ = 'ActionAbapRsusr002__IT_SECPOL'
     __table_args__ = {'extend_existing':True}
@@ -362,7 +362,7 @@ class ActionAbapRsusr002__IT_SECPOL(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_SNC(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_SNC(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for SNC """
 
     __tablename__ = 'ActionAbapRsusr002__IT_SNC'
@@ -388,7 +388,7 @@ class ActionAbapRsusr002__IT_SNC(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_ACTGRPS(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_ACTGRPS(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for Roles """
     __tablename__ = 'ActionAbapRsusr002__IT_ACTGRPS'
     __table_args__ = {'extend_existing':True}
@@ -413,7 +413,7 @@ class ActionAbapRsusr002__IT_ACTGRPS(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_PROF1(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_PROF1(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for Profiles """
     __tablename__ = 'ActionAbapRsusr002__IT_PROF1'
 
@@ -436,7 +436,7 @@ class ActionAbapRsusr002__IT_PROF1(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_OBJCT(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_OBJCT(Base, StandardAuthSelectionOptionMixin, BaseMixin):
 
     __tablename__ = 'ActionAbapRsusr002__IT_OBJCT'
     __table_args__ = {'extend_existing':True}
@@ -461,7 +461,7 @@ class ActionAbapRsusr002__IT_OBJCT(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_AUTH(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_AUTH(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for Authorizations """
 
     __tablename__ = 'ActionAbapRsusr002__IT_AUTH'
@@ -487,7 +487,7 @@ class ActionAbapRsusr002__IT_AUTH(Base, StandardAuthSelectionOptionMixin):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_VALUES(QtModelMixin, Base):
+class ActionAbapRsusr002__IT_VALUES(QtModelMixin, Base, BaseMixin):
     """ Sel. According to Authorization Values """
 
     __tablename__ = 'ActionAbapRsusr002__IT_VALUES'
@@ -547,7 +547,7 @@ class ActionAbapRsusr002__IT_VALUES(QtModelMixin, Base):
 
 
 @generic_repr
-class ActionAbapRsusr002__IT_UREF(Base, StandardAuthSelectionOptionMixin):
+class ActionAbapRsusr002__IT_UREF(Base, StandardAuthSelectionOptionMixin, BaseMixin):
     """ Selection Options for Reference Users """
     __tablename__ = 'ActionAbapRsusr002__IT_UREF'
     __table_args__ = {'extend_existing':True}

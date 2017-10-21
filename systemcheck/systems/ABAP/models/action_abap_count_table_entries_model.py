@@ -1,23 +1,14 @@
 from systemcheck.checks.models.checks import Check
 from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, qtRelationship, \
-    relationship, RichString, generic_repr, OperatorMixin
+    relationship, RichString, generic_repr, OperatorMixin, BaseMixin, TableNameMixin
 from systemcheck.systems.ABAP.models import ActionAbapClientSpecificMixin
+from sqlalchemy import inspect
 
 @generic_repr
-class ActionAbapCountTableEntries__params(QtModelMixin, Base, OperatorMixin):
-    __tablename__ = 'ActionAbapCountTableEntries__params'
+class ActionAbapCountTableEntries__params(QtModelMixin, Base, OperatorMixin, BaseMixin, TableNameMixin):
 
     __table_args__ = {'extend_existing':True}
 
-
-
-#        ('Equal', 'EQ'),
-#        ('Not Equal', 'NE'),
-#        ('Greater Than', 'GT'),
-#        ('Lower Than', 'LT'),
-#        ('Greater or Equal', 'GE'),
-#        ('Lower or Equal', 'LE')
-#
 
     id = Column(Integer, primary_key=True)
 
@@ -77,7 +68,8 @@ class ActionAbapCountTableEntries(Check, ActionAbapClientSpecificMixin):
 
     params = qtRelationship('ActionAbapCountTableEntries__params',
                             qt_show=True,
-                            cascade="all, delete-orphan")
+                            cascade="all, delete-orphan",
+                            back_populates="check")
 
 
     __mapper_args__ = {

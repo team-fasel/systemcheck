@@ -18,7 +18,7 @@ __authors__     = ['Lars Fasel']
 __author__      = ','.join(__authors__)
 __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
-__license__     = 'MIT'
+__license__     = 'GNU AGPLv3'
 
 
 def exception_hook(exctype, value, traceback):
@@ -43,7 +43,7 @@ class GenericSystemSettingsWidget(QtWidgets.QWidget):
         treeNode=self.model.getNode(currentIndex)
         self.setVisible(False)
         if treeNode:
-            if treeNode.type !='FOLDER':
+            if treeNode.parent_id is not None:
                 self.alchemyObject = treeNode
                 self.setLayout(layout)
                 self.delegate=generateQtDelegate(self.alchemyObject)

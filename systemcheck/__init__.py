@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" systemcheck - A Python-based extensivle configuration validation solution
+""" systemcheck - A Python-based extensive configuration validation solution
 
 systemcheck is a simple application that has two primary functions: 
 
@@ -16,7 +16,7 @@ __authors__ = ['Lars Fasel']
 __author__ = ','.join(__authors__)
 __credits__ = []
 __copyright__ = 'Copyright (c) 2017'
-__license__ = 'MIT'
+__license__ = 'GNU AGPLv3'
 
 # maintanence information
 __maintainer__ = 'Lars Fasel'

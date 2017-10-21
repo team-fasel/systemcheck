@@ -4,7 +4,7 @@ __authors__     = ['Lars Fasel']
 __author__      = ','.join(__authors__)
 __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
-__license__     = 'MIT'
+__license__     = 'GNU AGPLv3'
 
 # maintanence information
 __maintainer__  = 'Lars Fasel'
@@ -13,8 +13,8 @@ __email__       = 'systemcheck@team-fasel.com'
 
 
 from systemcheck.models.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
-    Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, \
-    Integer, ForeignKey, ChoiceType, UUIDType, relationship, RichString, qtRelationship, OperatorMixin
+    Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, BaseMixin, \
+    Integer, ForeignKey, ChoiceType, UUIDType, relationship, RichString, qtRelationship, OperatorMixin, TableNameMixin
 
 
 from systemcheck.models.meta.orm_choices import choices
@@ -39,6 +39,15 @@ class OptionChoice:
         GE = ['GT', 'greater or equal']
         LT = ['LT', 'lower']
         LE = ['LE', 'lower or equal']
+
+@choices
+class CriticalityChoice:
+    class Meta:
+        VERYHIGH = ['VERYHIGH', 'Very High']
+        HIGH = ['HIGH', 'High']
+        MEDIUM = ['MEDIUM', 'Medium']
+        LOW = ['LOW', 'Low']
+        INFO = ['INFO', 'Info']
 
 
 class StandardAbapAuthSelectionOptionMixin:
@@ -72,7 +81,7 @@ class StandardAbapAuthSelectionOptionMixin:
                 )
 
 @generic_repr
-class Check(QtModelMixin, Base):
+class Check(QtModelMixin, Base, BaseMixin, TableNameMixin):
     """ The Generic Data Model of a Check
 
     Similar to the generic tree for systems, this is a tree structure for checks.
@@ -105,14 +114,20 @@ class Check(QtModelMixin, Base):
                         nullable=False,
                         qt_label='Node Type',
                         qt_description='Node Type',
-                        qt_show=False
                         )
+
+    criticality = Column(String,
+                  nullable=False,
+                  qt_label='Criticality',
+                  qt_description='Describes the criticality of the finding or whether it is informational only',
+                  choices=CriticalityChoice.CHOICES,
+                  default=CriticalityChoice.INFO
+                  )
 
     description = Column(RichString,
                          nullable=True,
                          qt_label='Check Description',
                          qt_description='Brief description what the check does',
-                         qt_show=False,
                          )
 
     failcriteria = Column(String,
@@ -120,7 +135,7 @@ class Check(QtModelMixin, Base):
                        qt_description='Defines when a check is considered as failed. ',
                        qt_label = 'Fail Criteria',
                        choices=CheckFailCriteriaOptions.CHOICES,
-                       qt_show=True)
+                          )
 
     __qtmap__ = [name, description]
 
@@ -134,7 +149,16 @@ class Check(QtModelMixin, Base):
     def _restriction_count(self):
         return len(self.restrictions)
 
+    def _add_parameter_set(self, parameterDict):
+
+        paramClass = Base._decl_class_registry.get(self.__class__.__name__+'__params')
+        if paramClass:
+            paramObject=paramClass(**parameterDict)
+
+            self.params.append(paramObject)
+
     __mapper_args__ = {
-        'polymorphic_identity':'FOLDER',
+        'polymorphic_identity':'Check',
         'polymorphic_on':type,
     }
+

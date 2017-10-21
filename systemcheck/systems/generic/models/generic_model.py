@@ -3,7 +3,7 @@ __authors__     = ['Lars Fasel']
 __author__      = ','.join(__authors__)
 __credits__     = []
 __copyright__   = 'Copyright (c) 2017'
-__license__     = 'MIT'
+__license__     = 'GNU AGPLv3'
 
 # maintanence information
 __maintainer__  = 'Lars Fasel'
@@ -20,7 +20,7 @@ from sqlalchemy import inspect, Integer, ForeignKey, String, Boolean
 from typing import Any, List, Union
 from systemcheck.models.meta import Base, UniqueConstraint, \
     Column, String, generic_repr, validates, backref, QtModelMixin, \
-    relationship, Integer, ForeignKey, RichString
+    relationship, Integer, ForeignKey, RichString, BaseMixin
 from systemcheck.models.meta.orm_choices import choices
 
 @choices
@@ -33,10 +33,12 @@ class SystemCategoryChoices:
 
 
 @generic_repr
-class GenericSystemTreeNode(Base, QtModelMixin):
+class GenericSystemTreeNode(Base, QtModelMixin, BaseMixin):
     """ A generic node that is the foundation of the tree stored in a database table"""
 
     __tablename__ = 'systems'
+
+    __table_args__ = {'extend_existing' : True}
 
 
     id = Column(Integer, primary_key=True, qt_label='Primary Key')
@@ -56,7 +58,7 @@ class GenericSystemTreeNode(Base, QtModelMixin):
                           )
 
     __mapper_args__ = {
-        'polymorphic_identity':'FOLDER',
+        'polymorphic_identity':'GenericSystemTreeNode',
         'polymorphic_on':type,
     }
 
@@ -92,3 +94,5 @@ class GenericSystem(GenericSystemTreeNode):
     __mapper_args__ = {
         'polymorphic_identity':'GenericSystem',
     }
+
+    __table_args__ = {'extend_existing' : True}
