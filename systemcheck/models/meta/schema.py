@@ -22,6 +22,10 @@ from functools import reduce
 from typing import Union
 import yaml
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 def bool_or_str(type_):
     return is_string(type_) or is_boolean(type_)
 
@@ -251,6 +255,19 @@ class BaseMixin(object):
 
     """
 
+    @property
+    def __relationships__(self):
+        """
+        Return a list of relationships name which are not as a backref
+        name in model
+        """
+        back_ref_relationships = list()
+        items = self.__mapper__.relationships.items()
+        for (key, value) in items:
+            if isinstance(value.backref, tuple):
+                back_ref_relationships.append(key)
+        return back_ref_relationships
+
     @declarative.declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -262,8 +279,11 @@ class BaseMixin(object):
     def __iter__(self):
         return self.to_dict().items()
 
-    def to_dict(self, *args, backref:tuple=None, include_relationships=True, ignore_keys=True, ignore_attrs:Union[list, None]=None,
-                override_default_ignore_attrs:bool=False, rel_ignore_list=None, ignore_parents=True, **kwargs):
+    def to_dict(self, *args, backref:tuple=None, include_relationships=True, ignore_keys=True,
+                ignore_attrs:Union[list, None]=None,
+                override_default_ignore_attrs:bool=False,
+                rel_ignore_list=None,
+                ignore_parents=True, **kwargs):
         """ Convert the values of a SQLAlchemy ORM Object into a dictionary
 
 
@@ -275,11 +295,13 @@ class BaseMixin(object):
             since that would traverse the tree upwards. Had to be added since the the relationships for systemcheck
             are bidirectional.
         :param ignore_parents: If set to True, the attribute 'parent_node' will not get traversed.
-
+        :param folder_as_attribute: a attribute called 'folder' will be added that contains the objects path from root downwards.
         """
 
-        default_ignore_attrs=[]
+        logger.debug('Converting to dictionary: %s', self.saClassName)
 
+#        logger.debug('Name: %s', self.name)
+        default_ignore_attrs=[]
         if ignore_attrs is None:
             ignore_attrs=default_ignore_attrs
         else:
@@ -301,9 +323,6 @@ class BaseMixin(object):
         else:
             result = {str(column.key): getattr(self, attr)
                       for attr, column in self.__mapper__.c.items()}
-
-        for b in self.__class__.__bases__:
-            pprint(b)
 
         if include_relationships:
             for attr, relation in self.__mapper__.relationships.items():

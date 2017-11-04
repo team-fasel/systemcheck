@@ -23,6 +23,11 @@
     <file alias="ClearSymbol">./img/icons8/Clear Symbol_32px.png</file>
     <file alias="Client">./img/Client_32px.jpg</file>
     <file alias="Clock">./img/icons8/Clock_32px.png</file>
+    <file alias="CircleGreen">./img/icons8/CircleGreen_32px.png</file>
+    <file alias="CircleOrange">./img/icons8/CircleOrange_32px.png</file>
+    <file alias="CircleRed">./img/icons8/CircleRed_32px.png</file>
+    <file alias="CircleYellow">./img/icons8/CircleYellow_32px.png</file>
+    <file alias="ClearSymbol">./img/icons8/Clear Symbol_32px.png</file>
     <file alias="Cut">./img/icons8/Cut_32px.png</file>
     <file alias="Compare">./img/icons8/Compare_32px.png</file>
     <file alias="Copy">./img/icons8/Copy_32px.png</file>
@@ -35,6 +40,7 @@
     <file alias="Eye">./img/icons8/Eye_32px.png</file>
     <file alias="Erase">./img/icons8/Erase_32px.png</file>
     <file alias="Eraser">./img/icons8/Eraser_32px.png</file>
+    <file alias="Error">./img/icons8/Error_32px.png</file>
     <file alias="Excel">./img/icons8/Microsoft Excel_32px.png</file>
     <file alias="ExitSign">./img/icons8/Exit Sign_32px.png</file>
     <file alias="Export">./img/icons8/Export_32px.png</file>

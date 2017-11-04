@@ -16,6 +16,8 @@ __license__ = 'GNU AGPLv3'
 
 import logging
 from typing import Any
+import pickle
+from pprint import pformat
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -25,6 +27,7 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
         super().__init__(parent)
         self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
         self._rootNode=rootnode
+
         self._treeNode=treenode
         self._checkedIndexes = set()
 
@@ -81,7 +84,11 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
             return node._qt_data_colnr(colnr)
 
     def flags(self, index:QtCore.QModelIndex)->int:
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable
+        if not index.isValid():
+            return QtCore.Qt.ItemIsEnabled
+
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | \
+               QtCore.Qt.ItemIsEditable
 
     def getNode(self, index:QtCore.QModelIndex) -> Any:
         """ Returns the actual node object behind a index"""
@@ -254,3 +261,4 @@ class GenericTreeModel(QtCore.QAbstractItemModel):
             self.dataChanged.emit(index, index)
             return True
         return False
+

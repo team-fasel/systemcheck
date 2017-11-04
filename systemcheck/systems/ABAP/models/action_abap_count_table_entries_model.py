@@ -76,5 +76,6 @@ class ActionAbapCountTableEntries(Check, ActionAbapClientSpecificMixin):
         'polymorphic_identity':'ActionAbapCountTableEntries',
     }
 
-    __qtmap__ = [Check.name, Check.description, Check.failcriteria, ActionAbapClientSpecificMixin.client_specific]
+    __qtmap__ = [Check.name, Check.description, Check.failcriteria, Check.criticality,
+                 ActionAbapClientSpecificMixin.client_specific]
 

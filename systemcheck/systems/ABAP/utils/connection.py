@@ -46,23 +46,23 @@ class Connection:
 
         self.logger.exception(err)
         if isinstance(err, pyrfc.ABAPRuntimeError):
-            message = 'ABAP Runtime Error'
+            message = err.message
         elif isinstance(err, pyrfc.ExternalApplicationError):
-            message = 'External Application Error'
+            message = err.message
         elif isinstance(err, pyrfc.ABAPApplicationError):
-            message = 'ABAP Application Error'
+            message = err.message
         elif isinstance(err, pyrfc.ExternalRuntimeError):
-            message = 'External Runtime Error'
+            message = err.message
         elif isinstance(err, pyrfc.CommunicationError):
-            message = 'Communication Error'
+            message = err.message
         elif isinstance(err, pyrfc.LogonError):
-            message = 'Logon Error'
+            message = err.message
         elif isinstance(err, pyrfc.ExternalAuthorizationError):
-            message = 'External Authorization Error:'
+            message = err.message
         elif isinstance(err, pyrfc.RFCLibError):
-            message = 'RFC Library Error'
+            message = err.message
         elif isinstance(err, pyrfc.RFCError):
-            message = 'RFC Error'
+            message = err.message
         else:
             raise err
         return Fail(message=message, data=err)

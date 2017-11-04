@@ -1,9 +1,8 @@
 from systemcheck.checks.models.checks import Check
 from systemcheck.models.meta.orm_choices import choices
 from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, qtRelationship, \
-    relationship, RichString, generic_repr, Boolean, RestrictionsMixin, OperatorMixin, Date, DateTime, Time
+    relationship, RichString, generic_repr, Boolean, RestrictionsMixin, OperatorMixin, Date, DateTime, Time, BaseMixin
 from systemcheck.systems.ABAP.models import ActionAbapIsNotClientSpecificMixin
-from systemcheck.models.meta import CheckFailCriteriaOptions, InclusionChoice, OperatorChoice, ComponentChoice
 from systemcheck import models
 
 pluginName='ActionAbapJobSchedulingValidation'
@@ -20,7 +19,7 @@ class ActionAbapJobSchedulingValidation(Check, ActionAbapIsNotClientSpecificMixi
         'polymorphic_identity':pluginName,
     }
 
-    __qtmap__ = [Check.name, Check.description, Check.failcriteria]
+    __qtmap__ = [Check.name, Check.description, Check.failcriteria, Check.criticality]
 
 @choices
 class ActionAbapJobSchedulingValidationIntervalType:
@@ -41,7 +40,7 @@ class ActionAbapJobSchedulingValidationComparisonOperator:
         HT = ['HT', 'higher than']
 
 @generic_repr
-class ActionAbapJobSchedulingValidation__params(QtModelMixin, Base, OperatorMixin):
+class ActionAbapJobSchedulingValidation__params(QtModelMixin, Base, OperatorMixin, BaseMixin):
     """ Job Scheduling Validation:
 
 

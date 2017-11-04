@@ -8,6 +8,7 @@ from systemcheck.gui.utils import ComboBoxModel, comboBox
 from typing import Any
 from pprint import pprint
 from sqlalchemy import inspect
+from systemcheck.resources import icon_rc
 
 class ComboBoxItemDelegate(QtWidgets.QStyledItemDelegate):
 
@@ -26,7 +27,7 @@ class ComboBoxItemDelegate(QtWidgets.QStyledItemDelegate):
         editor.installEventFilter(self)
         return editor
 
-    def setEditorData(self, QWidget, QModelIndex):
+    def setEditorData(self, editor, index):
         value=index.data
 
     def setModelData(self, QWidget, QAbstractItemModel, QModelIndex):

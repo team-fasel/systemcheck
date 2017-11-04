@@ -26,6 +26,19 @@ def exception_hook(exctype, value, traceback):
     sys.exit(1)
 
 
+class TableView(QtWidgets.QTableView):
+
+    def __init__(self):
+        super().__init__()
+
+        self.keyPressEvent.connect(self.keyPressed)
+
+    def keyPressed(self, event):
+        self.resizeColumnsToContents()
+        self.resizeRowsToContents()
+        QtWidgets.QTableView.keyPressEvent(self, event)
+
+
 class GenericSystemSettingsWidget(QtWidgets.QWidget):
     """ Configure System Settings
 
@@ -49,13 +62,14 @@ class GenericSystemSettingsWidget(QtWidgets.QWidget):
                 self.delegate=generateQtDelegate(self.alchemyObject)
                 self.model=SettingsTableModel(self.alchemyObject)
                 columns = self.alchemyObject._qt_columns()
-                self.table = QtWidgets.QTableView()
+                self.table = TableView()
                 self.table.setModel(self.model)
                 self.table.setItemDelegate(self.delegate)
                 self.delegate.itemView=self.table
                 self.table.horizontalHeader().hide()
                 self.table.verticalHeader().hide()
                 self.table.horizontalHeader().setStretchLastSection(True)
+                self.table.horizontalHeader().setCascadingSectionResizes(True)
 
                 for colNr, column in enumerate(columns):
                     #we always want to show the drop down box instead of double clicking
@@ -63,8 +77,10 @@ class GenericSystemSettingsWidget(QtWidgets.QWidget):
                         self.table.openPersistentEditor(self.model.index(colNr, 1))
 
                 layout.addWidget(self.table)
-                self.table.resizeRowsToContents()
-                self.table.resizeColumnsToContents()
+#                self.table.resizeRowsToContents()
+#                self.table.resizeColumnsToContents()
+                self.table.horizontalHeader().setResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+                self.table.verticalHeader().setResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 
     def persistentEditor(self, alcObject):
         """ Check whether a persistent Editor should be opened immediately

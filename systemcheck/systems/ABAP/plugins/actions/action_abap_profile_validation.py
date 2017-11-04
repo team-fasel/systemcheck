@@ -3,7 +3,6 @@ from systemcheck.systems import ABAP
 from systemcheck.checks.models import Check
 from systemcheck.utils import Result, Fail
 
-from systemcheck.checks.models.checks import Check
 from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, qtRelationship, \
     relationship, RichString
 from systemcheck.systems import ABAP
@@ -47,8 +46,8 @@ class ActionAbapProfileValidation(systemcheck.plugins.ActionAbapCheck):
 #TODO: Reenable when developing a restriction approach
 #                               ABAP.models.ActionAbapProfileValidation__params__restrictions,
 #                               ABAP.models.ActionAbapProfileValidation__restrictions,
-                               Check,
                                ABAP.models.ActionAbapFolder]
+        self.initializeResult()
 
     def initializeResult(self):
 
@@ -178,7 +177,7 @@ class ActionAbapProfileValidation(systemcheck.plugins.ActionAbapCheck):
                               PARAMETER=parameterSet.parameter,
                               RATING='pass',
                               PROFILETYPE=parameterSet.profiletype,
-                              OPERATOR=parameterSet.operator,
+                              OPERATOR=self.operators.lookup(parameterSet.operator),
                               EXPECTED=parameterSet.expected,
                               PROFILENAME='',
                               CONFIGURED=None)
@@ -190,7 +189,7 @@ class ActionAbapProfileValidation(systemcheck.plugins.ActionAbapCheck):
                                   PARAMETER=parameterSet.parameter,
                                   RATING='pass',
                                   PROFILETYPE=parameterSet.profiletype,
-                                  OPERATOR=parameterSet.operator,
+                                  OPERATOR=self.operators.lookup(parameterSet.operator),
                                   PROFILENAME=data.get('PFNAME'),
                                   EXPECTED=parameterSet.expected,
                                   CONFIGURED=data.get('PVALUE'))

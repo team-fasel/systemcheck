@@ -10,7 +10,7 @@ __authors__ = ['Lars Fasel']
 __author__ = ','.join(__authors__)
 __credits__ = []
 __copyright__ = 'Copyright (c) 2017'
-__license__ = 'MIT'
+__license__ = 'GNU AGPLv3'
 
 # maintanence information
 __maintainer__ = 'Lars Fasel'
@@ -27,7 +27,6 @@ from systemcheck.gui.models import GenericTreeModel
 from systemcheck.systems.ABAP.models.abap_model import SystemAbap, SystemAbapClient, SystemAbapFolder
 from systemcheck.models.meta.base import scoped_session, sessionmaker, engine_from_config
 import logging
-import systemcheck_tools
 
 from PyQt5 import QtCore
 

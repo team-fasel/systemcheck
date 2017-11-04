@@ -38,7 +38,7 @@ class ActionAbapCheck(ActionAbapFoundation):
         super().__init__(*args, **kwargs)
 
 
-class ActionAbapSUIM(ActionAbapFoundation):
+class ActionAbapSUIM(ActionAbapCheck):
     """ SUIM API Plugin
     The SUIM API exposes the report that make up transaction SUIM via RFC. The API consists of several function modules:
 

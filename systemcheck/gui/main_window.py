@@ -92,9 +92,10 @@ class MainWindow(QtWidgets.QMainWindow):
         checks_menu = menubar.addMenu('&Checks')
         checks_menu.addAction(self.checksNewFolder_act)
         checks_menu.addAction(self.checksNew_act)
-        checks_menu.addAction(self.checksImport_act)
-        checks_menu.addAction(self.checksImport_act)
         checks_menu.addAction(self.checksDelete_act)
+        checks_menu.addSeparator()
+        checks_menu.addAction(self.checksImport_act)
+        checks_menu.addAction(self.checksExport_act)
         checks_menu.addSeparator()
         checks_menu.addAction(self.checksRun_act)
         checks_menu.addAction(self.checksPause_act)
@@ -183,11 +184,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.checksImport_act = QtWidgets.QAction(QtGui.QIcon(':Import'), 'Import Checks...')
         self.checksImport_act.triggered.connect(self.on_checksImport)
-        self.checksImport_act.setEnabled(False)
 
         self.checksExport_act = QtWidgets.QAction(QtGui.QIcon(':Export'), 'Export Checks...')
         self.checksExport_act.triggered.connect(self.on_checksExport)
-        self.checksExport_act.setEnabled(False)
 
         self.checksRun_act = QtWidgets.QAction(QtGui.QIcon(':Play'), 'Run Checks')
         self.checksRun_act.triggered.connect(self.on_checksRun)

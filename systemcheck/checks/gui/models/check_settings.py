@@ -4,6 +4,7 @@ from systemcheck import checks
 import systemcheck.utils
 from sqlalchemy import inspect
 from typing import Any
+from systemcheck.resources import icon_rc
 
 class CheckSettingsModel(QtCore.QAbstractItemModel):
 

@@ -14,4 +14,4 @@ from sqlalchemy_utils.models import generic_repr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import event
 from .systemcheck_choices import InclusionChoice, OperatorChoice, CodePageChoice, ComponentChoice, \
-    CheckFailCriteriaOptions, Operators, YesNoChoice
+    Operators, YesNoChoice

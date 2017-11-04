@@ -18,8 +18,7 @@ from systemcheck.models.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueCo
 
 
 from systemcheck.models.meta.orm_choices import choices
-from systemcheck.models.meta.systemcheck_choices import OperatorChoice, InclusionChoice, \
-    CheckFailCriteriaOptions
+from systemcheck.models.meta.systemcheck_choices import OperatorChoice, InclusionChoice
 
 #from systemcheck.session import SESSION
 
@@ -48,6 +47,14 @@ class CriticalityChoice:
         MEDIUM = ['MEDIUM', 'Medium']
         LOW = ['LOW', 'Low']
         INFO = ['INFO', 'Info']
+
+
+@choices
+class CheckFailCriteriaOptions:
+    class Meta:
+        FAIL_IF_ANY_FAILS = ['FAIL_IF_ANY_FAILS', 'Fail check if any parameter set fails']
+        FAIL_IF_ALL_FAIL = ['FAIL_IF_ALL_FAIL', 'Fail check if all parameter sets fail']
+        NO_RATING = ['NO_RATING', 'No Rating, just Information']
 
 
 class StandardAbapAuthSelectionOptionMixin:
@@ -81,11 +88,7 @@ class StandardAbapAuthSelectionOptionMixin:
                 )
 
 @generic_repr
-class Check(QtModelMixin, Base, BaseMixin, TableNameMixin):
-    """ The Generic Data Model of a Check
-
-    Similar to the generic tree for systems, this is a tree structure for checks.
-    """
+class CheckTreeStructure(QtModelMixin, Base, BaseMixin, TableNameMixin):
 
     __tablename__ = 'checks_metadata'
 
@@ -105,7 +108,15 @@ class Check(QtModelMixin, Base, BaseMixin, TableNameMixin):
                   qt_show=True
                   )
 
-    children = relationship('Check',
+
+    description = Column(RichString,
+                         nullable=True,
+                         qt_label='Check Description',
+                         qt_description='Brief description what the check does',
+                         )
+
+
+    children = relationship('CheckTreeStructure',
                           cascade="all, delete-orphan",
                           backref=backref("parent_node", remote_side=id),
                           )
@@ -116,6 +127,33 @@ class Check(QtModelMixin, Base, BaseMixin, TableNameMixin):
                         qt_description='Node Type',
                         )
 
+    __qtmap__ = [name, description]
+
+    __icon__ = ':Folder'
+
+
+    __mapper_args__ = {
+        'polymorphic_identity':'CheckFolder',
+        'polymorphic_on':type,
+    }
+
+
+
+@generic_repr
+class Check(CheckTreeStructure):
+    """ The Generic Data Model of a Check
+
+    Similar to the generic tree for systems, this is a tree structure for checks.
+    """
+
+    __tablename__ = 'checks_metadata'
+
+    __table_args__ = (
+        UniqueConstraint("type", "name"),
+        {'extend_existing' : True}
+    )
+
+
     criticality = Column(String,
                   nullable=False,
                   qt_label='Criticality',
@@ -124,12 +162,6 @@ class Check(QtModelMixin, Base, BaseMixin, TableNameMixin):
                   default=CriticalityChoice.INFO
                   )
 
-    description = Column(RichString,
-                         nullable=True,
-                         qt_label='Check Description',
-                         qt_description='Brief description what the check does',
-                         )
-
     failcriteria = Column(String,
                        default = CheckFailCriteriaOptions.FAIL_IF_ANY_FAILS,
                        qt_description='Defines when a check is considered as failed. ',
@@ -137,7 +169,13 @@ class Check(QtModelMixin, Base, BaseMixin, TableNameMixin):
                        choices=CheckFailCriteriaOptions.CHOICES,
                           )
 
-    __qtmap__ = [name, description]
+    technical_name = Column(String,
+                            qt_label='Technical Name',
+                            qt_description='Each Check has a unique technical name')
+
+    __qtmap__ = [CheckTreeStructure.name, CheckTreeStructure.description, criticality, failcriteria]
+
+    __icon__ = ':Checkmark'
 
 
 
@@ -159,6 +197,4 @@ class Check(QtModelMixin, Base, BaseMixin, TableNameMixin):
 
     __mapper_args__ = {
         'polymorphic_identity':'Check',
-        'polymorphic_on':type,
     }
-

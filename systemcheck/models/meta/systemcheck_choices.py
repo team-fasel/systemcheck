@@ -86,13 +86,6 @@ class CodePageChoice:
         NUC = ['NUC', 'Non-Unicode']
 
 
-@choices
-class CheckFailCriteriaOptions:
-    class Meta:
-        FAIL_IF_ANY_FAILS = ['FAIL_IF_ANY_FAILS', 'Fail check if any parameter set fails']
-        FAIL_IF_ALL_FAIL = ['FAIL_IF_ALL_FAIL', 'Fail check if all parameter sets fail']
-        NO_RATING = ['NO_RATING', 'No Rating, just Information']
-
 
 class Operators:
 
@@ -109,6 +102,24 @@ class Operators:
             self.__int_description[item[0]]=item[1]
 
         self.__str_operation = {
+            'ACTIVE': self._ACTIVE,
+            'BETWEEN': self._BETWEEN,
+            'EQ': self._EQ,
+            'GE': self._GE,
+            'GT': self._GT,
+            'INACTIVE': self._INACTIVE,
+            'INCLUDED': self._INCLUDED,
+            'INSTALLED': self._INSTALLED,
+            'LE': self._LE,
+            'LT': self._LT,
+            'MATCHES': self._MATCHES,
+            'MATCHESNOT': self._MATCHESNOT,
+            'NBOTBETWEEN': self._NOTBETWEEN,
+            'NE': self._NE,
+            'NOTINCLUDED': self._NOTINCLUDED,
+            'NOTINSTALLED': self._NOTINSTALLED,
+            'NOTSET': self._NOTSET,
+            'SET': self._SET,
             'active': self._ACTIVE,
             'between': self._BETWEEN,
             'equal': self._EQ,

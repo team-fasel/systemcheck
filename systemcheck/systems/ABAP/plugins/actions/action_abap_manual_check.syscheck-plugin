@@ -1,0 +1,14 @@
+[Core]
+Name = ActionAbapManualCheck
+Module = action_abap_manual_check
+system = ABAP
+type = action
+
+[Documentation]
+Author = Lars Fasel
+Version = 0.1
+Description = Describe a manual check
+
+
+
+

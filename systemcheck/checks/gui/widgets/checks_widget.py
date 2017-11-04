@@ -7,6 +7,8 @@ from collections import OrderedDict
 from typing import Any
 from pprint import pprint
 import functools
+from systemcheck.resources import icon_rc
+from os.path import expanduser
 
 class CheckHandler(QtCore.QObject):
     """ Check Handler
@@ -49,6 +51,8 @@ class ChecksWidget(QtWidgets.QWidget):
     pauseChecks_signal = QtCore.pyqtSignal()
     stopChecks_signal = QtCore.pyqtSignal()
 
+    #TODO: Enable Drag&Drop for Tree View
+
     def __init__(self, systemtype, model = None):
         super().__init__()
         self.logger = logging.getLogger('{}.{}'.format(__name__, self.__class__.__name__))
@@ -58,7 +62,7 @@ class ChecksWidget(QtWidgets.QWidget):
         if model is not None:
             self.setModel(model)
         self.show()
-        self.folderObject=systemcheck.checks.models.Check
+        self.saFolderClass=systemcheck.checks.models.Check
         self.actions = OrderedDict()
 
         for check in self.availableChecks.values():
@@ -67,16 +71,40 @@ class ChecksWidget(QtWidgets.QWidget):
             self.actions[description] = QtWidgets.QAction(QtGui.QIcon(':Checkmark'), description)
             self.actions[description].triggered.connect(functools.partial(self.on_checkNew, classobj, description))
 
+    def exportChecks(self):
+        """ Export all Checks
 
-    @property
-    def folderObject(self):
-        """ Return the folder object of the tree model """
-        return self.__folderObject
+        Export all checks in yaml format
+        """
 
-    @folderObject.setter
-    def folderObject(self, folderObject):
-        """ Set the folder object of the tree model """
-        self.__folderObject = folderObject
+        result = systemcheck.checks.utils.exportChecks(session=systemcheck.session.SESSION)
+        if result.fail:
+            systemcheck.gui.utils.message(icon=QtWidgets.QMessageBox.Warning,
+                                          title='Checks Export Failed', text=result.message)
+        else:
+            systemcheck.gui.utils.message(icon=QtWidgets.QMessageBox.Information,
+                                          title='Checks Export Successful', text=result.message)
+
+    def importChecks(self):
+        """ Import all Checks
+
+        Import all checks in yaml format
+        """
+
+        fileName, mask=QtWidgets.QFileDialog.getOpenFileName(self, 'Open Import File', expanduser('~'))
+
+        if fileName is not None:
+            result = systemcheck.checks.utils.importChecks(session=systemcheck.session.SESSION)
+            if result.fail:
+                systemcheck.gui.utils.message(icon=QtWidgets.QMessageBox.Warning,
+                                              title='Checks Import', text='Error During Import',
+                                              details=result.message)
+            else:
+                self.checks_model.modelReset.emit()
+                self.checks_model.dataChanged.emit(QtCore.QModelIndex(), QtCore.QModelIndex())
+                systemcheck.gui.utils.message(icon=QtWidgets.QMessageBox.Information,
+                                              title='Checks Import', text='Checks Import Successful. Please restart the application')
+
 
     def setupUi(self):
         vlayout = QtWidgets.QVBoxLayout()
@@ -204,13 +232,18 @@ class ChecksWidget(QtWidgets.QWidget):
         print('selection changed')
         current = self.tree.currentIndex()
         node = self.tree.model().getNode(current)
-        self.checkDescription_widget.updateCheck.emit(node, None)
-        if hasattr(node, 'params'):
-            self.checkAttributes_tabw.setTabEnabled(1, True)
-            form = self.checkHandler.parameterForm(node.__class__.__name__)
-            self.checkParameters_widget.updateCheck.emit(node, form)
+
+        if node.name != 'RootNode':
+            self.checkDescription_widget.setVisible(True)
+            self.checkDescription_widget.updateCheck.emit(node, None)
+            if hasattr(node, 'params'):
+                self.checkAttributes_tabw.setTabEnabled(1, True)
+                form = self.checkHandler.parameterForm(node.__class__.__name__)
+                self.checkParameters_widget.updateCheck.emit(node, form)
+            else:
+                self.checkAttributes_tabw.setTabEnabled(1, False)
         else:
-            self.checkAttributes_tabw.setTabEnabled(1, False)
+            self.checkDescription_widget.setVisible(False)
 
     def on_checkNew(self, classobject, description):
         """ Create a new Check
@@ -231,15 +264,36 @@ class ChecksWidget(QtWidgets.QWidget):
         self.checks_model.insertRow(position=0, parent=parent_index, nodeObject=node)
         #self.tree.expand(parent_index)
 
+    def getCheckFolderClass(self):
+        self.logger.debug('Trying to determine Checks Folder Class')
+        self.logger.debug('System Type: %s', self.systemType)
+
+
 
     def on_checkNewFolder(self):
         """ Create a new folder """
 
+        self.logger.debug('Creating new folder')
+        self.logger.debug('System Type: %s', self.systemType)
+
+        systemtype=self.systemType.lower().title()
+        classname='Action'+systemtype+'Folder'
+        self.logger.debug('Folder Class Name: %s', classname)
+
+        folderclass = systemcheck.models.get_class_by_name(class_name=classname, Base=systemcheck.models.meta.Base)
+
         if len(self.tree.selectionModel().selectedIndexes())==0:
+            # That means, somebody right clicked in the white area that doesn't belong to any check
             parent_index=QtCore.QModelIndex()
         else:
             parent_index = self.tree.currentIndex()
-        folder = systemcheck.checks.models.Check(name='new Check')
+
+
+
+
+        folder = folderclass(name='new Check')
+
+
         self.checks_model.insertRow(position=0, parent=parent_index, nodeObject=folder)
         self.tree.expand(parent_index)
 
@@ -261,10 +315,10 @@ class ChecksWidget(QtWidgets.QWidget):
             pprint(info)
 
     def on_checkExport(self):
-        raise NotImplemented
+        self.exportChecks()
 
     def on_checkImport(self):
-        raise NotImplemented
+        self.importChecks()
 
     def on_checkStop(self):
         raise NotImplemented
@@ -282,6 +336,8 @@ class ChecksWidget(QtWidgets.QWidget):
         self.checks_model = checks_model
         self.tree.setModel(checks_model)
         self.tree.setColumnHidden(1, True)
+        self.tree.setColumnHidden(2, True)
+        self.tree.setColumnHidden(3, True)
         self.tree.selectionModel().selectionChanged.connect(self.on_tree_selectionChanged)
 
     def systemSpecificContextMenu(self, position, menu):
@@ -293,7 +349,8 @@ class ChecksWidget(QtWidgets.QWidget):
             menu.addSeparator()
             for action in self.actions.values():
                 menu.addAction(action)
-        elif type(node).__mapper_args__.get('polymorphic_identity').endswith('Folder'):
+        elif type(node).__mapper_args__.get('polymorphic_identity').endswith('Folder') or \
+                        type(node).__mapper_args__.get('polymorphic_identity') == 'Check':
             menu.addAction(self.checksNewFolder_act)
             menu.addAction(self.checksDelete_act)
             menu.addSeparator()

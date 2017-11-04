@@ -31,7 +31,7 @@ class TestCheckParamTableModel(TestCase):
         self.session = scoped_session(self.session_factory)
 
         if self.session.query(Check).filter(Check.parent_id == None).count() == 0:
-            self.session.add(Check(type='FOLDER', name='RootNode'))
+            self.session.add(Check(name='RootNode'))
             self.session.commit()
 
     def tearDown(self):

@@ -1,9 +1,8 @@
 from systemcheck.checks.models.checks import Check
 from systemcheck.models.meta.orm_choices import choices
 from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, qtRelationship, \
-    relationship, RichString, generic_repr, Boolean, RestrictionsMixin, OperatorMixin
+    relationship, RichString, generic_repr, Boolean, RestrictionsMixin, OperatorMixin, BaseMixin
 from systemcheck.systems.ABAP.models import ActionAbapIsNotClientSpecificMixin
-from systemcheck.models.meta import CheckFailCriteriaOptions, InclusionChoice, OperatorChoice, ComponentChoice
 
 
 pluginName='ActionAbapProfileValidation'
@@ -22,7 +21,7 @@ class ActionAbapProfileValidation(Check, ActionAbapIsNotClientSpecificMixin):
         'polymorphic_identity':pluginName,
     }
 
-    __qtmap__ = [Check.name, Check.description, Check.failcriteria]
+    __qtmap__ = [Check.name, Check.description, Check.failcriteria, Check.criticality]
 
 @choices
 class AbapProfileChoice:
@@ -33,7 +32,7 @@ class AbapProfileChoice:
 
 
 @generic_repr
-class ActionAbapProfileValidation__params(QtModelMixin, Base, OperatorMixin):
+class ActionAbapProfileValidation__params(QtModelMixin, Base, OperatorMixin, BaseMixin):
     """ Configuration for the profile validation :
 
 
@@ -53,14 +52,15 @@ class ActionAbapProfileValidation__params(QtModelMixin, Base, OperatorMixin):
                             qt_label='Parameter Set Name',
                             qt_description='Parameter Set Description')
 
-    parameter = Column(String,
-                       qt_label='Parameter',
-                       qt_description='Profile Parameter')
 
     profiletype = Column(Integer,
                          qt_label='Profile',
                          choices=AbapProfileChoice.CHOICES,
                          default=AbapProfileChoice.DEFAULT)
+
+    parameter = Column(String,
+                       qt_label='Parameter',
+                       qt_description='Profile Parameter')
 
     expected=Column(String,
                     qt_label='Expected')

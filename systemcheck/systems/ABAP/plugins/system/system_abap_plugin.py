@@ -1,4 +1,4 @@
-from systemcheck.plugins import SystemBasePlugin
+from systemcheck import plugins
 from systemcheck.systems.ABAP.models import SystemAbapClient, SystemAbap, SystemAbapFolder
 from systemcheck.systems.generic.models import GenericSystem, GenericSystemTreeNode
 from systemcheck.systems.generic.gui.widgets import GenericSystemMainWidget
@@ -9,8 +9,10 @@ from collections import namedtuple
 
 class AbapMainWidget(GenericSystemMainWidget):
 
-    def __init__(self, systemType='ABAP', systemFilter:list = None, systemsWidget:QtWidgets.QWidget=None):
+    def __init__(self, systemType='ABAP', systemFilter:list = None, systemsWidget:QtWidgets.QWidget=None, saFolderClass=None):
         super().__init__(systemType=systemType, systemFilter=systemFilter, systemsWidget=systemsWidget)
+
+        self.saFolderClass=saFolderClass
 
     def buildTaskList(self, systems, checks):
         """ Build the Task List for ABAP Systems
@@ -42,7 +44,7 @@ class AbapMainWidget(GenericSystemMainWidget):
 
         return taskList
 
-class SystemABAPPlugin(SystemBasePlugin):
+class SystemABAPPlugin(plugins.SystemBasePlugin):
 
     def __init__(self, *args, systemType = None, **kwargs):
         super().__init__()
@@ -52,7 +54,7 @@ class SystemABAPPlugin(SystemBasePlugin):
         self.systemsWidget = ABAP.gui.widgets.AbapSystemsWidget
         self.systemFolderObject = SystemAbapFolder
         self.systemObject = SystemAbap
-        self.checkFolderObject = ABAP.models.ActionAbapFolder
+        self.checkFolderClass = ABAP.models.ActionAbapFolder
 
 
     def widget(self):

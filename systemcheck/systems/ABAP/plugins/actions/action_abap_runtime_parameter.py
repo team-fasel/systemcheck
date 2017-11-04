@@ -21,8 +21,9 @@ class ActionAbapRuntimeParameter(systemcheck.plugins.ActionAbapCheck):
         super().__init__()
         self.alchemyObjects = [ABAP.models.ActionAbapRuntimeParameter,
                                ABAP.models.ActionAbapRuntimeParameter__params,
-                               Check,
                                ABAP.models.ActionAbapFolder]
+
+        self.initializeResult()
 
     def initializeResult(self):
 

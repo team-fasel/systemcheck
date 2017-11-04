@@ -15,7 +15,7 @@ from typing import Any, List, Union
 from systemcheck.models.meta import Base, SurrogatePK, SurrogateUuidPK, UniqueConstraint, \
     StandardAbapAuthSelectionOptionMixin, Column, String, CHAR, generic_repr, validates, backref, QtModelMixin, \
     PasswordKeyringMixin, UniqueMixin, Session, DateTime, qtRelationship, declared_attr, attribute_mapped_collection, \
-    one_to_many, many_to_one, Boolean, Integer, ForeignKey, hybrid_property, RichString
+    one_to_many, many_to_one, Boolean, Integer, ForeignKey, hybrid_property, RichString, BaseMixin, TableNameMixin
 from systemcheck.systems.ABAP.utils import get_snc_name
 from systemcheck.config import CONFIG
 import keyring
@@ -24,7 +24,7 @@ from systemcheck.models.meta.systemcheck_choices import YesNoChoice
 from systemcheck.systems import generic
 #from systemcheck.systems.generic.models import GenericSystem
 from systemcheck import checks
-from systemcheck.checks.models import Check
+from systemcheck.checks.models import Check, CheckTreeStructure
 import uuid
 import logging
 
@@ -345,7 +345,7 @@ class SystemAbapClient(generic.models.GenericSystemTreeNode, PasswordKeyringMixi
         return logon_info
 
 @generic_repr
-class ActionAbapFolder(Check):
+class ActionAbapFolder(CheckTreeStructure, QtModelMixin, Base, BaseMixin, TableNameMixin):
     __mapper_args__ = {
         'polymorphic_identity': 'ActionAbapFolder',
     }
@@ -377,6 +377,7 @@ class ActionAbapClientSpecificMixin:
     client_specific = Column(Boolean, name='client_specific',
                              default=YesNoChoice.YES,
                              choices=YesNoChoice.CHOICES,
+                             qt_label='Client Specific',
                              qt_description='Check the box if the check is client specific')
 
 class AbapSpoolParams_BAPIXMPRNT_Mixin:

@@ -23,6 +23,7 @@ from configparser import ConfigParser
 import sys
 import os
 import datetime
+import re
 
 def main_is_frozen():
     """ Determines whether scripts are executed using pyInstaller or actual scripts.
@@ -120,3 +121,16 @@ class Fail(Result):
         fail = True
         super().__init__(message, data, fail)
 
+def underscore_to_camelcase(value):
+    """ Convert the value camel_case to CamelCase """
+    def camelcase():
+        yield str.lower
+        while True:
+            yield str.capitalize
+
+    c = camelcase()
+    return "".join(c.next()(x) if x else '_' for x in value.split("_"))
+
+def camelcase_to_underscore(value):
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', value)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()

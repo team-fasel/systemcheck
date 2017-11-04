@@ -37,7 +37,8 @@ class Signals(QtCore.QObject):
 
 class GenericSystemMainWidget(QtWidgets.QWidget):
 
-    def __init__(self, systemType:str='generic', systemFilter:list = None, systemsWidget:QtWidgets.QWidget=None):
+    def __init__(self, systemType:str='generic', systemFilter:list = None,
+                 systemsWidget:QtWidgets.QWidget=None):
         super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.signals = Signals()
@@ -47,10 +48,9 @@ class GenericSystemMainWidget(QtWidgets.QWidget):
 
         self.systemFilter = systemFilter
 
-        self.__checkModel = None
-        self.__systemType = None
-        self.__systemModel = None
-
+        self.checkModel = None
+        self.checkModel= None
+        self.checkModel = None
 
     def buildTaskList(self, systems:set, checks:set)->set:
         """ Build the Task List
@@ -146,6 +146,8 @@ class GenericSystemMainWidget(QtWidgets.QWidget):
 
         tasklist = self.buildTaskList(systems=systems, checks=checks)
 
+        self.results
+
         for task in tasklist:
             plugin=self.pm.getPlugin(task.check.type)
             result = plugin.plugin_object.executeAction(task.system, task.check)
@@ -218,6 +220,13 @@ class GenericSystemMainWidget(QtWidgets.QWidget):
         self.systems.setModel(self.systemSortFilterProxyModel)
         return True
 
+    @property
+    def saFolderClass(self):
+        return self.__saFolderClass
+
+    @saFolderClass.setter
+    def saFolderClass(self, folderClass):
+        self.__saFolderClass = folderClass
 
     @property
     def systemSortFilterProxyModel(self):

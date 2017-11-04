@@ -4,7 +4,6 @@ from systemcheck.checks.models import Check
 from systemcheck.utils import Result, Fail, datecalc
 from pprint import pformat
 
-from systemcheck.checks.models.checks import Check
 from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, qtRelationship, relationship, RichString
 from systemcheck.systems import ABAP
 from datetime import datetime
@@ -38,7 +37,6 @@ class ActionAbapJobSchedulingValidationAction(systemcheck.plugins.ActionAbapChec
         super().__init__()
         self.alchemyObjects = [ABAP.models.ActionAbapJobSchedulingValidation,
                                ABAP.models.ActionAbapJobSchedulingValidation__params,
-                               Check,
                                ABAP.models.ActionAbapFolder]
 
     def initializeResult(self):

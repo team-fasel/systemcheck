@@ -20,7 +20,7 @@ class ActionAbapValidateRedundantPasswordHashes(Check, AbapSpoolParams_BAPIPRIPA
         'polymorphic_identity':pluginName,
     }
 
-    __qtmap__ = [Check.name, Check.description, Check.failcriteria,
+    __qtmap__ = [Check.name, Check.description, Check.failcriteria, Check.criticality,
                  SAP_USER_NAME,
                  AbapSpoolParams_BAPIPRIPAR_Mixin.PDEST,
                  AbapSpoolParams_BAPIPRIPAR_Mixin.PRBIG,

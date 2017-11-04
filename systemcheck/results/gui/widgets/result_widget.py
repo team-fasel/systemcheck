@@ -18,7 +18,10 @@ class ResultWidget(QtWidgets.QWidget):
 
 
     def on_resultClear(self):
-        pass
+        self.ui.details.setModel(None)
+        self.ui.details.setVisible(False)
+        rowcount=self.overviewModel.rowCount(QtCore.QModelIndex())
+        self.overviewModel.removeRows(0, rowcount, QtCore.QModelIndex())
 
     def on_resultExport(self):
         raise NotImplemented
@@ -30,7 +33,7 @@ class ResultWidget(QtWidgets.QWidget):
 
         index = self.ui.overview.tree.currentIndex()
         node = index.internalPointer()
-        if node:
+        if node.typeInfo() == 'RESULT':
             resultObject = node.resultObject
             if resultObject:
                 detailModel = self.resultHandler.buildResultTableModel(resultObject)

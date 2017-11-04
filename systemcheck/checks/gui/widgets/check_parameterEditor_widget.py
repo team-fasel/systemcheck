@@ -7,6 +7,8 @@ from systemcheck.checks.gui.widgets import CheckSettingsWidget
 from collections import OrderedDict
 from typing import Any
 from pprint import pprint
+from systemcheck.resources import icon_rc
+
 
 
 class CheckParameterEditorWidget(CheckSettingsWidget):

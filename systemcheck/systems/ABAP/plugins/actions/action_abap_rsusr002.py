@@ -150,6 +150,7 @@ class Form(QtWidgets.QWidget):
         selectionCriteria_documentation=[]
 
 
+
         param_set_name_widget=QtWidgets.QWidget()
         param_set_name_layout=QtWidgets.QFormLayout()
         param_set_name_widget.setLayout(param_set_name_layout)
@@ -176,7 +177,6 @@ class Form(QtWidgets.QWidget):
         layout.addWidget(widget)
         displayWidget.setLayout(layout)
         return displayWidget
-
 
 class Table(QtWidgets.QWidget):
 
@@ -246,12 +246,6 @@ class Table(QtWidgets.QWidget):
     def initModel(self):
         self.model = TableModel(self.abstractItem, self.sectionName)
         self.table.setModel(self.model)
-        for row in range(self.model.rowCount()):
-            for column in range(self.model.columnCount()):
-                colType=self.model.objectClass.__qtmap__[column]
-                widget=systemcheck.gui.qtalcmapper.getQtWidgetForAlchemyType(colType)
-                index=self.table.model().index(row, column)
-                self.table.setIndexWidget(index, widget)
 
         self.delegate=gui.qtalcmapper.generateQtDelegate(self.abstractItem, self.sectionName)
         self.table.setItemDelegate(self.delegate)
@@ -459,7 +453,6 @@ class ActionAbapRsusr002(action_types.ActionAbapSUIM):
 
         self.alchemyObjects = [ABAP.models.ActionAbapRsusr002,
                                ABAP.models.ActionAbapRsusr002__params,
-                               Check,
                                ABAP.models.ActionAbapFolder]
 
         report_columns = CONFIG['systemtype_ABAP']['suim.reportcolumns.rsusr002'].split(',')
@@ -481,4 +474,7 @@ class ActionAbapRsusr002(action_types.ActionAbapSUIM):
         for column in report_columns:
             self.actionResult.addResultColumn(column, header_descriptions.get(column) or column)
 
-        self.parameterForm = Form()
+        self.parameterForm = Form
+
+if __name__ == '__main__':
+    x = ActionAbapRsusr002()

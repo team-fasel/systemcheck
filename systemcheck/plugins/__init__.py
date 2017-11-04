@@ -10,6 +10,7 @@ from collections import OrderedDict
 from typing import Union
 from pprint import pformat
 
+
 class ActionResult:
     """ Result of a check plugin
 
@@ -177,12 +178,12 @@ class ActionBasePlugin(BasePlugin):
 
     def __init__(self, *args, alchemyRoot=checks.models.Check, **kwargs):
         super().__init__()
-        self.actionResult = ActionResult()
         self.alchemyRoot=alchemyRoot
 
         self.parameterForm= None
         self.systemConnection = None
         self.logger = logging.getLogger("{}.{}".format(__name__, self.__class__.__name__))
+        self.actionResult = ActionResult()
 
     def evaluateWhitelist(self):
         """ Certain Checks """
@@ -201,20 +202,18 @@ class ActionBasePlugin(BasePlugin):
         """
         self.systemObject=systemObject
         self.checkObject=checkObject
+        result = systemcheck.systems.ABAP.utils.get_connection(self.systemObject.logon_info())
 
-        self.initializeResult()
         self.actionResult.logonInfo=self.systemObject.logon_info()
         self.actionResult.checkName=self.checkObject.name
         self.actionResult.systeminfo=self.systemInfo()
-
-        result = systemcheck.systems.ABAP.utils.get_connection(self.systemObject.logon_info())
 
         if not result.fail:
             self.systemConnection = result.data
             self.execute()
         else:
             self.actionResult.rating='error'
-            self.actionResult.message=result.fail
+            self.actionResult.errorMessage=result.message
             return self.actionResult
 
         self.systemConnection.close()
@@ -226,30 +225,67 @@ class ActionBasePlugin(BasePlugin):
 
         Add Columns to the Result Data Structure """
 
-        raise NotImplemented
+
+
+        raise systemcheck.exceptions.NotImplemented
 
     def rateIndividualResult(self, result:dict)->dict:
         """ Rate Individual Result
 
         A check can consist of multiple sets of paramters. Each set is validated individually.
+
+        The direction of the comparison should match the direction in the display of the results. For example, if this
+        parameter is set in the system:
+
+        max_password_length = 10
+
+        we expect that the minimum setting of that parameter is 8.
+
+        then we have two options to compare the configured values:
+
+        1: we want to verify that whatever we specified as expected is lower than what is configured to establish that
+           the the configured value is larger:
+
+
+        - we want to verify that the configured value is larger than the expected value.
+
+            +------------------+----------------------+-----------------+
+            | Value 1          | Operator             | Value 2         |
+            +------------------+----------------------+-----------------+
+            | EXPECTED (8)     | Lower or equal (>=)  | CONFIGURED (10) |
+            | CONFIGURED (10)  | Higher or equal (>=) | CONFIGURED (10) |
+            +------------------+----------------------+-----------------+
+
+        Both representations are correct.
+
         """
         self.logger.debug('Rating individual result: %s', pformat(result))
         operator = result.get('OPERATOR')
-        expected = result.get('EXPECTED')
-        configured = result.get('CONFIGURED')
         upper = result.get('UPPER')
+
+        definitionList = list(self.actionResult.resultDefinition.keys())
+
+        if definitionList.index('EXPECTED') > definitionList.index('CONFIGURED'):
+            self.logger.debug('Configured occurs before Expected. That means, it is value1')
+            value1 = result.get('CONFIGURED')
+            value2 = result.get('EXPECTED')
+        else:
+            self.logger.debug('Configured occurs before Expected. That means, it is value1')
+            value1 = result.get('EXPECTED')
+            value2 = result.get('CONFIGURED')
+
 
         result['RATING']='pass'
 
         try:
-            if self.operators.operation(operator, expected, configured, upper):
+            if self.operators.operation(value1=value1, operation_name=operator, value2=value2, value3=upper):
                 result['RATING']='pass'
             else:
                 result['RATING']='fail'
-        except Exception:
+        except Exception as err:
                 result['RATING']='error'
-                result['CONFIGURED']='No Rating Operator defined for {}'.format(result['OPERATOR'])
-
+                self.actionResult.addResultColumn('ERROR', 'Error Message')
+                result['ERROR'] = pformat(err)
         return result
 
     def rateOverallResult(self, error=False, errormessage=None):
@@ -269,17 +305,17 @@ class ActionBasePlugin(BasePlugin):
 
         if error or 'error' in ratings:
             self.actionResult.rating='error'
-            self.actionResult.message=errormessage
+            self.actionResult.message='Unexpected Error during Execution. See detail results'
         else:
-            if self.checkObject.failcriteria == 'NO_RATING':
+            if self.checkObject.failcriteria == checks.models.CheckFailCriteriaOptions.NO_RATING:
                 self.actionResult.rating='info'
-            elif self.checkObject.failcriteria == 'FAIL_IF_ANY_FAILS':
+            elif self.checkObject.failcriteria ==  checks.models.CheckFailCriteriaOptions.FAIL_IF_ANY_FAILS:
                 if 'fail' in ratings:
                     self.actionResult.rating='fail'
-            elif self.checkObject.failcriteria == 'FAIL_IF_ALL_FAIL':
-                resultCount=len(self.checkObject.result)
+            elif self.checkObject.failcriteria == checks.models.CheckFailCriteriaOptions.FAIL_IF_ALL_FAIL:
+                resultCount=len(self.actionResult.result)
                 failCount=ratings.count('fail')
-                if resultCount != failCount:
+                if resultCount == failCount:
                     self.actionResult.rating='fail'
 
 

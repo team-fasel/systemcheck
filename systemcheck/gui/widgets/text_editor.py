@@ -57,12 +57,12 @@ class TextEditor(QtWidgets.QMainWindow):
         menu.addAction(self.toggleToolbar)
 
 
-    def event(self, event):
-        if event.type() == QtCore.QEvent.FocusOut:
-            self.editingFinished.emit()
-            return True
+#    def event(self, event):
+#        if event.type() == QtCore.QEvent.FocusOut:
+#            self.editingFinished.emit()
+#            return True
 
-        return QtWidgets.QTextEdit.event(self, event)
+#        return QtWidgets.QTextEdit.event(self.text_tedit, event)
 
     def on_textEditContextMenu(self, point):
 

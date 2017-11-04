@@ -1,23 +1,13 @@
 from systemcheck.checks.models.checks import Check
 from systemcheck.models.meta import Base, ChoiceType, Column, ForeignKey, Integer, QtModelMixin, String, qtRelationship, \
-    relationship, RichString, generic_repr, OperatorMixin
+    relationship, RichString, generic_repr, OperatorMixin, BaseMixin
 from systemcheck.systems.ABAP.models import ActionAbapIsNotClientSpecificMixin
 
 @generic_repr
-class ActionAbapRuntimeParameter__params(QtModelMixin, Base, OperatorMixin):
+class ActionAbapRuntimeParameter__params(QtModelMixin, Base, OperatorMixin, BaseMixin):
     __tablename__ = 'ActionAbapRuntimeParameter__params'
 
     __table_args__ = {'extend_existing':True}
-
-
-
-#        ('Equal', 'EQ'),
-#        ('Not Equal', 'NE'),
-#        ('Greater Than', 'GT'),
-#        ('Lower Than', 'LT'),
-#        ('Greater or Equal', 'GE'),
-#        ('Lower or Equal', 'LE')
-#
 
 
     id = Column(Integer, primary_key=True)
@@ -65,5 +55,5 @@ class ActionAbapRuntimeParameter(Check, ActionAbapIsNotClientSpecificMixin):
         'polymorphic_identity':'ActionAbapRuntimeParameter',
     }
 
-    __qtmap__ = [Check.name, Check.description, Check.failcriteria]
+    __qtmap__ = [Check.name, Check.description, Check.failcriteria, Check.criticality]
 

@@ -124,6 +124,7 @@ class TestOperators(TestCase):
     def test_ge(self):
         op = 'greater or equal'
         values = [(1, 1, True),
+                  (1, 0, True),
                   (1, 2, False),
                   ('1', 1, True),
                   (1, '1', True),

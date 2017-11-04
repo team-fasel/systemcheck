@@ -1,5 +1,8 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 from typing import Any, Union
+import logging
+from pprint import pformat
+
 
 class Node(object):
     """ Generic Tree Node
@@ -48,10 +51,12 @@ class Node(object):
 
         return True
 
+    @property
     def name(self):
         return self._name
 
-    def setName(self, name):
+    @name.setter
+    def name(self, name):
         self._name = name
 
     def child(self, row):
@@ -85,17 +90,6 @@ class Node(object):
 
         return output
 
-    def resultRating(self):
-        object = self.resultObject()
-        if object:
-            return object.rating
-        else:
-            return None
-
-    @property
-    def resultObject(self):
-        return self._resultObject
-
     def __repr__(self):
         return self.log()
 
@@ -107,13 +101,23 @@ class ResultNode(Node):
         super(ResultNode, self).__init__(name, parent)
         self._resultObject = resultObject
 
+    @property
+    def resultObject(self):
+        return self._resultObject
+
+    @resultObject.setter
+    def resultObject(self, resObj):
+        self._resultObject = resObj
 
     def typeInfo(self):
         return "RESULT"
 
 
 class ResultTreeModel(QtCore.QAbstractItemModel):
-    """INPUTS: Node, QObject"""
+    """ Results Tree Model
+
+
+    This tree model is used for displaying the results of the executed actions in the TreeView of the results widget """
 
     def __init__(self, header, groupBy, root=None, parent=None):
         """ Initialize ResultTreeModel
@@ -131,6 +135,8 @@ class ResultTreeModel(QtCore.QAbstractItemModel):
         self._rootNode = root
         self._header = header
         self.groupBy = groupBy
+
+        self.logger = logging.getLogger(self.__class__.__name__)
 
 
     def rowCount(self, parent:QtCore.QModelIndex)->int:
@@ -153,7 +159,7 @@ class ResultTreeModel(QtCore.QAbstractItemModel):
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             if index.column() == 0:
-                return node.name()
+                return node.name
 
         # if role == QtCore.Qt.DecorationRole:
         # TODO: REturn some meaningful icons
@@ -226,36 +232,76 @@ class ResultTreeModel(QtCore.QAbstractItemModel):
 
         return self._rootNode
 
-    def insertRows(self, position:int, rows:int, parent=QtCore.QModelIndex()):
-
+    def insertRows(self, position:int, rows:int, parent=QtCore.QModelIndex(), childNode=None):
+        success=True
         parentNode = self.getNode(parent)
         self.beginInsertRows(parent, position, position + rows - 1)
 
-        for row in range(rows):
-            childCount = parentNode.childCount()
-            childNode = Node("untitled" + str(childCount))
-            success = parentNode.insertChild(position, childNode)
+        if childNode is not None:
+            for row in range(rows):
+                childCount = parentNode.childCount()
+                if childNode is None:
+                    childNode = Node("untitled" + str(childCount))
+                success = parentNode.insertChild(position, childNode)
+
         self.endInsertRows()
         return success
 
-    def insertResult(self, resultObject, parent=QtCore.QModelIndex()):
+    def insertResult(self, resultObject, parent=None):
+        self.logger.debug('inserting Result {}'.format(pformat(resultObject)))
         success = False
+
+        if parent is None:
+            self.logger.debug('Inserting at root level')
+            parent=QtCore.QModelIndex()
+
+        # Need to traverse the result tree
+        prevParentIndex = parent
+        prevNodeObject = self.getNode(prevParentIndex)
+        self.logger.debug('Retrieved initial parent node: {}'.format(pformat(prevNodeObject)))
+
+        hierarchy=dict()
+
         for levelNr, level in enumerate(self.groupBy):
+            self.logger.debug('Processing Level {}: {}'.format(levelNr, level))
             text=getattr(resultObject, level)
-            index = self.findIndexByName(text, parent)
-            if index:
-                parent = index
-            else:
-                if levelNr < len(self._groupBy)-1:
-                    node = Node(text)
+            self.logger.debug('Retrieved text from result object for {}: {}. Searching for object'.format(level, text))
+            newParentIndex = self.findIndexByName(text, prevParentIndex)
+
+
+            if newParentIndex is None:
+                self.logger.debug('No Object with that text found. Building a new tree node')
+                prevParentNodeObject = self.getNode(prevParentIndex)
+                if levelNr<len(self.groupBy)-1:
+                    self.logger.debug('Did not reach lowest level yet. Creating a normal tree node with text: "%s"', text)
+                    newNode = Node(text)
+                else:   #That means, we reached the lowest level of the hierarchy
+                    self.logger.debug('Reached lowest level in hierarchy (%i), adding ResultObject node', levelNr)
+                    if resultObject.rating == 'error':
+                        self.logger.debug('ResultObject had error status. Changing text to include message')
+                        text = '{} ({})'.format(text, resultObject.errorMessage or 'no Error Message')
+                        self.logger.debug('Text for result object: %s', text)
+                    newNode = ResultNode(name=text, resultObject=resultObject)
+
+                self.logger.debug('inserting node with name "%s" under "%s"', newNode.name, prevParentNodeObject.name)
+                prevParentNodeObject.insertChild(0, newNode)
+                self.insertRows(0, 1, prevParentIndex)
+                self.logger.debug('searching for text "%s" again', newNode.name)
+                prevParentIndex = self.findIndexByName(text, prevParentIndex)
+                if prevParentIndex is None:
+                    self.logger.error('Searched for "%s" but did not find it. ', newNode.name)
                 else:
-                    node = ResultNode(text, resultObject)
-                rowcount=self.rowCount(parent)
-                self.beginInsertRows(parent, rowcount, 1)
-                parent_node = self.getNode(parent)
-                success = parent_node.insertChild(rowcount, node)
-                parent = self.index(rowcount, 0, parent)
-                self.endInsertRows()
+                    node = self.getNode(prevParentIndex)
+                    self.logger.debug('Found node with name "%s"', node.name)
+                    if newNode.name == node.name:
+                        self.logger.debug('Names Match, everything ok')
+                    else:
+                        self.logger.error('Names do not Match. Tree Hierarchy is wrong')
+            else:
+                self.logger.debug('Node with text "%s" found. Using it as new Root Node', text)
+                prevParentIndex=newParentIndex
+                self.logger.debug('Hierarchy: \n%s', self.getNode(prevParentIndex).log())
+
 
         return success
 
@@ -341,6 +387,7 @@ class ResultHandler(QtCore.QObject):
         super().__init__()
         self.__results=[]
         self.resultAdd_signal.connect(self.addResult)
+        self.logger = logging.getLogger(self.__class__.__name__)
 
 
     def addResult(self, result):
@@ -363,7 +410,7 @@ class ResultHandler(QtCore.QObject):
         return model
 
     def buildResultTableModel(self, resultObject):
-
+        self.logger.debug('Building Table Model for result object: %s', pformat(resultObject))
         model = ResultTableModel(resultObject)
         return model
 
